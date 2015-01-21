@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QUERY=/home/groups/harrisonlab/project_files/idris/analysis/blast_homology/PHI_36_accessions
+QUERY=analysis/blast_homology/PHI_36_accessions
 
 PROGRAM=/home/armita/git_repos/emr_repos/tools/pathogen/blast/blast_pipe.sh 
 
