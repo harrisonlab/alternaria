@@ -4,7 +4,7 @@
 #$ -pe smp 16
 #$ -l virtual_free=1G
 
-# Pipeline used for Gene prediction used in Alternaria using rnaSeq data.
+# Pipeline used for Gene prediction used in Alternaria using rnaSeq data assembled with trinity.
 # Training was performed using RNASeq data.
 
 
@@ -17,10 +17,10 @@
 AUG_DIR=$(which augustus)
 PASA_DIR=$(which pasa | sed s%/pasa%%)
 
-TRANSCRIPTOME=$1
-#TRANSCRIPTOME=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta
+#TRANSCRIPTOME=$1
+TRANSCRIPTOME=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta
 
-GENOMIC_CONTIGS=$2
+#GENOMIC_CONTIGS=$2
 GENOMIC_CONTIGS=assembly/velvet/A.alternata_ssp._gaisen/650/650_assembly.41/sorted_contigs.fa
 ORGANISM=$(echo $GENOMIC_CONTIGS | rev | cut -d "/" -f4 | rev)
 STRAIN=$(echo $GENOMIC_CONTIGS | rev | cut -d "/" -f3 | rev)
