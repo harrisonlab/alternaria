@@ -17,18 +17,21 @@
 AUG_DIR=$(which augustus)
 PASA_DIR=$(which pasa | sed s%/pasa%%)
 
-#TRANSCRIPTOME=$1
-TRANSCRIPTOME=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta
+TRANSCRIPTOME=$1
+#TRANSCRIPTOME=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta
+#TRANSCRIPTOME=assembly/trinity/genbank/P.cactorum/P.cactorum_rna_contigs/Trinity.fasta 
 
-#GENOMIC_CONTIGS=$2
-GENOMIC_CONTIGS=assembly/velvet/A.alternata_ssp._gaisen/650/650_assembly.41/sorted_contigs.fa
+GENOMIC_CONTIGS=$2
+#GENOMIC_CONTIGS=assembly/velvet/A.alternata_ssp._gaisen/650/650_assembly.41/sorted_contigs.fa
+#GENOMIC_CONTIGS=repeat_masked/P.cactorum/10300/version1_repmask/10300_contigs_softmasked.fa
 ORGANISM=$(echo $GENOMIC_CONTIGS | rev | cut -d "/" -f4 | rev)
 STRAIN=$(echo $GENOMIC_CONTIGS | rev | cut -d "/" -f3 | rev)
 
 CUR_PATH=$PWD
-WORK_DIR=$TMPDIR/$STRAIN
+#WORK_DIR=$TMPDIR/$STRAIN
+WORK_DIR=/tmp/$STRAIN
 
-PASA_DB=temp_db_test3
+PASA_DB="$STRAIN"_db
 # When Pasa makes a MYSQL database it wont work if there is already a database of this name.
 # For this reason the PASA_DB value needs to be changed everytime this script is run.
 # IMPORTANT - find a way to remove MYSQL databases.
@@ -48,18 +51,19 @@ PASA_DB=temp_db_test3
 #------------------------------------------------------
 #run seqclean to identify and discard polyA trim vectors, and low quality sequences 
 
-seqclean $TRANSCRIPTOME
-#outputs files <name>.cidx <name>.clean, <name>.cln, seql_<name>.log, err_seql_<name>.log, cleaning_1, outparts_cln.sort
-
 mkdir -p gene_pred/pasa/$ORGANISM/$STRAIN/
 cd gene_pred/pasa/$ORGANISM/$STRAIN/
+seqclean $CUR_PATH/$TRANSCRIPTOME
+
+#outputs files <name>.cidx <name>.clean, <name>.cln, seql_<name>.log, err_seql_<name>.log, cleaning_1, outparts_cln.sort
+
 cp $PASA_DIR/../pasa_conf/pasa.alignAssembly.Template.txt .
 perl -pi -e "s%<__MYSQLDB__>%$PASA_DB%g" pasa.alignAssembly.Template.txt				
 perl -pi -e "s%<__MIN_PERCENT_ALIGNED__>%90%g" pasa.alignAssembly.Template.txt			
 perl -pi -e "s%<__MIN_AVG_PER_ID__>%95%g" pasa.alignAssembly.Template.txt				
 
 
-Launch_PASA_pipeline.pl -c pasa.alignAssembly.Template.txt -C -R -g ../../../../$GENOMIC_CONTIGS -t ../../../../$TRANSCRIPTOME --ALIGNERS blat,gmap
+Launch_PASA_pipeline.pl -c pasa.alignAssembly.Template.txt -C -R -g $CUR_PATH/$GENOMIC_CONTIGS -t $CUR_PATH/$TRANSCRIPTOME --ALIGNERS blat,gmap
 
 
 pasa_asmbls_to_training_set.dbi --pasa_transcripts_fasta $PASA_DB.assemblies.fasta  --pasa_transcripts_gff $PASA_DB.pasa_assemblies.gff3
