@@ -282,10 +282,48 @@ RNAseq data was assembled into transcriptomes using Trinity
 	done
 ```	
 	
-Gene prediction
+#Gene prediction
 
 
 
 /home/armita/git_repos/emr_repos/tools/gene_prediction/augustus/training_by_transcriptome.sh assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta assembly/velvet/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_53/sorted_contigs.fa 
+
+
+#Genomic analysis
+
+
+The first analysis was based upon BLAST searches for genes known to be involved in toxin production
+
+#BLAST Searches
+```shell
+	ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast/
+	Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa 
+	BestAss675=assembly/velvet/A.alternata_ssp._arborescens/675/A.alternata_ssp._arborescens_675_69/sorted_contigs.fa
+	BestAss970013=assembly/velvet/A.alternata_ssp._arborescens/97.0013/A.alternata_ssp._arborescens_97.0013_59/sorted_contigs.fa
+	BestAss970016=assembly/velvet/A.alternata_ssp._arborescens/97.0016/A.alternata_ssp._arborescens_97.0016_77/sorted_contigs.fa
+	BestAss650=assembly/velvet/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_67/sorted_contigs.fa
+	BestAss1082=assembly/velvet/A.alternata_ssp._tenuissima/1082/A.alternata_ssp._tenuissima_1082_49/sorted_contigs.fa
+	BestAss1164=assembly/velvet/A.alternata_ssp._tenuissima/1164/A.alternata_ssp._tenuissima_1164_67/sorted_contigs.fa
+	BestAss1166=assembly/velvet/A.alternata_ssp._tenuissima/1166/A.alternata_ssp._tenuissima_1166_43/sorted_contigs.fa
+	BestAss1177=assembly/velvet/A.alternata_ssp._tenuissima/1177/A.alternata_ssp._tenuissima_1177_63/sorted_contigs.fa
+	BestAss24350=assembly/velvet/A.alternata_ssp._tenuissima/24350/A.alternata_ssp._tenuissima_24350_63/sorted_contigs.fa
+	BestAss635=assembly/velvet/A.alternata_ssp._tenuissima/635/A.alternata_ssp._tenuissima_635_59/sorted_contigs.fa
+	BestAss648=assembly/velvet/A.alternata_ssp._tenuissima/648/A.alternata_ssp._tenuissima_648_45/sorted_contigs.fa
+	BestAss743=assembly/velvet/A.alternata_ssp._tenuissima/743/A.alternata_ssp._tenuissima_743_69/sorted_contigs.fa
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss675
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss970013
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss970016
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss650
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss1082
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss1164
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss1166
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss1177
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss24350
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss635
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss648
+	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss743
+```
+
+
 
 
