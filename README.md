@@ -229,7 +229,62 @@ The best assemblies were used to perform repeatmasking
 	
 #Gene Prediction
 
-Gene models were trained for isolates 1166 and 650 using RNAseq data
+Gene prediction followed two steps:
+	Gene model training
+		- Gene models were trained for isolates 1166 and 650 using assembled RNAseq data
+	Gene prediction
+		- Gene models were used to predict genes in A. alternata genomes. This used RNAseq data as hints for gene models.
+
+#Gene model training
+
+Data quality was visualised using fastqc:
+```shell
+	for RawData in raw_rna/paired/*/*/*/*.fastq.gz; do 
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
+		echo $RawData; 
+		qsub $ProgDir/run_fastqc.sh $RawData
+	done
+```
+
+Trimming was performed on data to trim adapters from 
+sequences and remove poor quality data. This was done with fastq-mcf
+
+```shell
+	for StrainPath in raw_rna/paired/*/*; do 
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/rna_qc
+		IlluminaAdapters=/home/armita/git_repos/emr_repos/tools/seq_tools/illumina_full_adapters.fa
+		ReadsF=$(ls $StrainPath/F/*.fastq.gz)
+		ReadsR=$(ls $StrainPath/R/*.fastq.gz)
+		echo $ReadsF
+		echo $ReadsR
+		qsub $ProgDir/rna_qc_fastq-mcf.sh $ReadsF $ReadsR $IlluminaAdapters RNA
+	done
+```
+
+Data quality was visualised once again following trimming:
+```shell
+	for TrimData in qc_rna/paired/*/*/*/*.fastq.gz; do 
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
+		echo $RawData; 
+		qsub $ProgDir/run_fastqc.sh $TrimData
+	done
+```	
+
+RNAseq data was assembled into transcriptomes using Trinity
+```shell
+	for StrainPath in qc_rna/paired/*/*; do
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/transcriptome_assembly
+		ReadsF=$(ls $StrainPath/F/*.fastq.gz)
+		ReadsR=$(ls $StrainPath/R/*.fastq.gz)	
+		echo $ReadsF
+		echo $ReadsR
+		qsub $ProgDir/transcriptome_assembly_trinity.sh $ReadsF $ReadsR
+	done
+```	
+	
+Gene prediction
+
+
 
 /home/armita/git_repos/emr_repos/tools/gene_prediction/augustus/training_by_transcriptome.sh assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta assembly/velvet/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_53/sorted_contigs.fa 
 
