@@ -323,7 +323,32 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss648
 	qsub $ProgDir/blast_pipe.sh $Query dna $BestAss743
 ```
+BLAST search results were summarised into a presence/absence table
 
+The presence /absence table determines presence if a hit is present and the alignment represents >50% of the query sequence.
+This thresholding means that some hits have not been summarised including AMT11, AMT15 and ALT1.
+```shell
+	ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast/
+	InFiles=$(ls analysis/blast_homology/A.alternata_ssp._*/*/*_A.alternata_CDC_genes.fa_homologs.csv | paste -s -d ' ')
+	echo $InFiles
+	$ProgDir/blast_differentials.pl $InFiles
+	mv *.csv analysis/blast_homology/CDC_genes/.
+``` 
 
+#CDC Assembly
 
+Raw reads were aligned against assembled genomes to identify contigs that were unique to a isolate or clade
+```shell
+for Pathz in $(ls -d qc_dna/paired/A.alternata_ssp._*/*); do  
+Strain=$(echo $Pathz | cut -d '/' -f4)
+echo "using reads for $Strain"
+ProgPath=/home/armita/git_repos/emr_repos/tools/pathogen/lineage_specific_regions
+F_IN=$(ls $Pathz/F/*.fastq.gz)
+R_IN=$(ls $Pathz/R/*.fastq.gz)
+for Assemblyz in $(ls repeat_masked/A.alternata_ssp._*/*/*/*_contigs_unmasked.fa); do
+basename $Assemblyz
+qsub "$ProgPath"/bowtie2_alignment_pipe.sh	$F_IN $R_IN $Assemblyz
+done
+done
+```
 
