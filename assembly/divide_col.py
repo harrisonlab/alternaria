@@ -18,5 +18,5 @@ with open (infile, 'r') as infile_fh:
 			if no_reads == '0':
 				coverage = 0
 			else: 
-				coverage = int(contig_lgth) / int(no_reads)
-			print cur_line + "\t" + str(coverage)
+				coverage = float(contig_lgth) / float(no_reads)
+			print cur_line + "\t" + "%.2f" % round(coverage, 2)
