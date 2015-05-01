@@ -229,11 +229,26 @@ The best assemblies were used to perform repeatmasking
 	
 #Gene Prediction
 
-Gene prediction followed two steps:
+
+Gene prediction followed three steps:
+	Pre-gene prediction
+		- Quality of genome assemblies were assessed using Cegma to see how many core eukaryotic genes can be identified. 
 	Gene model training
 		- Gene models were trained for isolates 1166 and 650 using assembled RNAseq data
 	Gene prediction
 		- Gene models were used to predict genes in A. alternata genomes. This used RNAseq data as hints for gene models.
+
+#Pre-gene prediction
+
+Quality of genome assemblies was assessed by looking for the gene space in the assemblies.
+```shell
+	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/cegma
+	cd /home/groups/harrisonlab/project_files/alternaria/
+	for Genome in $(ls repeat_masked/A.*/*/*/*_contigs_unmasked.fa); do 
+		echo $Genome; 
+		qsub $ProgDir/sub_cegma.sh $Genome dna;
+	done
+```
 
 #Gene model training
 
@@ -297,6 +312,16 @@ Training for 650 and 1166 was performed in two instances of screen and occassion
 	Genome1166=repeat_masked/A.alternata_ssp._tenuissima/1166/A.alternata_ssp._tenuissima_1166_43_repmask/1166_contigs_unmasked.fa
 	$ProgDir/training_by_transcriptome.sh $Assembly1166 $Genome1166
 ```
+
+Quality of Trinity assemblies were assessed using Cegma to assess gene-space within the transcriptome
+```shell
+	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/cegma
+	for Transcriptome in $(ls assembly/trinity/A.*/*/*_rna_contigs/Trinity.fasta); do  
+		echo $Transcriptome;  
+		qsub $ProgDir/sub_cegma.sh $Transcriptome rna; 
+	done
+```
+
 	
 #Gene prediction
 
