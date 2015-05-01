@@ -281,12 +281,71 @@ RNAseq data was assembled into transcriptomes using Trinity
 		qsub $ProgDir/transcriptome_assembly_trinity.sh $ReadsF $ReadsR
 	done
 ```	
+Gene training was performed using RNAseq data. The cluster can not run this script using qlogin. As such it was run on the head node (-naughty) using screen.
+Training for 650 and 1166 was performed in two instances of screen and occassionally viewed to check progress over time.
+(screen is detached after opening using ctrl+a then ctrl+d. - if just ctrl+d is pressed the instance of screen is deleted. - be careful)
+```shell
+	screen -a
+	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
+	Assembly650=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta 
+	Genome650=repeat_masked/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_67_repmask/650_contigs_unmasked.fa
+	$ProgDir/training_by_transcriptome.sh $Assembly650 $Genome650
+
+	screen -a
+	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
+	Assembly1166=assembly/trinity/A.alternata_ssp._tenuissima/1166/1166_rna_contigs/Trinity.fasta 
+	Genome1166=repeat_masked/A.alternata_ssp._tenuissima/1166/A.alternata_ssp._tenuissima_1166_43_repmask/1166_contigs_unmasked.fa
+	$ProgDir/training_by_transcriptome.sh $Assembly1166 $Genome1166
+```
 	
 #Gene prediction
 
+Gene prediction was performed for A. alternata isolates. 
+RNAseq reads were used as Hints for the location of CDS. 
+A concatenated dataset of both ssp. tenuissima and ssp. gaisen RNAseq reads were used as hints for all strains.
+Genes were predicted for ssp. tenuissima using the gene model trained to ssp. tenunissima. 
+Genes were predicted for ssp. gaisen using the gene model trained to ssp. gaisen. 
+Genes were predicted for ssp. arborescens using the gene model trained to ssp. tenuisima.
 
 
-/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus/training_by_transcriptome.sh assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta assembly/velvet/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_53/sorted_contigs.fa 
+```shell
+	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
+	mkdir -p qc_rna/concatenated
+	RnaFiles=$(ls qc_rna/paired/A.alternata_ssp._*/*/*/*.fastq.gz | paste -s -d ' ')
+	ConcatRna=qc_rna/concatenated/A.alternata_RNA_650_1166.fa.gz
+	cat $RnaFiles > $ConcatRna
+	
+	for Genome in repeat_masked/A.alternata_ssp._*/*/*/*_contigs_unmasked.fa; do
+		Species=$(printf $Genome | rev | cut -f4 -d '/' | rev)
+		if [ "$Species" == 'A.alternata_ssp._tenuissima' ]; then 
+			GeneModel=A.alternata_ssp._tenuissima_1166
+		elif [ "$Species" == 'A.alternata_ssp._gaisen' ]; then 
+			GeneModel=A.alternata_ssp._gaisen_650
+		elif [ "$Species" == 'A.alternata_ssp._arborescens' ]; then 
+			GeneModel=A.alternata_ssp._tenuissima_1166
+		fi
+		qsub $ProgDir/augustus_pipe.sh $Genome $ConcatRna $GeneModel
+	done
+```
+
+#Functional annotation
+
+Interproscan was used to give gene models functional annotations.
+
+```shell
+	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan/
+	for Genes in $(ls gene_pred/augustus/A.alternata_ssp._*/*/*_augustus_preds.aa); do
+		echo $Genes
+		$ProgDir/sub_interproscan.sh $Genes
+	done
+```
+
+
+
+
+
+
+
 
 
 #Genomic analysis
@@ -335,20 +394,85 @@ This thresholding means that some hits have not been summarised including AMT11,
 	mv *.csv analysis/blast_homology/CDC_genes/.
 ``` 
 
+
+
+
+
+
 #CDC Assembly
 
 Raw reads were aligned against assembled genomes to identify contigs that were unique to a isolate or clade
 ```shell
-for Pathz in $(ls -d qc_dna/paired/A.alternata_ssp._*/*); do  
-Strain=$(echo $Pathz | cut -d '/' -f4)
-echo "using reads for $Strain"
-ProgPath=/home/armita/git_repos/emr_repos/tools/pathogen/lineage_specific_regions
-F_IN=$(ls $Pathz/F/*.fastq.gz)
-R_IN=$(ls $Pathz/R/*.fastq.gz)
-for Assemblyz in $(ls repeat_masked/A.alternata_ssp._*/*/*/*_contigs_unmasked.fa); do
-basename $Assemblyz
-qsub "$ProgPath"/bowtie2_alignment_pipe.sh	$F_IN $R_IN $Assemblyz
-done
-done
+	for Pathz in $(ls -d qc_dna/paired/A.alternata_ssp._*/*); do  
+		Strain=$(echo $Pathz | cut -d '/' -f4)
+		echo "using reads for $Strain"
+		ProgPath=/home/armita/git_repos/emr_repos/tools/pathogen/lineage_specific_regions
+		F_IN=$(ls $Pathz/F/*.fastq.gz)
+		R_IN=$(ls $Pathz/R/*.fastq.gz)
+		for Assemblyz in $(ls repeat_masked/A.alternata_ssp._*/*/*/*_contigs_unmasked.fa); do
+			basename $Assemblyz
+			qsub "$ProgPath"/bowtie2_alignment_pipe.sh $F_IN $R_IN $Assemblyz
+		done
+	done
+```
+A summary file was made from the alignment logs.
+The percentage of reads aligning to each set of assembled contigs was determined.
+
+```shell
+	SummaryFile=analysis/ls_contigs/alignment_summaries.txt
+	printf "" > "$SummaryFile"
+	for OUTPUT in $(ls bowtie2_alignment_pipe.sh.e*); do 
+		ID=$(echo $OUTPUT | rev | cut -d 'e' -f1 | rev | less); 
+		cat bowtie2_alignment_pipe.sh.o"$ID" | grep -E "Trimmed .* reads .*/F/|Output files: " | sed -e 's/.*\/F\///g' | cut -f1 -d ')' | cut -f2 -d '"' >> "$SummaryFile"; 
+		cat $OUTPUT >> "$SummaryFile"; 
+		printf "\n" >> "$SummaryFile"; 
+	done
+	cat $SummaryFile | grep ' overall alignment rate' | cut -f1 -d ' ' | less
+```
+These are the reads percentages reported by bowtie but do not actually reflect the percentage unaligned reads where neither pair matched.
+
+These were identified using SAM FLAGS to extract unaligned pairs.
+```shell
+	for Pathz in $(ls assembly/ls_contigs/A.alternata_ssp._*/*/vs_*/*_sorted.bam); do  
+		OutFileF=$(echo $Pathz | sed 's/.bam/_unaligned_F.txt/g')
+		OutFileR=$(echo $Pathz | sed 's/.bam/_unaligned_R.txt/g')
+		OutFileSum=$(echo $Pathz | sed 's/.bam/_sum.txt/g')
+		samtools view -f 77 "$Pathz" | cut -f1 > $OutFileF
+		samtools view -f 141 "$Pathz" | cut -f1 > $OutFileR
+		NoReads=$(samtools view -f 1 "$Pathz" | wc -l)
+		NoReadsF=$(cat "$OutFileF" | wc -l)
+		NoReadsR=$(cat "$OutFileR" | wc -l)
+		printf "File\tNo. paired reads\tF reads unaligned\tR reads unaligned\n" > "$OutFileSum"
+		printf "$Pathz\t$NoReads\t$NoReadsF\t$NoReadsR\n" >> "$OutFileSum"
+	done
+
+	for File in $(ls assembly/ls_contigs/A.alternata_ssp._*/*/vs_*/*_sum.txt); do 
+		cat $File | tail -n+2; 
+	done > analysis/ls_contigs/assembly_summaries2.txt 
 ```
 
+The number of reads aligning per bp of assembly was determined. Typical alignment values were 0.20 reads per bp. Contigs were detemined as unique to that alignment if they contained an average of 0 reads per bp.
+The number of bp unique to each assembly were identified.
+
+```shell
+	mkdir -p analysis/ls_contigs
+	Outfile=analysis/ls_contigs/ls_contig_size.csv
+	printf "Reads" > $Outfile
+	for Genome in $(ls -d assembly/ls_contigs/A.alternata_ssp._arborescens/675/vs_A.alternata_ssp._*); do
+		NameG=$(basename "$Genome" | sed 's/vs_//g' | sed 's/_repmask_contigs//g')
+		printf "\t$NameG" >> $Outfile
+	done
+	printf "\n" >> $Outfile
+	for Reads in $(ls -d assembly/ls_contigs/A.alternata_ssp._*/*); do
+		NameR=$(basename "$Reads")
+		printf "$NameR" >> $Outfile
+		for Genome in $(ls -d $Reads/*); do
+			printf "\t" >> $Outfile
+			cat $Genome/*_sorted_indexstats_coverage.csv | head -n-1 | grep -E -w "0.00$" | cut -f2 | awk '{s+=$1} END {printf s}' >> $Outfile
+		done
+		printf "\n" >> $Outfile
+	done
+```
+This did not give clear results.
+
+Contigs that had no reads align to them were identified.
