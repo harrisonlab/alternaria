@@ -249,6 +249,18 @@ Quality of genome assemblies was assessed by looking for the gene space in the a
 		qsub $ProgDir/sub_cegma.sh $Genome dna;
 	done
 ```
+Outputs were summarised using the commands:
+```shell
+	for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_dna_cegma.completeness_report); do 
+		Strain=$(echo $File | rev | cut -f2 -d '/' | rev); 
+		Species=$(echo $File | rev | cut -f3 -d '/' | rev); 
+		printf "$Species\t$Strain\n"; 
+		cat $File | head -n18 | tail -n+4;printf "\n"; 
+	done > gene_pred/cegma/cegma_results_dna_summary.txt
+	
+	less gene_pred/cegma/cegma_results_dna_summary.txt
+```
+
 
 #Gene model training
 
@@ -321,7 +333,17 @@ Quality of Trinity assemblies were assessed using Cegma to assess gene-space wit
 		qsub $ProgDir/sub_cegma.sh $Transcriptome rna; 
 	done
 ```
-
+Outputs were summarised using the commands:
+```shell
+	for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_rna_cegma.completeness_report); do 
+		Strain=$(echo $File | rev | cut -f2 -d '/' | rev); 
+		Species=$(echo $File | rev | cut -f3 -d '/' | rev); 
+		printf "$Species\t$Strain\n"; 
+		cat $File | head -n18 | tail -n+4;printf "\n"; 
+	done > gene_pred/cegma/cegma_results_rna_summary.txt
+	
+	less gene_pred/cegma/cegma_results_rna_summary.txt
+```
 	
 #Gene prediction
 
