@@ -150,3 +150,18 @@ following lines is as follows:
 Isolate name (total number of orthogroups)
 number of unique singleton genes
 number of unique groups of inparalogs
+
+```
+  [1] "Aarb (9054)"
+  [1] 134
+  [1] 166
+  [1] "Agai (8848)"
+  [1] 270
+  [1] 5
+  [1] "AtAP (9794)"
+  [1] 224
+  [1] 89
+  [1] "Aten (9680)"
+  [1] 185
+  [1] 36
+```
