@@ -22,7 +22,7 @@ Alignment of raw reads to assembled genomes
 Assembly of remaining reads
 
 
-#Data qc
+# 1) Data qc
 
 programs:
   fastqc
@@ -30,19 +30,19 @@ programs:
   kmc
 
 Data quality was visualised using fastqc:
-```shell
-	for RawData in raw_dna/paired/*/*/*/*.fastq*?; do 
+```bash
+	for RawData in raw_dna/paired/*/*/*/*.fastq*?; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
-		echo $RawData; 
+		echo $RawData;
 		qsub $ProgDir/run_fastqc.sh $RawData
 	done
 ```
 
-Trimming was performed on data to trim adapters from 
+Trimming was performed on data to trim adapters from
 sequences and remove poor quality data. This was done with fastq-mcf
 
-```shell
-	for StrainPath in raw_dna/paired/*/*; do 
+```bash
+	for StrainPath in raw_dna/paired/*/*; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/rna_qc
 		IlluminaAdapters=/home/armita/git_repos/emr_repos/tools/seq_tools/illumina_full_adapters.fa
 		ReadsF=$(ls $StrainPath/F/*.fastq*)
@@ -54,10 +54,10 @@ sequences and remove poor quality data. This was done with fastq-mcf
 ```
 
 Data quality was visualised once again following trimming:
-```shell
-	for RawData in qc_dna/paired/*/*/*/*.fastq*; do 
+```bash
+	for RawData in qc_dna/paired/*/*/*/*.fastq*; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
-		echo $RawData; 
+		echo $RawData;
 		qsub $ProgDir/run_fastqc.sh $RawData
 	done
 ```
@@ -65,8 +65,8 @@ Data quality was visualised once again following trimming:
 kmer counting was performed using kmc
 This allowed estimation of sequencing depth and total genome size
 
-```shell
-	for TrimPath in qc_dna/paired/*/*; do 
+```bash
+	for TrimPath in qc_dna/paired/*/*; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
 		TrimF=$(ls $TrimPath/F/*.fastq*)
 		TrimR=$(ls $TrimPath/R/*.fastq*)
@@ -76,17 +76,17 @@ This allowed estimation of sequencing depth and total genome size
 	done
 ```
 
-#Assembly
+# 2) Assembly
 
 Assembly was performed using Velvet
 
 A range of hash lengths were used and the best assembly selected for subsequent analysis
 
-```shell
+```bash
 	for TrimPath in qc_dna/paired/*/*; do
 	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/velvet
 	Strain=$(printf $TrimPath | rev | cut -f1 -d '/' | rev)
-	
+
 	MinHash=41
 	MaxHash=81
 	HashStep=2
@@ -95,7 +95,7 @@ A range of hash lengths were used and the best assembly selected for subsequent 
 	GenomeSz=36
 
 	echo $Strain
-	if [ "$Strain" == '675' ]; then 
+	if [ "$Strain" == '675' ]; then
 		ExpCov=27
 		MinCov=9
 		InsLgth=600
@@ -156,20 +156,20 @@ A range of hash lengths were used and the best assembly selected for subsequent 
 		InsLgth=600
 		echo "$Strain set"
 	fi
-	
+
 	qsub $ProgDir/submit_velvet_range.sh $MinHash $MaxHash $HashStep \
 	$TrimF $TrimR $GenomeSz $ExpCov $MinCov $InsLgth
 	done
-	
+
 ```
 
 
 Assemblies were summarised to allow the best assembly to be determined by eye
 
-```shell
+```bash
 	for StrainPath in $(ls -d assembly/velvet/A.alternata_ssp._*/*); do
 		printf "N50\tMax_contig_size\tNumber of bases in contigs\tNumber of contigs\tNumber of contigs >=1kb\tNumber of contigs in N50\tNumber of bases in contigs >=1kb\tGC Content of contigs\n" > $StrainPath/assembly_stats.csv
-		for StatsFile in $(ls $StrainPath/*/stats.txt); do 
+		for StatsFile in $(ls $StrainPath/*/stats.txt); do
 			cat $StatsFile | rev | cut -f1 -d ' ' | rev | paste -d '\t' -s >> $StrainPath/assembly_stats.csv
 		done
 	done
@@ -177,15 +177,15 @@ Assemblies were summarised to allow the best assembly to be determined by eye
 ```
 
 
-#Repeatmasking
+# 3) Repeatmasking
 
 Repeat masking was performed and used the following programs:
 	Repeatmasker
 	Repeatmodeler
 
 The best assemblies were used to perform repeatmasking
-	
-```shell
+
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
 	BestAss675=assembly/velvet/A.alternata_ssp._arborescens/675/A.alternata_ssp._arborescens_675_69/sorted_contigs.fa
 	BestAss970013=assembly/velvet/A.alternata_ssp._arborescens/97.0013/A.alternata_ssp._arborescens_97.0013_59/sorted_contigs.fa
@@ -226,58 +226,58 @@ The best assemblies were used to perform repeatmasking
 	qsub $ProgDir/transposonPSI.sh $BestAss648
 	qsub $ProgDir/transposonPSI.sh $BestAss743
 ```
-	
-#Gene Prediction
+
+# 4) Gene Prediction
 
 
 Gene prediction followed three steps:
 	Pre-gene prediction
-		- Quality of genome assemblies were assessed using Cegma to see how many core eukaryotic genes can be identified. 
+		- Quality of genome assemblies were assessed using Cegma to see how many core eukaryotic genes can be identified.
 	Gene model training
 		- Gene models were trained for isolates 1166 and 650 using assembled RNAseq data
 	Gene prediction
 		- Gene models were used to predict genes in A. alternata genomes. This used RNAseq data as hints for gene models.
 
-#Pre-gene prediction
+## 4a) Pre-gene prediction
 
 Quality of genome assemblies was assessed by looking for the gene space in the assemblies.
-```shell
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/cegma
 	cd /home/groups/harrisonlab/project_files/alternaria/
-	for Genome in $(ls repeat_masked/A.*/*/*/*_contigs_unmasked.fa); do 
-		echo $Genome; 
+	for Genome in $(ls repeat_masked/A.*/*/*/*_contigs_unmasked.fa); do
+		echo $Genome;
 		qsub $ProgDir/sub_cegma.sh $Genome dna;
 	done
 ```
 Outputs were summarised using the commands:
-```shell
-	for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_dna_cegma.completeness_report); do 
-		Strain=$(echo $File | rev | cut -f2 -d '/' | rev); 
-		Species=$(echo $File | rev | cut -f3 -d '/' | rev); 
-		printf "$Species\t$Strain\n"; 
-		cat $File | head -n18 | tail -n+4;printf "\n"; 
+```bash
+	for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_dna_cegma.completeness_report); do
+		Strain=$(echo $File | rev | cut -f2 -d '/' | rev);
+		Species=$(echo $File | rev | cut -f3 -d '/' | rev);
+		printf "$Species\t$Strain\n";
+		cat $File | head -n18 | tail -n+4;printf "\n";
 	done > gene_pred/cegma/cegma_results_dna_summary.txt
-	
+
 	less gene_pred/cegma/cegma_results_dna_summary.txt
 ```
 
 
-#Gene model training
+## 4b) Gene model training
 
 Data quality was visualised using fastqc:
-```shell
-	for RawData in raw_rna/paired/*/*/*/*.fastq.gz; do 
+```bash
+	for RawData in raw_rna/paired/*/*/*/*.fastq.gz; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
-		echo $RawData; 
+		echo $RawData;
 		qsub $ProgDir/run_fastqc.sh $RawData
 	done
 ```
 
-Trimming was performed on data to trim adapters from 
+Trimming was performed on data to trim adapters from
 sequences and remove poor quality data. This was done with fastq-mcf
 
-```shell
-	for StrainPath in raw_rna/paired/*/*; do 
+```bash
+	for StrainPath in raw_rna/paired/*/*; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/rna_qc
 		IlluminaAdapters=/home/armita/git_repos/emr_repos/tools/seq_tools/illumina_full_adapters.fa
 		ReadsF=$(ls $StrainPath/F/*.fastq.gz)
@@ -289,97 +289,97 @@ sequences and remove poor quality data. This was done with fastq-mcf
 ```
 
 Data quality was visualised once again following trimming:
-```shell
-	for TrimData in qc_rna/paired/*/*/*/*.fastq.gz; do 
+```bash
+	for TrimData in qc_rna/paired/*/*/*/*.fastq.gz; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
-		echo $RawData; 
+		echo $RawData;
 		qsub $ProgDir/run_fastqc.sh $TrimData
 	done
-```	
+```
 
 RNAseq data was assembled into transcriptomes using Trinity
-```shell
+```bash
 	for StrainPath in qc_rna/paired/*/*; do
 		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/transcriptome_assembly
 		ReadsF=$(ls $StrainPath/F/*.fastq.gz)
-		ReadsR=$(ls $StrainPath/R/*.fastq.gz)	
+		ReadsR=$(ls $StrainPath/R/*.fastq.gz)
 		echo $ReadsF
 		echo $ReadsR
 		qsub $ProgDir/transcriptome_assembly_trinity.sh $ReadsF $ReadsR
 	done
-```	
+```
 Gene training was performed using RNAseq data. The cluster can not run this script using qlogin. As such it was run on the head node (-naughty) using screen.
 Training for 650 and 1166 was performed in two instances of screen and occassionally viewed to check progress over time.
 (screen is detached after opening using ctrl+a then ctrl+d. - if just ctrl+d is pressed the instance of screen is deleted. - be careful)
-```shell
+```bash
 	screen -a
 	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
-	Assembly650=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta 
+	Assembly650=assembly/trinity/A.alternata_ssp._gaisen/650/650_rna_contigs/Trinity.fasta
 	Genome650=repeat_masked/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_67_repmask/650_contigs_unmasked.fa
 	$ProgDir/training_by_transcriptome.sh $Assembly650 $Genome650
 
 	screen -a
 	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
-	Assembly1166=assembly/trinity/A.alternata_ssp._tenuissima/1166/1166_rna_contigs/Trinity.fasta 
+	Assembly1166=assembly/trinity/A.alternata_ssp._tenuissima/1166/1166_rna_contigs/Trinity.fasta
 	Genome1166=repeat_masked/A.alternata_ssp._tenuissima/1166/A.alternata_ssp._tenuissima_1166_43_repmask/1166_contigs_unmasked.fa
 	$ProgDir/training_by_transcriptome.sh $Assembly1166 $Genome1166
 ```
 
 Quality of Trinity assemblies were assessed using Cegma to assess gene-space within the transcriptome
-```shell
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/cegma
 	for Transcriptome in $(ls assembly/trinity/A.*/*/*_rna_contigs/Trinity.fasta); do  
 		echo $Transcriptome;  
-		qsub $ProgDir/sub_cegma.sh $Transcriptome rna; 
+		qsub $ProgDir/sub_cegma.sh $Transcriptome rna;
 	done
 ```
 Outputs were summarised using the commands:
-```shell
-	for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_rna_cegma.completeness_report); do 
-		Strain=$(echo $File | rev | cut -f2 -d '/' | rev); 
-		Species=$(echo $File | rev | cut -f3 -d '/' | rev); 
-		printf "$Species\t$Strain\n"; 
-		cat $File | head -n18 | tail -n+4;printf "\n"; 
+```bash
+	for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_rna_cegma.completeness_report); do
+		Strain=$(echo $File | rev | cut -f2 -d '/' | rev);
+		Species=$(echo $File | rev | cut -f3 -d '/' | rev);
+		printf "$Species\t$Strain\n";
+		cat $File | head -n18 | tail -n+4;printf "\n";
 	done > gene_pred/cegma/cegma_results_rna_summary.txt
-	
+
 	less gene_pred/cegma/cegma_results_rna_summary.txt
 ```
-	
-#Gene prediction
 
-Gene prediction was performed for A. alternata isolates. 
-RNAseq reads were used as Hints for the location of CDS. 
+## 4c) Gene prediction
+
+Gene prediction was performed for A. alternata isolates.
+RNAseq reads were used as Hints for the location of CDS.
 A concatenated dataset of both ssp. tenuissima and ssp. gaisen RNAseq reads were used as hints for all strains.
-Genes were predicted for ssp. tenuissima using the gene model trained to ssp. tenunissima. 
-Genes were predicted for ssp. gaisen using the gene model trained to ssp. gaisen. 
+Genes were predicted for ssp. tenuissima using the gene model trained to ssp. tenunissima.
+Genes were predicted for ssp. gaisen using the gene model trained to ssp. gaisen.
 Genes were predicted for ssp. arborescens using the gene model trained to ssp. tenuisima.
 
 
-```shell
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
 	mkdir -p qc_rna/concatenated
 	RnaFiles=$(ls qc_rna/paired/A.alternata_ssp._*/*/*/*.fastq.gz | paste -s -d ' ')
 	ConcatRna=qc_rna/concatenated/A.alternata_RNA_650_1166.fa.gz
 	cat $RnaFiles > $ConcatRna
-	
+
 	for Genome in repeat_masked/A.alternata_ssp._*/*/*/*_contigs_unmasked.fa; do
 		Species=$(printf $Genome | rev | cut -f4 -d '/' | rev)
-		if [ "$Species" == 'A.alternata_ssp._tenuissima' ]; then 
+		if [ "$Species" == 'A.alternata_ssp._tenuissima' ]; then
 			GeneModel=A.alternata_ssp._tenuissima_1166
-		elif [ "$Species" == 'A.alternata_ssp._gaisen' ]; then 
+		elif [ "$Species" == 'A.alternata_ssp._gaisen' ]; then
 			GeneModel=A.alternata_ssp._gaisen_650
-		elif [ "$Species" == 'A.alternata_ssp._arborescens' ]; then 
+		elif [ "$Species" == 'A.alternata_ssp._arborescens' ]; then
 			GeneModel=A.alternata_ssp._tenuissima_1166
 		fi
 		qsub $ProgDir/augustus_pipe.sh $Genome $ConcatRna $GeneModel
 	done
 ```
 
-#Functional annotation
+# 5) Functional annotation
 
 Interproscan was used to give gene models functional annotations.
 
-```shell
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan/
 	for Genes in $(ls gene_pred/augustus/A.alternata_ssp._*/*/*_augustus_preds.aa); do
 		echo $Genes
@@ -387,23 +387,74 @@ Interproscan was used to give gene models functional annotations.
 	done
 ```
 
+Following interproscan annotation split files were combined using the following
+commands:
+
+```bash
+	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
+	for StrainPath in $(ls -d gene_pred/interproscan/A.*/*); do
+		Strain=$(basename $StrainPath)
+		Organism=$(echo $StrainPath | rev | cut -d "/" -f2 | rev)
+		echo $Strain
+		PredGenes=gene_pred/augustus/"$Organism"/"$Strain"/"$Strain"_augustus_preds.aa
+		InterProRaw=gene_pred/interproscan/"$Organism"/"$Strain"/raw
+		$ProgDir/append_interpro.sh $PredGenes $InterProRaw
+	done
+```
+
+# Genomic analysis
+
+# 6) orthology
+
+Orthomcl was used to identify orthologous groups between Alternaria spp. genomes
+
+Genomes were grouped by subspecies and orthology was determined within each
+subspecies group. Orthology was also determined between subspecies groups.
+
+| A. gaisen | A. tenuissima | A. tenuissima apple pathotype | A. arborescens |
+| --------- | ------------- | ----------------------------- | -------------- |
+| 650       | 1166          | 648                           | 675            |
+|           | 635           | 1082                          | 97.0013        |
+|           | 1177          | 1164                          | 97.0016        |
+|           | 743           | 24350                         |                |
+
+
+
+## 6a) Orthology between A. alternata ssp. tenuissima
+
+The Commands used to run this analysis are shown in
+pathogen/orthology/A.tenuissima_orthology.md
+
+
+## 6b) Orthology between A. alternata ssp. tenuissima apple pathotypes
+
+The Commands used to run this analysis are shown in
+pathogen/orthology/A.tenuissima_apple_pathotype_orthology.md
+
+
+## 6c) Orthology between A. alternata ssp. arborescens
+
+The Commands used to run this analysis are shown in
+pathogen/orthology/A.tenuissima_orthology.md
+
+
+## 6d) Orthology between A. alternata ssp. gaisen, A. alternata ssp. tenuissima, A. alternata ssp. tenuissima apple pathotype & A. alternata ssp. arborescens
+
+The Commands used to run this analysis are shown in
+pathogen/orthology/A.alternata_ssp_orthology.md
 
 
 
 
 
-
-
-
-#Genomic analysis
+# 7) BLAST Searches
 
 
 The first analysis was based upon BLAST searches for genes known to be involved in toxin production
 
-#BLAST Searches
-```shell
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast/
-	Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa 
+	Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa
 	BestAss675=assembly/velvet/A.alternata_ssp._arborescens/675/A.alternata_ssp._arborescens_675_69/sorted_contigs.fa
 	BestAss970013=assembly/velvet/A.alternata_ssp._arborescens/97.0013/A.alternata_ssp._arborescens_97.0013_59/sorted_contigs.fa
 	BestAss970016=assembly/velvet/A.alternata_ssp._arborescens/97.0016/A.alternata_ssp._arborescens_97.0016_77/sorted_contigs.fa
@@ -433,23 +484,23 @@ BLAST search results were summarised into a presence/absence table
 
 The presence /absence table determines presence if a hit is present and the alignment represents >50% of the query sequence.
 This thresholding means that some hits have not been summarised including AMT11, AMT15 and ALT1.
-```shell
+```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast/
 	InFiles=$(ls analysis/blast_homology/A.alternata_ssp._*/*/*_A.alternata_CDC_genes.fa_homologs.csv | paste -s -d ' ')
 	echo $InFiles
 	$ProgDir/blast_differentials.pl $InFiles
 	mv *.csv analysis/blast_homology/CDC_genes/.
-``` 
+```
 
 
 
 
 
 
-#CDC Assembly
+# 8 ) CDC Assembly
 
 Raw reads were aligned against assembled genomes to identify contigs that were unique to a isolate or clade
-```shell
+```bash
 	for Pathz in $(ls -d qc_dna/paired/A.alternata_ssp._*/*); do  
 		Strain=$(echo $Pathz | cut -d '/' -f4)
 		echo "using reads for $Strain"
@@ -465,21 +516,21 @@ Raw reads were aligned against assembled genomes to identify contigs that were u
 A summary file was made from the alignment logs.
 The percentage of reads aligning to each set of assembled contigs was determined.
 
-```shell
+```bash
 	SummaryFile=analysis/ls_contigs/alignment_summaries.txt
 	printf "" > "$SummaryFile"
-	for OUTPUT in $(ls bowtie2_alignment_pipe.sh.e*); do 
-		ID=$(echo $OUTPUT | rev | cut -d 'e' -f1 | rev | less); 
-		cat bowtie2_alignment_pipe.sh.o"$ID" | grep -E "Trimmed .* reads .*/F/|Output files: " | sed -e 's/.*\/F\///g' | cut -f1 -d ')' | cut -f2 -d '"' >> "$SummaryFile"; 
-		cat $OUTPUT >> "$SummaryFile"; 
-		printf "\n" >> "$SummaryFile"; 
+	for OUTPUT in $(ls bowtie2_alignment_pipe.sh.e*); do
+		ID=$(echo $OUTPUT | rev | cut -d 'e' -f1 | rev | less);
+		cat bowtie2_alignment_pipe.sh.o"$ID" | grep -E "Trimmed .* reads .*/F/|Output files: " | sed -e 's/.*\/F\///g' | cut -f1 -d ')' | cut -f2 -d '"' >> "$SummaryFile";
+		cat $OUTPUT >> "$SummaryFile";
+		printf "\n" >> "$SummaryFile";
 	done
 	cat $SummaryFile | grep ' overall alignment rate' | cut -f1 -d ' ' | less
 ```
 These are the reads percentages reported by bowtie but do not actually reflect the percentage unaligned reads where neither pair matched.
 
 These were identified using SAM FLAGS to extract unaligned pairs.
-```shell
+```bash
 	for Pathz in $(ls assembly/ls_contigs/A.alternata_ssp._*/*/vs_*/*_sorted.bam); do  
 		OutFileF=$(echo $Pathz | sed 's/.bam/_unaligned_F.txt/g')
 		OutFileR=$(echo $Pathz | sed 's/.bam/_unaligned_R.txt/g')
@@ -493,15 +544,15 @@ These were identified using SAM FLAGS to extract unaligned pairs.
 		printf "$Pathz\t$NoReads\t$NoReadsF\t$NoReadsR\n" >> "$OutFileSum"
 	done
 
-	for File in $(ls assembly/ls_contigs/A.alternata_ssp._*/*/vs_*/*_sum.txt); do 
-		cat $File | tail -n+2; 
-	done > analysis/ls_contigs/assembly_summaries2.txt 
+	for File in $(ls assembly/ls_contigs/A.alternata_ssp._*/*/vs_*/*_sum.txt); do
+		cat $File | tail -n+2;
+	done > analysis/ls_contigs/assembly_summaries2.txt
 ```
 
 The number of reads aligning per bp of assembly was determined. Typical alignment values were 0.20 reads per bp. Contigs were detemined as unique to that alignment if they contained an average of 0 reads per bp.
 The number of bp unique to each assembly were identified.
 
-```shell
+```bash
 	mkdir -p analysis/ls_contigs
 	Outfile=analysis/ls_contigs/ls_contig_size.csv
 	printf "Reads" > $Outfile
