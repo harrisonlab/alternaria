@@ -27,13 +27,13 @@ and annotation.
 ```bash
     mkdir -p /home/groups/harrisonlab/project_files/alternaria
   	cd /home/groups/harrisonlab/project_files/alternaria
-  	Species=F.oxysporum_fsp_fragariae
-  	Strain=FeChina
-    mkdir -p raw_dna/paired/fusarium_ex_strawberry/FeChina/F
-    mkdir -p raw_dna/paired/fusarium_ex_strawberry/FeChina/R
-    RawDat=/home/groups/harrisonlab/raw_data/raw_seq/raw_reads/150925_M01678_0029_AC669
-    cp $RawDat/FeChina_S1_L001_R1_001.fastq.gz raw_dna/paired/fusarium_ex_strawberry/FeChina/F/.
-    cp $RawDat/FeChina_S1_L001_R1_001.fastq.gz raw_dna/paired/fusarium_ex_strawberry/FeChina/R/.
+#   	Species=F.oxysporum_fsp_fragariae
+#   	Strain=FeChina
+#     mkdir -p raw_dna/paired/fusarium_ex_strawberry/FeChina/F
+#     mkdir -p raw_dna/paired/fusarium_ex_strawberry/FeChina/R
+#     RawDat=/home/groups/harrisonlab/raw_data/raw_seq/raw_reads/150925_M01678_0029_AC669
+#     cp $RawDat/FeChina_S1_L001_R1_001.fastq.gz raw_dna/paired/fusarium_ex_strawberry/FeChina/F/.
+#     cp $RawDat/FeChina_S1_L001_R1_001.fastq.gz raw_dna/paired/fusarium_ex_strawberry/FeChina/R/.
 ```
 
 
@@ -44,16 +44,27 @@ programs: fastqc fastq-mcf kmc
 Data quality was visualised using fastqc:
 
 ```bash
-  	for RawData in $(ls raw_dna/paired/*/*/*/*.fastq.gz); do
-	  echo $RawData;
-	  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
-	  qsub $ProgDir/run_fastqc.sh $RawData;
-  	done
+  for RawData in $(ls raw_dna/paired/*/*/*/*.fastq.gz); do
+    echo $RawData;
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
+    qsub $ProgDir/run_fastqc.sh $RawData;
+  done
 ```
 
 Trimming was performed on data to trim adapters from sequences and remove poor quality data.
 This was done with fastq-mcf
 
+```bash
+	for StrainPath in $(ls -d raw_dna/paired/*/*); do
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/rna_qc
+		IlluminaAdapters=/home/armita/git_repos/emr_repos/tools/seq_tools/ncbi_adapters.fa
+		ReadsF=$(ls $StrainPath/F/*.fastq*)
+		ReadsR=$(ls $StrainPath/R/*.fastq*)
+		echo $ReadsF
+		echo $ReadsR
+		qsub $ProgDir/rna_qc_fastq-mcf.sh $ReadsF $ReadsR $IlluminaAdapters DNA
+	done
+```
 
 ```bash
 	Read_F=raw_dna/paired/fusarium_ex_strawberry/FeChina/F/FeChina_S1_L001_R1_001.fastq.gz
