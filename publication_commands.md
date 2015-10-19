@@ -1,6 +1,3 @@
-# fusarium_ex_strawberry
-Commands used in the analysis of Alternaria spp.isolates ex. strawberry.
-
 Alternaria alternata ssp.
 ====================
 
@@ -65,23 +62,13 @@ This was done with fastq-mcf
 		qsub $ProgDir/rna_qc_fastq-mcf.sh $ReadsF $ReadsR $IlluminaAdapters DNA
 	done
 ```
-
-```bash
-	Read_F=raw_dna/paired/fusarium_ex_strawberry/FeChina/F/FeChina_S1_L001_R1_001.fastq.gz
-	Read_R=raw_dna/paired/fusarium_ex_strawberry/FeChina/R/FeChina_S1_L001_R1_001.fastq.gz
-	IluminaAdapters=/home/armita/git_repos/emr_repos/tools/seq_tools/illumina_full_adapters.fa
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/rna_qc
-	qsub $ProgDir/rna_qc_fastq-mcf.sh $Read_F $Read_R $IluminaAdapters DNA
-```
-
-
 Data quality was visualised once again following trimming:
 
 ```bash
-	for RawData in $(ls qc_dna/paired/*/*/*/*.fq.gz); do
-  	echo $RawData;
-  	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
-  	qsub $ProgDir/run_fastqc.sh $RawData;
+  for RawData in $(ls qc_dna/paired/*/*/*/*.fq.gz); do
+    echo $RawData;
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
+    qsub $ProgDir/run_fastqc.sh $RawData;
   done
 ```
 
@@ -90,10 +77,14 @@ kmer counting was performed using kmc.
 This allowed estimation of sequencing depth and total genome size:
 
 ```bash
-	Trim_F=qc_dna/paired/fusarium_ex_strawberry/FeChina/F/FeChina_S1_L001_R1_001_trim.fq.gz
-	Trim_R=qc_dna/paired/fusarium_ex_strawberry/FeChina/R/FeChina_S1_L001_R1_001_trim.fq.gz
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
-	qsub $ProgDir/kmc_kmer_counting.sh $Trim_F $Trim_R
+  for StrainPath in $(ls -d qc_dna/paired/*/*); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
+    TrimF=$(ls $StrainPath/F/*.fq.gz)
+    TrimR=$(ls $StrainPath/R/*.fq.gz)
+    echo $TrimF
+    echo $TrimR
+    qsub $ProgDir/kmc_kmer_counting.sh $Trim_F $Trim_R
+  done
 ```
 
 ** Estimated Genome Size is: 48490129
@@ -103,7 +94,7 @@ This allowed estimation of sequencing depth and total genome size:
 # Assembly
 Assembly was performed using: Velvet / Abyss / Spades
 
-## Velvet Assembly
+<!-- ## Velvet Assembly
 A range of hash lengths were used and the best assembly selected for subsequent analysis
 
 ```bash
@@ -121,28 +112,24 @@ A range of hash lengths were used and the best assembly selected for subsequent 
   InsLgth=600
   qsub $ProgDir/submit_velvet_range.sh \
   $MinHash $MaxHash $HashStep $Trim_F $Trim_R $GenomeSz $ExpCov $MinCov $InsLgth
-```
-
-## Spades Assembly
-<!--
-First run error correction. (This job is CPU intensive rather than RAM intensive
-and will run on any node of the cluster).
-
-```bash
-	F_Read=qc_dna/paired/fusarium_ex_strawberry/FeChina/F/FeChina_S1_L001_R1_001_trim.fq.gz
-	R_Read=qc_dna/paired/fusarium_ex_strawberry/FeChina/R/FeChina_S1_L001_R1_001_trim.fq.gz
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/spades
-	OutDir=qc_dna/paired/fusarium_ex_strawberry/FeChina/corrected
-  qsub $ProgDir/sub_spades_correction.sh $F_Read $R_Read $OutDir
 ``` -->
 
+## Spades Assembly
+
+
 
 ```bash
-  F_Read=qc_dna/paired/fusarium_ex_strawberry/FeChina/F/FeChina_S1_L001_R1_001_trim.fq.gz
-  R_Read=qc_dna/paired/fusarium_ex_strawberry/FeChina/R/FeChina_S1_L001_R1_001_trim.fq.gz
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/spades
-	OutDir=assembly/spades/usarium_ex_strawberry/FeChina
-  qsub $ProgDir/submit_SPAdes.sh $F_Read $R_Read $OutDir correct
+  for StrainPath in $(ls -d qc_dna/paired/*/*); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/spades
+    Strain=$(echo $StrainPath | rev | cut -f1 | rev)
+    Organism=$(echo $StrainPath | rev | cut -f2 | rev)
+    F_Read=$(ls $StrainPath/F/*.fq.gz)
+    R_Read=$(ls $StrainPath/R/*.fq.gz)
+    OutDir=assembly/spades/$Organism/$Strain
+    echo $F_Read
+    echo $R_Read
+    qsub $ProgDir/submit_SPAdes.sh $F_Read $R_Read $OutDir correct 10
+  done
 ```
 <!--
 Quast
