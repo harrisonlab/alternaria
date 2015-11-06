@@ -121,8 +121,8 @@ A range of hash lengths were used and the best assembly selected for subsequent 
 ```bash
   for StrainPath in $(ls -d qc_dna/paired/*/*); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/spades
-    Strain=$(echo $StrainPath | rev | cut -f1 | rev)
-    Organism=$(echo $StrainPath | rev | cut -f2 | rev)
+    Strain=$(echo $StrainPath | rev | cut -f1 -d '/' | rev)
+    Organism=$(echo $StrainPath | rev | cut -f2 -d '/' | rev)
     F_Read=$(ls $StrainPath/F/*.fq.gz)
     R_Read=$(ls $StrainPath/R/*.fq.gz)
     OutDir=assembly/spades/$Organism/$Strain
@@ -131,63 +131,70 @@ A range of hash lengths were used and the best assembly selected for subsequent 
     qsub $ProgDir/submit_SPAdes.sh $F_Read $R_Read $OutDir correct 10
   done
 ```
-<!--
+
 Quast
 
 ```bash
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
-	Assembly=assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp.fasta
-	OutDir=assembly/spades/N.ditissima/R0905_v2/filtered_contigs
-	qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
+    for Assembly in $(ls assembly/spades/*/*/filtered_contigs/contigs_min_500bp.fasta); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
+    OutDir=assembly/spades/$Organism/$Strain/filtered_contigs
+    qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+  done
 ```
 
-Assemblies were summarised to allow the best assembly to be determined by eye.
-
-** Assembly stats are:
-  * Assembly size:
-  * N50:153669
-  * N80:
-  * N20:
-  * Longest contig:687738
-  **
-
-As SPADes was run with the option to autodetect a minimum coverage the assembly was assessed to identify the coverage of assembled contigs. This was done using the following command:
-
-	BestAss=assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp.fasta
-	cat $BestAss | grep '>' | cut -f6 -d'_' | sort -n | cut -f1 -d '.' | sort -n | uniq -c | less
-
-From this it was determined that SPades could not be trusted to set its own minimum threshold for coverage.
-In future an option will be be used to set a coverage for spades.
-In the meantime contigs with a coverage lower than 10 were filtered out using the following commands:
-
-	Headers=assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp_10x_headers.txt
-	cat $BestAss | grep '>' | grep -E -v 'cov_.\..*_' > $Headers
-	FastaMinCov=assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp_10x_headers.fasta
-	cat $BestAss | sed -e 's/\(^>.*$\)/#\1#/' | tr -d "\r" | tr -d "\n" | sed -e 's/$/#/' | tr "#" "\n" | sed -e '/^$/d' | grep -A1 -f $Headers | grep -v -E '^\-\-' > $FastaMinCov
+The results of quast were shown using the following commands:
 
 ```bash
-	~/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/remove_contaminants/remove_contaminants.py --inp ../neonectria_ditissima/assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp_10x_headers.fasta  --out assembly/spades/N.galligena/R0905_v2/filtered_contigs/contigs_min_500bp_10x_filtered_renamed.fasta  --coord_file editfile.tab
+for Assembly in $(ls assembly/spades/*/1177/filtered_contigs/report.txt); do
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
+echo;
+echo $Organism;
+echo $Strain;
+cat $Assembly;
+done
+```
 
-We run Quast again.
+The output of this analysis is in the assembly/quast_results.txt file of this
+git repository.
 
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
-	Assembly=assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp_10x_headers.fasta
-	OutDir=assembly/spades/N.ditissima/R0905_v2/contigs_min_500bp_10x_headers
-	qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+
+Contigs were renamed in accordance with ncbi recomendations.
+
+```bash
+  ProgDir=~/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/remove_contaminants
+  touch tmp.csv
+  for Assembly in $(ls assembly/spades/*/*/filtered_contigs/contigs_min_500bp.fasta); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
+    OutDir=assembly/spades/$Organism/$Strain/filtered_contigs
+    $ProgDir/remove_contaminants.py --inp $Assembly --out $OutDir/contigs_min_500bp_renamed.fasta --coord_file tmp.csv
+  done
+  rm tmp.csv
+```
+
+
 
 # Repeat masking
 Repeat masking was performed and used the following programs: Repeatmasker Repeatmodeler
 
-The best assembly was used to perform repeatmasking
+The renamed assembly was used to perform repeatmasking.
 
 ```bash
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
-	BestAss=/assembly/spades/N.ditissima/R0905_v2/filtered_contigs/contigs_min_500bp_10x_headers.fasta
-	qsub $ProgDir/rep_modeling.sh $BestAss
-	qsub $ProgDir/transposonPSI.sh $BestAss
+  for Assembly in $(ls assembly/spades/*/1177/filtered_contigs/contigs_min_500bp_renamed.fasta); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+    echo "$Organism"
+    echo "$Strain"
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
+    qsub $ProgDir/rep_modeling.sh $Assembly
+    qsub $ProgDir/transposonPSI.sh $Assembly
+  done
  ```
 
-** % bases masked by repeatmasker: 11.73%
+** % bases masked by repeatmasker:
 
 ** % bases masked by transposon psi: **
 
@@ -201,14 +208,19 @@ Gene models were used to predict genes in the Neonectria genome. This used resul
 Quality of genome assemblies was assessed by looking for the gene space in the assemblies.
 
 ```bash
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+    echo "$Organism"
+    echo "$Strain"
   	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/cegma
-  	Assembly=/repeat_masked/spades/N.ditissima/R0905_v2/filtered_contigs_repmask/R0905_v2_contigs_unmasked.fa
   	qsub $ProgDir/sub_cegma.sh $Assembly dna
+  done
 ```
 
 ** Number of cegma genes present and complete: 95.16
 ** Number of cegma genes present and partial: 97.18
-
+<!--
 ##Gene prediction
 
 Gene prediction was performed for the neonectria genome.
