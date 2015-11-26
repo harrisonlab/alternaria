@@ -42,7 +42,7 @@ Data quality was visualised once again following trimming:
 
 # 2) RNA Alignment
 ```bash
-  for Strain in 1166 650 97.0013; do
+  for Strain in $(650 1082  1164  1166  1177  24350  635  648  743 675  97.0013  97.0016); do
     Assembly=$(ls repeat_masked/*/$Strain/filtered_contigs_repmask/*_contigs_unmasked.fa)
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
     echo "$Organism"
@@ -55,4 +55,19 @@ Data quality was visualised once again following trimming:
     OutDir=aligment/$Organism/$Strain
     qsub $ProgDir/alt_tophat_alignment.sh $Assembly $FileF1 $FileR1 $FileF2 $FileR2 $OutDir
   done
+	for Strain in 650 1082  1164  1166  1177  24350  635  648  743 675  97.0013  97.0016; do
+		Assembly=$(ls repeat_masked/*/$Strain/filtered_contigs_repmask/*_contigs_unmasked.fa)
+		Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+		Jobs=$(qstat | grep 'tophat_ali' | wc -l)
+		while [ $Jobs -gt 0 ]; do
+			sleep 10
+			printf "."
+			Jobs=$(qstat | grep 'alt_tophat' | wc -l)
+		done
+		OutDir=gene_pred/braker/$Organism/$Strain
+		AcceptedHits=alignment/$Organism/$Strain/accepted_hits.bam
+		GeneModelName="$Organism"_"$Strain"_braker
+		ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/braker1
+		qsub $ProgDir/sub_braker.sh $Assembly $OutDir $AcceptedHits $GeneModelName
+	done
 ```
