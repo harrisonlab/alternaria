@@ -220,19 +220,50 @@ Quality of genome assemblies was assessed by looking for the gene space in the a
 
 ** Number of cegma genes present and complete: 95.16
 ** Number of cegma genes present and partial: 97.18
-<!--
-##Gene prediction
 
-Gene prediction was performed for the neonectria genome.
-CEGMA genes were used as Hints for the location of CDS.
+## Gene prediction 1 - Braker1 gene model training and prediction
+
+Gene prediction was performed using Braker1.
+ * The commands used to do this can be found in /gene_prediction/10300_braker1_prediction.md
+
+
+
+Numbers of genes predicted are summarised:
 
 ```bash
-	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/augustus
-  	Assembly=/repeat_masked/spades/N.ditissima/R0905_v2/filtered_contigs_repmask/R0905_v2_contigs_unmasked.fa
-  	GeneModel=fusarium
-  	qsub $ProgDir/submit_augustus.sh $GeneModel $Assembly false
+  for File in $(ls gene_pred/braker/A.alternata_*/*/*_braker/augustus.gff); do
+    echo $File;
+    tail -n1 $File;
+  done
 ```
 
+```
+  gene_pred/braker/A.alternata_ssp._arborescens/675/A.alternata_ssp._arborescens_675_braker/augustus.gff
+  # end gene g12046
+  gene_pred/braker/A.alternata_ssp._arborescens/97.0013/A.alternata_ssp._arborescens_97.0013_braker/augustus.gff
+  # end gene g11974
+  gene_pred/braker/A.alternata_ssp._arborescens/97.0016/A.alternata_ssp._arborescens_97.0016_braker/augustus.gff
+  # end gene g11951
+  gene_pred/braker/A.alternata_ssp._gaisen/650/A.alternata_ssp._gaisen_650_braker/augustus.gff
+  # end gene g12281
+  gene_pred/braker/A.alternata_ssp._tenuissima/1082/A.alternata_ssp._tenuissima_1082_braker/augustus.gff
+  # end gene g12346
+  gene_pred/braker/A.alternata_ssp._tenuissima/1164/A.alternata_ssp._tenuissima_1164_braker/augustus.gff
+  # end gene g12529
+  gene_pred/braker/A.alternata_ssp._tenuissima/1166/A.alternata_ssp._tenuissima_1166_braker/augustus.gff
+  # end gene g12628
+  gene_pred/braker/A.alternata_ssp._tenuissima/1177/A.alternata_ssp._tenuissima_1177_braker/augustus.gff
+  # end gene g12902
+  gene_pred/braker/A.alternata_ssp._tenuissima/24350/A.alternata_ssp._tenuissima_24350_braker/augustus.gff
+  # end gene g12074
+  gene_pred/braker/A.alternata_ssp._tenuissima/635/A.alternata_ssp._tenuissima_635_braker/augustus.gff
+  # end gene g12759
+  gene_pred/braker/A.alternata_ssp._tenuissima/648/A.alternata_ssp._tenuissima_648_braker/augustus.gff
+  # end gene g12173
+  gene_pred/braker/A.alternata_ssp._tenuissima/743/A.alternata_ssp._tenuissima_743_braker/augustus.gff
+  # end gene g12867
+```
+ <!--
 ** Number of genes predicted: 12712
 
 #Functional annotation
