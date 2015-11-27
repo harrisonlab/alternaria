@@ -147,14 +147,14 @@ Quast
 The results of quast were shown using the following commands:
 
 ```bash
-for Assembly in $(ls assembly/spades/*/1177/filtered_contigs/report.txt); do
-Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
-Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
-echo;
-echo $Organism;
-echo $Strain;
-cat $Assembly;
-done
+  for Assembly in $(ls assembly/spades/*/1177/filtered_contigs/report.txt); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
+    echo;
+    echo $Organism;
+    echo $Strain;
+    cat $Assembly;
+  done
 ```
 
 The output of this analysis is in the assembly/quast_results.txt file of this
