@@ -228,12 +228,17 @@ Gene prediction was performed using Braker1.
 
 
 
-Numbers of genes predicted are summarised:
+Numbers of predicted genes were summarised, amino acid sequence extracted and
+gff files extracted:
 
 ```bash
   for File in $(ls gene_pred/braker/A.alternata_*/*/*_braker/augustus.gff); do
     echo $File;
     tail -n1 $File;
+    getAnnoFasta.pl $File
+    OutDir=$(dirname $File)
+    echo "##gff-version 3" > $OutDir/augustus_extracted.gff
+    cat $File | grep -v '#' >> $OutDir/augustus_extracted.gff
   done
 ```
 
@@ -263,24 +268,129 @@ Numbers of genes predicted are summarised:
   gene_pred/braker/A.alternata_ssp._tenuissima/743/A.alternata_ssp._tenuissima_743_braker/augustus.gff
   # end gene g12867
 ```
- <!--
-** Number of genes predicted: 12712
+
+
+## Gene prediction 2 - atg.pl prediction of ORFs
+
+Open reading frame predictions were made using the atg.pl script as part of the
+path_pipe.sh pipeline. This pipeline also identifies open reading frames containing
+Signal peptide sequences and RxLRs. This pipeline was run with the following commands:
+
+```bash
+  ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+    qsub $ProgDir/run_ORF_finder.sh $Assembly
+  done
+```
+<!--
+The Gff files from the the ORF finder are not in true Gff3 format. These were
+corrected using the following commands:
+
+```bash
+	ProgDir=~/git_repos/emr_repos/tools/seq_tools/feature_annotation
+	ORF_Gff=gene_pred/ORF_finder/P.cactorum/10300/10300_ORF.gff
+	ORF_Gff_mod=gene_pred/ORF_finder/P.cactorum/10300/10300_ORF_corrected.gff3
+	$ProgDir/gff_corrector.pl $ORF_Gff > $ORF_Gff_mod
+```
+ -->
 
 #Functional annotation
 
 Interproscan was used to give gene models functional annotations.
 
 ```bash
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan/
-  	Genes=gene_pred/augustus/spades/N.ditissima/N.ditissima_aug_out.aa
-  	$ProgDir/sub_interproscan.sh $Genes
+  for Proteome in $(ls gene_pred/braker/A.alternata_ssp._*/*/*/augustus.aa); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
+    $ProgDir/sub_interproscan.sh $Proteome
+  done
 ```
-
+<!--
 ```bash
 	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
 	Genes=gene_pred/augustus/spades/N.ditissima/N.ditissima_aug_out.aa
 	InterProRaw=gene_pred/interproscan/spades/N.ditissima/raw
 	ProgDir/append_interpro.sh $Genes $InterProRaw
+``` -->
+
+
+## Small secreted proteins
+
+Putative RxLR genes were identified within Augustus gene models using a number
+of approaches:
+
+ * A) From Braker gene models - Signal peptide & small cystein rich protein
+ <!-- * B) From Augustus gene models - Hmm evidence of WY domains  
+ * C) From Augustus gene models - Hmm evidence of RxLR effectors
+ * D) From Augustus gene models - Hmm evidence of CRN effectors  
+ * E) From ORF fragments - Signal peptide & RxLR motif  
+ * F) From ORF fragments - Hmm evidence of WY domains  
+ * G) From ORF fragments - Hmm evidence of RxLR effectors -->
+
+
+### A) From Augustus gene models - Signal peptide & RxLR motif
+
+Required programs:
+ * SigP
+ * biopython
+
+
+Proteins that were predicted to contain signal peptides were identified using
+the following commands:
+
+```bash
+  for Proteome in $(ls gene_pred/braker/A.alternata_ssp._*/*/*/augustus.aa); do
+    SplitfileDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
+    Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
+    SplitDir=gene_pred/braker_split/$Organism/$Strain
+    mkdir -p $SplitDir
+    BaseName="$Organism""_$Strain"_braker_preds
+    $SplitfileDir/splitfile_500.py --inp_fasta $Proteome --out_dir $SplitDir --out_base $BaseName
+    for File in $(ls $SplitDir/*_braker_preds_*); do
+    Jobs=$(qstat | grep 'pred_sigP' | grep 'qw' | wc -l)
+    while [ $Jobs -gt '1' ]; do
+    sleep 10
+    printf "."
+    Jobs=$(qstat | grep 'pred_sigP' | grep 'qw' | wc -l)
+    done
+    printf "\n"
+    echo $File
+    qsub $ProgDir/pred_sigP.sh $File signalp-4.1
+    done
+  done
+```
+
+The batch files of predicted secreted proteins needed to be combined into a
+single file for each strain. This was done with the following commands:
+```bash
+	SplitDir=gene_pred/braker_split/P.cactorum/10300
+	Strain=$(echo $SplitDir | cut -d '/' -f4)
+	Organism=$(echo $SplitDir | cut -d '/' -f3)
+	InStringAA=''
+	InStringNeg=''
+	InStringTab=''
+	InStringTxt=''
+	SigpDir=braker_sigP
+	# SigpDir=braker_signalp-4.1
+	for GRP in $(ls -l $SplitDir/*_braker_preds_*.fa | rev | cut -d '_' -f1 | rev | sort -n); do  
+		InStringAA="$InStringAA gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.aa";  
+		InStringNeg="$InStringNeg gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp_neg.aa";  
+		InStringTab="$InStringTab gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.tab";
+		InStringTxt="$InStringTxt gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.txt";  
+	done
+	cat $InStringAA > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.aa
+	cat $InStringNeg > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_neg_sp.aa
+	tail -n +2 -q $InStringTab > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.tab
+	cat $InStringTxt > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.txt
+	# Headers=gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp_headers.txt
+	# ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation
+	# BrakerGff=gene_pred/braker/P.cactorum/10300/P.cactorum/augustus.gff
+	# ExtractedGff=gene_pred/braker/P.cactorum/10300/P.cactorum/augustus_extracted.gff
+	# cat $BrakerGff | grep -v '#' > $ExtractedGff
+	# SigPGff=gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.gff
+	# cat gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.aa | grep '>' | tr -d '>' | cut -f1 -d ' ' > $Headers
+	# $ProgDir/gene_list_to_gff.pl $Headers $ExtractedGff SigP Name Augustus > $SigPGff
 ```
 
 #Genomic analysis
@@ -291,10 +401,11 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 Predicted gene models were searched against the PHIbase database using tBLASTx.
 
 ```bash
-	ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
-	Query=../../phibase/v3.8/PHI_accessions.fa
-	Subject=repeat_masked/spades/N.ditissima/NG-R0905_repmask/N.ditissima_contigs_unmasked.fa
-	qsub $ProgDir/blast_pipe.sh $Query protein $Subject
+  for Subject in $(ls repeat_masked/A.alternata_ssp._*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    Query=../../phibase/v3.8/PHI_accessions.fa
+    qsub $ProgDir/blast_pipe.sh $Query protein $Subject
+  done
 ```
 
 Top BLAST hits were used to annotate gene models.
