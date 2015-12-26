@@ -360,7 +360,7 @@ the following commands:
     done
   done
 ```
-
+<!--
 The batch files of predicted secreted proteins needed to be combined into a
 single file for each strain. This was done with the following commands:
 ```bash
@@ -391,7 +391,31 @@ single file for each strain. This was done with the following commands:
 	# SigPGff=gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.gff
 	# cat gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.aa | grep '>' | tr -d '>' | cut -f1 -d ' ' > $Headers
 	# $ProgDir/gene_list_to_gff.pl $Headers $ExtractedGff SigP Name Augustus > $SigPGff
-```
+``` -->
+
+
+B) SwissProt
+
+```bash
+  screen -a
+  qlogin
+  ProjDir=/home/groups/harrisonlab/project_files/alternaria
+  cd $ProjDir
+  for Proteome in $(ls gene_pred/braker/A.alternata_ssp._*/*/*/augustus.aa); do
+    Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
+    OutDir=$ProjDir/gene_pred/augustus/$Species/$Strain/swissplot
+    mkdir -p $OutDir
+    blastp \
+    -db /home/groups/harrisonlab/uniprot/swissprot/uniprot_sprot \
+    -query $ProjDir/$Proteome \
+    -out $OutDir/swissprot_v2015_10_hits.tbl \
+    -evalue 1e-100 \
+    -outfmt 6 \
+    -num_threads 16 \
+    -num_alignments 10
+  done
+  ```
 
 #Genomic analysis
 The first analysis was based upon BLAST searches for genes known to be involved in toxin production
