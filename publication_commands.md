@@ -194,9 +194,88 @@ The renamed assembly was used to perform repeatmasking.
   done
  ```
 
-** % bases masked by repeatmasker:
 
-** % bases masked by transposon psi: **
+ The number of bases masked by transposonPSI and Repeatmasker were summarised
+ using the following commands:
+
+ ```bash
+  for RepDir in $(ls -d repeat_masked/*/*/filtered_contigs_repmask); do
+    Strain=$(echo $RepDir | rev | cut -f2 -d '/' | rev)
+    Organism=$(echo $RepDir | rev | cut -f3 -d '/' | rev)  
+    RepMaskGff=$(ls $RepDir/*_contigs_hardmasked.gff)
+    TransPSIGff=$(ls $RepDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
+    printf "$Organism\t$Strain\n"
+    printf "The number of bases masked by RepeatMasker:\t"
+    sortBed -i $RepMaskGff | bedtools merge | awk -F'\t' 'BEGIN{SUM=0}{ SUM+=$3-$2 }END{print SUM}'
+    printf "The number of bases masked by TransposonPSI:\t"
+    sortBed -i $TransPSIGff | bedtools merge | awk -F'\t' 'BEGIN{SUM=0}{ SUM+=$3-$2 }END{print SUM}'
+    printf "The total number of masked bases are:\t"
+    cat $RepMaskGff $TransPSIGff | sortBed | bedtools merge | awk -F'\t' 'BEGIN{SUM=0}{ SUM+=$3-$2 }END{print SUM}'
+    echo
+  done
+ ```
+
+```bash
+ A.alternata_ssp._arborescens	675
+ The number of bases masked by RepeatMasker:	679814
+ The number of bases masked by TransposonPSI:	325226
+ The total number of masked bases are:	778492
+
+ A.alternata_ssp._arborescens	97.0013
+ The number of bases masked by RepeatMasker:	841134
+ The number of bases masked by TransposonPSI:	355274
+ The total number of masked bases are:	972725
+
+ A.alternata_ssp._arborescens	97.0016
+ The number of bases masked by RepeatMasker:	555661
+ The number of bases masked by TransposonPSI:	337525
+ The total number of masked bases are:	712560
+
+ A.alternata_ssp._gaisen	650
+ The number of bases masked by RepeatMasker:	329570
+ The number of bases masked by TransposonPSI:	213597
+ The total number of masked bases are:	467341
+
+ A.alternata_ssp._tenuissima	1082
+ The number of bases masked by RepeatMasker:	510714
+ The number of bases masked by TransposonPSI:	244175
+ The total number of masked bases are:	621605
+
+ A.alternata_ssp._tenuissima	1164
+ The number of bases masked by RepeatMasker:	744712
+ The number of bases masked by TransposonPSI:	270404
+ The total number of masked bases are:	906187
+
+ A.alternata_ssp._tenuissima	1166
+ The number of bases masked by RepeatMasker:	709427
+ The number of bases masked by TransposonPSI:	262625
+ The total number of masked bases are:	855593
+
+ A.alternata_ssp._tenuissima	1177
+ The number of bases masked by RepeatMasker:	855107
+ The number of bases masked by TransposonPSI:	274429
+ The total number of masked bases are:	1006851
+
+ A.alternata_ssp._tenuissima	24350
+ The number of bases masked by RepeatMasker:	318302
+ The number of bases masked by TransposonPSI:	159189
+ The total number of masked bases are:	424669
+
+ A.alternata_ssp._tenuissima	635
+ The number of bases masked by RepeatMasker:	849942
+ The number of bases masked by TransposonPSI:	335963
+ The total number of masked bases are:	1025475
+
+ A.alternata_ssp._tenuissima	648
+ The number of bases masked by RepeatMasker:	547898
+ The number of bases masked by TransposonPSI:	160220
+ The total number of masked bases are:	652885
+
+ A.alternata_ssp._tenuissima	743
+ The number of bases masked by RepeatMasker:	627923
+ The number of bases masked by TransposonPSI:	333470
+ The total number of masked bases are:	829749
+```
 
 
 # Gene Prediction
@@ -218,8 +297,53 @@ Quality of genome assemblies was assessed by looking for the gene space in the a
   done
 ```
 
-** Number of cegma genes present and complete: 95.16
-** Number of cegma genes present and partial: 97.18
+results were summarised:
+
+```bash
+  for File in $(ls gene_pred/cegma/A.alternata_ssp._*/*/*_dna_cegma.completeness_report); do
+    basename $File
+    cat $File | grep -w -e 'Complete' -e 'Partial' | grep -v 'Category' | sed -E 's/\s+/\t/g'| cut -f2,3,4
+  done
+```
+
+```
+  675_dna_cegma.completeness_report
+  Complete	239	96.37
+  Partial	241	97.18
+  97.0013_dna_cegma.completeness_report
+  Complete	238	95.97
+  Partial	240	96.77
+  97.0016_dna_cegma.completeness_report
+  Complete	237	95.56
+  Partial	240	96.77
+  650_dna_cegma.completeness_report
+  Complete	241	97.18
+  Partial	244	98.39
+  1082_dna_cegma.completeness_report
+  Complete	241	97.18
+  Partial	243	97.98
+  1164_dna_cegma.completeness_report
+  Complete	241	97.18
+  Partial	243	97.98
+  1166_dna_cegma.completeness_report
+  Complete	239	96.37
+  Partial	241	97.18
+  1177_dna_cegma.completeness_report
+  Complete	241	97.18
+  Partial	243	97.98
+  24350_dna_cegma.completeness_report
+  Complete	241	97.18
+  Partial	243	97.98
+  635_dna_cegma.completeness_report
+  Complete	240	96.77
+  Partial	243	97.98
+  648_dna_cegma.completeness_report
+  Complete	240	96.77
+  Partial	242	97.58
+  743_dna_cegma.completeness_report
+  Complete	241	97.18
+  Partial	243	97.98
+```
 
 ## Gene prediction 1 - Braker1 gene model training and prediction
 
@@ -282,17 +406,19 @@ Signal peptide sequences and RxLRs. This pipeline was run with the following com
     qsub $ProgDir/run_ORF_finder.sh $Assembly
   done
 ```
-<!--
+
 The Gff files from the the ORF finder are not in true Gff3 format. These were
 corrected using the following commands:
 
 ```bash
-	ProgDir=~/git_repos/emr_repos/tools/seq_tools/feature_annotation
-	ORF_Gff=gene_pred/ORF_finder/P.cactorum/10300/10300_ORF.gff
-	ORF_Gff_mod=gene_pred/ORF_finder/P.cactorum/10300/10300_ORF_corrected.gff3
-	$ProgDir/gff_corrector.pl $ORF_Gff > $ORF_Gff_mod
+  for ORF_Gff in $(ls gene_pred/ORF_finder/*/*/*_ORF.gff); do
+    ProgDir=~/git_repos/emr_repos/tools/seq_tools/feature_annotation
+    basename $ORF_Gff
+    ORF_Gff_mod=$(echo $ORF_Gff | sed 's/ORF.gff/ORF_corrected.gff3/g')
+    $ProgDir/gff_corrector.pl $ORF_Gff > $ORF_Gff_mod
+  done
 ```
- -->
+
 
 #Functional annotation
 
@@ -304,14 +430,46 @@ Interproscan was used to give gene models functional annotations.
     $ProgDir/sub_interproscan.sh $Proteome
   done
 ```
-<!--
-```bash
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
-	Genes=gene_pred/augustus/spades/N.ditissima/N.ditissima_aug_out.aa
-	InterProRaw=gene_pred/interproscan/spades/N.ditissima/raw
-	ProgDir/append_interpro.sh $Genes $InterProRaw
-``` -->
 
+```bash
+  screen -a
+  for Proteome in $(ls gene_pred/braker/A.alternata_ssp._*/*/*/augustus.aa); do
+    InFile=$(basename $Proteome)
+    echo $InFile
+    Organism=$(echo $Proteome  | rev | cut -d "/" -f3 | rev)
+    Strain=$(echo $Proteome  | rev | cut -d "/" -f2 | rev)
+    Split_Dir=gene_pred/interproscan/$Organism/$Strain
+    mkdir -p $Split_Dir
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
+    $ProgDir/splitfile_500.py --inp_fasta $Proteome  --out_dir $Split_Dir --out_base "$InFile"_split
+    for File in $(ls $Split_Dir/*_split*); do
+      Jobs=$(qstat | grep 'run_interp' | grep 'qw' | wc -l)
+      while [ $Jobs -gt 1 ]; do
+        sleep 10
+        printf "."
+        Jobs=$(qstat | grep 'run_interp' | grep 'qw' | wc -l)
+      done
+      printf "\n"
+      echo $File
+      ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
+      qsub $ProgDir/run_interproscan.sh $File
+    done
+  done
+```
+<!--
+Following interproscan annotation split files were combined using the following commands:
+
+```bash
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
+  for StrainPath in $(ls -d gene_pred/interproscan/*/*); do
+  Strain=$(basename $StrainPath)
+  Organism=$(echo $StrainPath | rev | cut -d "/" -f2 | rev)
+  echo $Strain
+  PredGenes=gene_pred/augustus/"$Organism"/"$Strain"/"$Strain"_augustus_preds.aa
+  InterProRaw=gene_pred/interproscan/"$Organism"/"$Strain"/raw
+  $ProgDir/append_interpro.sh $PredGenes $InterProRaw
+  done
+``` -->
 
 ## Small secreted proteins
 
@@ -360,38 +518,30 @@ the following commands:
     done
   done
 ```
-<!--
+
 The batch files of predicted secreted proteins needed to be combined into a
 single file for each strain. This was done with the following commands:
 ```bash
-	SplitDir=gene_pred/braker_split/P.cactorum/10300
-	Strain=$(echo $SplitDir | cut -d '/' -f4)
-	Organism=$(echo $SplitDir | cut -d '/' -f3)
-	InStringAA=''
-	InStringNeg=''
-	InStringTab=''
-	InStringTxt=''
-	SigpDir=braker_sigP
-	# SigpDir=braker_signalp-4.1
-	for GRP in $(ls -l $SplitDir/*_braker_preds_*.fa | rev | cut -d '_' -f1 | rev | sort -n); do  
-		InStringAA="$InStringAA gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.aa";  
-		InStringNeg="$InStringNeg gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp_neg.aa";  
-		InStringTab="$InStringTab gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.tab";
-		InStringTxt="$InStringTxt gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.txt";  
-	done
-	cat $InStringAA > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.aa
-	cat $InStringNeg > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_neg_sp.aa
-	tail -n +2 -q $InStringTab > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.tab
-	cat $InStringTxt > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.txt
-	# Headers=gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp_headers.txt
-	# ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation
-	# BrakerGff=gene_pred/braker/P.cactorum/10300/P.cactorum/augustus.gff
-	# ExtractedGff=gene_pred/braker/P.cactorum/10300/P.cactorum/augustus_extracted.gff
-	# cat $BrakerGff | grep -v '#' > $ExtractedGff
-	# SigPGff=gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.gff
-	# cat gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.aa | grep '>' | tr -d '>' | cut -f1 -d ' ' > $Headers
-	# $ProgDir/gene_list_to_gff.pl $Headers $ExtractedGff SigP Name Augustus > $SigPGff
-``` -->
+  for SplitDir in $(ls -d gene_pred/braker_split/*/*); do
+    Strain=$(echo $SplitDir | cut -d '/' -f4)
+    Organism=$(echo $SplitDir | cut -d '/' -f3)
+    InStringAA=''
+    InStringNeg=''
+    InStringTab=''
+    InStringTxt=''
+    SigpDir=braker_signalp-4.1
+    for GRP in $(ls -l $SplitDir/*_braker_preds_*.fa | rev | cut -d '_' -f1 | rev | sort -n); do  
+      InStringAA="$InStringAA gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.aa";  
+      InStringNeg="$InStringNeg gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp_neg.aa";  
+      InStringTab="$InStringTab gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.tab";
+      InStringTxt="$InStringTxt gene_pred/$SigpDir/$Organism/$Strain/split/"$Organism"_"$Strain"_braker_preds_$GRP""_sp.txt";  
+    done
+    cat $InStringAA > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.aa
+    cat $InStringNeg > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_neg_sp.aa
+    tail -n +2 -q $InStringTab > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.tab
+    cat $InStringTxt > gene_pred/$SigpDir/$Organism/$Strain/"$Strain"_aug_sp.txt
+  done
+```
 
 
 B) SwissProt
@@ -415,7 +565,7 @@ B) SwissProt
     -num_threads 16 \
     -num_alignments 10
   done
-  ```
+```
 
 #Genomic analysis
 The first analysis was based upon BLAST searches for genes known to be involved in toxin production
@@ -440,4 +590,3 @@ Top BLAST hits were used to annotate gene models.
 
 ** Blast results of note: **
   * 'Result A'
--->
