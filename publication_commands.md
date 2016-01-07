@@ -567,11 +567,11 @@ B) SwissProt
   done
 ```
 
-#Genomic analysis
+# Genomic analysis
 The first analysis was based upon BLAST searches for genes known to be involved in toxin production
 
 
-##Genes with homology to PHIbase
+## Genes with homology to PHIbase
 Predicted gene models were searched against the PHIbase database using tBLASTx.
 
 ```bash
@@ -582,11 +582,74 @@ Predicted gene models were searched against the PHIbase database using tBLASTx.
   done
 ```
 
-Top BLAST hits were used to annotate gene models.
+
+## Presence and genes with homology to Alternaria toxins
+
+The first analysis was based upon BLAST searches for genes known to be involved in toxin production
+
+
 
 ```bash
-
+  for Subject in $(ls repeat_masked/A.alternata_ssp._*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa
+    qsub $ProgDir/blast_pipe.sh $Query dna $Subject
+  done
 ```
 
-** Blast results of note: **
-  * 'Result A'
+Once blast searches had completed, the BLAST hits were converted to GFF
+annotations:
+
+```bash
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
+    Organism=$(echo $BlastHits | rev | cut -f3 -d '/' | rev)
+    HitsGff=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs.gff
+    Column2=toxin_homolog
+    NumHits=1
+    $ProgDir/blast2gff.pl $Column2 $NumHits $BlastHits > $HitsGff
+  done
+```
+
+
+Extracted gff files of the BLAST hit locations were intersected with gene models
+to identify if genes were predicted for these homologs:
+
+```bash
+for HitsGff in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.gff); do
+Strain=$(echo $HitsGff | rev | cut -f2 -d '/' | rev)
+Organism=$(echo $HitsGff | rev | cut -f3 -d '/' | rev)
+Proteins=$(ls gene_pred/braker/$Organism/$Strain/*/augustus.gff)
+OutDir=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes
+IntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_Intersect.gff
+# NoIntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
+mkdir -p $OutDir
+echo "$Organism - $Strain"
+echo "The number of BLAST hits in the gff file were:"
+cat $HitsGff | wc -l
+echo "The number of blast hits intersected were:"
+bedtools intersect -wao -a $HitsGff -b $Proteins > $IntersectBlast
+cat $IntersectBlast | grep -w 'gene' | wc -l
+echo "The number of blast hits not intersecting gene models were:"
+# bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
+# rm $NoIntersectBlast
+cat $IntersectBlast | grep -w -E '0$' | wc -l
+done
+```
+
+As a proof of concept the gene intersecting the AMT2 and AMT4 homolog was
+searched for in the results of the orthology analysis. The AMT2 homolog
+was present in a large orthology group, containing genes from the core genome -
+present in all A. tenuissima isolates. This explains why this locus may not be
+approapriate as a marker for molecular identification of apple pathotypes. The
+AMT2 group did not appear to be expanded in pathotypic isolates. The AMT4 locus
+was identified in an ortholog group specific to apple pathotype isolates:
+
+```bash
+# AMT2
+cat analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt | grep 'At_6|g4087' | less
+cat analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt | grep 'At_6|g4087' | sed 's/\s/\n/g' | grep -v 'orthogroup' |  cut -f1 -d '|' | sort | uniq -c | less
+# AMT4
+cat analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt | grep 'At_6|g4038' | less
+```
