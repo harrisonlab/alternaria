@@ -280,7 +280,7 @@ done
 ```
 
 ```
-The number of orthogroups unique to A.tenuissima apple pathotype are:
+The number of orthogroups unique to A. tenuissima are:
 21
 The following number genes from isolate 648 are contained in these orthogorups:
 22
@@ -321,7 +321,7 @@ done
 ```
 
 ```
-The number of orthogroups unique to A.arborescens are:
+The number of orthogroups unique to A. arborescens are:
 41
 The following number genes from isolate 675 are contained in these orthogorups:
 45
@@ -348,7 +348,7 @@ done
 ```
 
 ```
-The number of orthogroups unique to A.gaisen pear pathotype pathotype are:
+The number of orthogroups unique to A. gaisen pear pathotype pathotype are:
 7
 The following number genes from isolate 650 are contained in these orthogorups:
 15
@@ -377,7 +377,7 @@ done
 ```
 
 ```
-The number of orthogroups unique to A.tenuissima apple pathotype are:
+The number of orthogroups unique to A.tenuissima non pathotypes are:
 0
 The following number genes from isolate 648 are contained in these orthogorups:
 0
