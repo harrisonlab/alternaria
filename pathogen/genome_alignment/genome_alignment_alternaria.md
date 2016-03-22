@@ -21,55 +21,42 @@ alignments.
 generating a series of pair-wise alignments to “seed” the multiple alignment process
 
 ```bash
-qlogin
-WorkDir=/tmp/genome_alignment
-mkdir -p $WorkDir
-cd $WorkDir
-ProjDir=/home/groups/harrisonlab/project_files/alternaria
-Assembly_648=$(ls $ProjDir/repeat_masked/*/648/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_1082=$(ls $ProjDir/repeat_masked/*/1082/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_1164=$(ls $ProjDir/repeat_masked/*/1164/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_24350=$(ls $ProjDir/repeat_masked/*/24350/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_635=$(ls $ProjDir/repeat_masked/*/635/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_743=$(ls $ProjDir/repeat_masked/*/743/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_1166=$(ls $ProjDir/repeat_masked/*/1166/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_1177=$(ls $ProjDir/repeat_masked/*/1177/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_675=$(ls $ProjDir/repeat_masked/*/675/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_970013=$(ls $ProjDir/repeat_masked/*/97.0013/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_970016=$(ls $ProjDir/repeat_masked/*/97.0016/filtered_contigs_repmask/*_contigs_softmasked.fa)
-Assembly_650=$(ls $ProjDir/repeat_masked/*/650/filtered_contigs_repmask/*_contigs_softmasked.fa)
-cat $Assembly_648 | sed 's/>/>648:/g' | sed '/>/s/$/:1:+:1/' > 648
-cat $Assembly_1082 | sed 's/>/>1082:/g' | sed '/>/s/$/:1:+:1/' > 1082
-cat $Assembly_1164 | sed 's/>/>1164:/g' | sed '/>/s/$/:1:+:1/' > 1164
-cat $Assembly_24350 | sed 's/>/>24350:/g' | sed '/>/s/$/:1:+:1/' > 24350
-cat $Assembly_635 | sed 's/>/>635:/g' | sed '/>/s/$/:1:+:1/' > 635
-cat $Assembly_743 | sed 's/>/>743:/g' | sed '/>/s/$/:1:+:1/' > 743
-cat $Assembly_1166 | sed 's/>/>1166:/g' | sed '/>/s/$/:1:+:1/' > 1166
-cat $Assembly_1177 | sed 's/>/>1177:/g' | sed '/>/s/$/:1:+:1/' > 1177
-cat $Assembly_675 | sed 's/>/>675:/g' | sed '/>/s/$/:1:+:1/' > 675
-cat $Assembly_970013 | sed 's/>/>97.0013:/g' | sed '/>/s/$/:1:+:1/' > 97.0013
-cat $Assembly_970016 | sed 's/>/>97.0016:/g' | sed '/>/s/$/:1:+:1/' > 97.0016
-all_bz - \
-  "((648 1082 1164 24350 (635 743 1166 1177)) (675 97.0013 97.0016) (650))" >& all_bz.log
+  ProjDir=/home/groups/harrisonlab/project_files/alternaria
+  WorkDir=analysis/genome_alignment/tmp
+  mkdir -p $WorkDir
+  cd $WorkDir
 
-  #  all_bz - \
-  #    "((648 1082 1164 24350 (635 743 1166 1177)) (675 97.0013 97.0016) (650))" \
-  #     | sed 's/maf_sort/maf_sort.py/g' >& all_bz.log
-# +(off) verbose
-# -(off) output command only.
-# b(2) 0: run post-process only 1: run blastzWrapper only, transform to maf 2: run both
-# A(1) 0: toast 1: single_cov2 2: toast, following by chain and single cov on reference
-# F(null) null: single coverage is done for both species; reference: single coverage is done for reference only, effective in single_cov2
-# T(null): annotation file path and name, used for running toast and chaining procedure
-# h(300) minimum chaining size, effective in toast
-# q(600) minimum cluster size, effective in toast
-# D(1) 0: run all_bz for roast 1: run all_bz for TBA.
-# c(500): parameter transfered to blastz_clean, alignments closer than c are subjected to be cleaned.
-# f(2) x% is used for determine in-paralogs, effective in toast.
+  for Assembly in $(ls $ProjDir/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa); do
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+    Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev)
+    cat $Assembly | sed "s/>/>$Strain:/g" > $Strain.fa
+    get_standard_headers $Strain.fa > "$Strain"_headers.txt
+    ProgDir=~/git_repos/emr_repos/tools/pathogen/lineage_specific_regions
+    $ProgDir/parse_tba_headers.py --inp_fasta $Strain.fa --new_headers "$Strain"_headers.txt > $Strain
+  done
+
+  all_bz - \
+    "((648 1082 1164 24350 (635 743 1166 1177)) (675 97.0013 97.0016) (650))" >& all_bz.log
+
+  cat all_bz.log | grep 'blastzWrapper' > commands_part1.log
+  while read Commands; do
+    qsub -S /bin/bash -b y -pe smp 1 -l virtual_free=1G -N blastzWrapper -cwd "$Commands"
+  done < commands_part1.log
+
+  cat all_bz.log | grep 'single_cov2' > commands_part2.log
+  while read Commands; do
+    qsub -S /bin/bash -b y -pe smp 1 -l virtual_free=1G -N blastzWrapper -cwd "$Commands"
+  done < commands_part2.log
 
 ```
 
 ### 2.2) generating the multiple alignment
+
+```bash
+tba \
+  "((648 1082 1164 24350 (635 743 1166 1177)) (675 97.0013 97.0016) (650))" \
+  *.*.maf tba.maf >& tba.log
+```
 
 ### 2.3) “projecting” the alignment onto a reference sequence
 
@@ -83,5 +70,6 @@ Importantly, it allows identification of contigs that do not align to other
 strains, facilitating identification of CDCs.
 
 ```bash
-
+  # maffilter input.file=mydata.maf.gz input.file.compression=gzip input.format=Maf output.log=mydata.maffilter.log
+  maffilter input.file=tba.maf input.file.compression=none input.format=Maf output.log=mydata.maffilter.log
 ```
