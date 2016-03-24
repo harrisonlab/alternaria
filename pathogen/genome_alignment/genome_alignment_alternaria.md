@@ -128,28 +128,43 @@ strains, facilitating identification of CDCs.
 ## Progressive Mauve was used to align genomes:
 
 ```bash
-ProjDir=/home/groups/harrisonlab/project_files/alternaria
-WorkDir=$ProjDir/analysis/genome_alignment/mauve
-mkdir -p $WorkDir
-# Reference=$ProjDir/assembly/external_groups/A.brassicicola/EGS42–002/Alternaria_brassicicola_masked_assembly.fasta
-# cp $Reference $WorkDir/A.brasicicola.fa
-Reference=$(ls $ProjDir/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa)
-# cd $WorkDir
+  ProjDir=/home/groups/harrisonlab/project_files/alternaria
+  WorkDir=$ProjDir/analysis/genome_alignment/mauve
+  mkdir -p $WorkDir
+  # Reference=$ProjDir/assembly/external_groups/A.brassicicola/EGS42–002/Alternaria_brassicicola_masked_assembly.fasta
+  # cp $Reference $WorkDir/A.brasicicola.fa
+  Reference=$(ls $ProjDir/repeat_masked/*/1177/filtered_contigs_repmask/*_contigs_softmasked.fa)
 
-# Use move_contigs to order genomes based on reference for each phylogroup
-for Assembly in $(ls $ProjDir/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa | grep -v '1177'); do
-Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
-Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev)
-echo "$Organism - $Strain"
-MauveDir=~/prog/mauve/mauve_snapshot_2015-02-13
-OutDir=$WorkDir/"$Strain"_contigs
-ProgDir=~/git_repos/emr_repos/tools/seq_tools/genome_alignment/mauve
-rm -r $OutDir
-qsub $ProgDir/mauve_order_contigs.sh $MauveDir $Reference  $Assembly $OutDir
-# qsub $ProgDir/mauve_order_contigs.sh $MauveDir $WorkDir/A.brasicicola.fa  $Assembly $OutDir
-done
+  # Use move_contigs to order genomes based on reference for each phylogroup
+  for Assembly in $(ls $ProjDir/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa | grep -v '1177'); do
+  Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+  Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev)
+  echo "$Organism - $Strain"
+  MauveDir=~/prog/mauve/mauve_snapshot_2015-02-13
+  OutDir=$WorkDir/"$Strain"_contigs
+  ProgDir=~/git_repos/emr_repos/tools/seq_tools/genome_alignment/mauve
+  rm -r $OutDir
+  qsub $ProgDir/mauve_order_contigs.sh $MauveDir $Reference  $Assembly $OutDir
+  # qsub $ProgDir/mauve_order_contigs.sh $MauveDir $WorkDir/A.brasicicola.fa  $Assembly $OutDir
+  done
+```
 
+## Running Progressive Mauve
 
-# Generate alignment of genome sequences using progressive mauve - remember to use linux-64
-./progressiveMauve --output=/home/hulinm/local/src/mauve_2.3.1/all.xmfa  /home/hulinm/pseudomonas_data/pseudomonas/assembly/ordered_contigs/fastafiles/5244.fasta
+```bash
+  ProjDir=/home/groups/harrisonlab/project_files/fusarium
+  WorkDir=$ProjDir/analysis/genome_alignment/mauve
+  OutDir=$WorkDir/alignment
+  GenomeList=''
+  for Assembly in $(ls $ProjDir/repeat_masked/F.oxysporum*/*/filtered_contigs_repmask/*_contigs_softmasked.fa); do
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+    Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev)
+    echo "$Organism - $Strain"
+    NumAlignments=$(ls -d $WorkDir/"$Strain"_contigs/alignment* | wc -l)
+    AlignedContigs=$(ls $WorkDir/"$Strain"_contigs/alignment"$NumAlignments"/"$Strain"_contigs_softmasked.fa.fas)
+    echo $AlignedContigs
+    GenomeList="$GenomeList""$AlignedContigs "
+  done
+  ProgDir=~/git_repos/emr_repos/tools/seq_tools/genome_alignment/mauve
+  qsub $ProgDir/run_progressive_mauve.sh $OutDir "$GenomeList"
 ```
