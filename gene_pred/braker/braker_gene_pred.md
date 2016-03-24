@@ -41,33 +41,125 @@ Data quality was visualised once again following trimming:
 
 
 # 2) RNA Alignment
+
+Insert sizes of the RNA seq library were unknown until a draft alignment could
+be made. To do this tophat and cufflinks were run, aligning the reads against a
+single genome. The fragment length and stdev were printed to stdout while
+cufflinks was running.
+
 ```bash
-  for Strain in $(650 1082  1164  1166  1177  24350  635  648  743 675  97.0013  97.0016); do
-    Assembly=$(ls repeat_masked/*/$Strain/filtered_contigs_repmask/*_contigs_unmasked.fa)
-    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
-    echo "$Organism"
-    echo "$Strain"
-    ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/gene_pred/braker
-    FileF1=qc_rna/paired/A.alternata_ssp._gaisen/650/F/Pear_S1_L001_R1_001_trim.fq.gz
-    FileR1=qc_rna/paired/A.alternata_ssp._gaisen/650/R/Pear_S1_L001_R2_001_trim.fq.gz
-    FileF2=qc_rna/paired/A.alternata_ssp._tenuissima/1166/F/Apple_S2_L001_R1_001_trim.fq.gz
-    FileR2=qc_rna/paired/A.alternata_ssp._tenuissima/1166/R/Apple_S2_L001_R2_001_trim.fq.gz
-    OutDir=aligment/$Organism/$Strain
-    qsub $ProgDir/alt_tophat_alignment.sh $Assembly $FileF1 $FileR1 $FileF2 $FileR2 $OutDir
-  done
-	for Strain in 650 1082  1164  1166  1177  24350  635  648  743 675  97.0013  97.0016; do
-		Assembly=$(ls repeat_masked/*/$Strain/filtered_contigs_repmask/*_contigs_unmasked.fa)
-		Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
-		Jobs=$(qstat | grep 'tophat_ali' | wc -l)
-		while [ $Jobs -gt 0 ]; do
-			sleep 10
-			printf "."
-			Jobs=$(qstat | grep 'alt_tophat' | wc -l)
+for Strain in $(650); do
+	Assembly=$(ls repeat_masked/*/$Strain/filtered_contigs_repmask/*_contigs_unmasked.fa)
+	Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+	echo "$Organism"
+	echo "$Strain"
+	ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/gene_pred/braker
+	FileF1=qc_rna/paired/A.alternata_ssp._gaisen/650/F/Pear_S1_L001_R1_001_trim.fq.gz
+	FileR1=qc_rna/paired/A.alternata_ssp._gaisen/650/R/Pear_S1_L001_R2_001_trim.fq.gz
+	FileF2=qc_rna/paired/A.alternata_ssp._tenuissima/1166/F/Apple_S2_L001_R1_001_trim.fq.gz
+	FileR2=qc_rna/paired/A.alternata_ssp._tenuissima/1166/R/Apple_S2_L001_R2_001_trim.fq.gz
+	OutDir=aligment/$Organism/$Strain
+	qsub $ProgDir/alt_tophat_alignment.sh $Assembly $FileF1 $FileR1 $FileF2 $FileR2 $OutDir
+done
+```
+
+Cufflinks was run to produce the fragment length and stdev statistics:
+
+```bash
+	for Assembly in $(ls repeat_masked/*/650/*/*_contigs_unmasked.fa); do
+		Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+		Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+		echo "$Organism - $Strain"
+		for RNADir in $(ls -d qc_rna/paired/*/*); do
+			Timepoint=$(echo $RNADir | rev | cut -f1 -d '/' | rev)
+			echo "$Timepoint"
+			FileF=$(ls $RNADir/F/*_trim.fq.gz)
+			FileR=$(ls $RNADir/R/*_trim.fq.gz)
+			OutDir=alignment/$Organism/$Strain/$Timepoint
+			ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+			qsub $ProgDir/tophat_alignment.sh $Assembly $FileF $FileR $OutDir
 		done
-		OutDir=gene_pred/braker/$Organism/$Strain
-		AcceptedHits=alignment/$Organism/$Strain/accepted_hits.bam
+	done
+```
+
+Output from stdout included:
+```
+	Processed 22484 loci.                        [*************************] 100%
+	Map Properties:
+	     Normalized Map Mass: 50507412.55
+	     Raw Map Mass: 50507412.55
+	     Fragment Length Distribution: Empirical (learned)
+	                   Estimated Mean: 181.98
+	                Estimated Std Dev: 78.39
+	[13:02:48] Assembling transcripts and estimating abundances.
+	Processed 22506 loci.                        [*************************] 100%
+```
+
+The Estimated Mean: X allowed calculation of of the mean insert gap to be
+Xbp X-(152*2) where 152 was the mean read length. This was provided to tophat
+on a second run (as the -r option) along with the fragment length stdev to
+increase the accuracy of mapping.
+
+
+A second round of tophat RNAseq alignment was performed, this time using
+parameters determined above.
+
+```bash
+	for Assembly in $(ls repeat_masked/*/*/*/*_contigs_unmasked.fa); do
+		Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+		Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+		echo "$Organism - $Strain"
+		for RNADir in $(ls -d qc_rna/paired/*/*); do
+			Timepoint=$(echo $RNADir | rev | cut -f1 -d '/' | rev)
+			echo "$Timepoint"
+			FileF=$(ls $RNADir/F/*_trim.fq.gz)
+			FileR=$(ls $RNADir/R/*_trim.fq.gz)
+			OutDir=alignment/$Organism/$Strain/$Timepoint
+			InsertGap=''
+			InsertStdDev=''
+			ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+			qsub $ProgDir/tophat_alignment.sh $Assembly $FileF $FileR $OutDir $InsertGap $InsertStdDev
+		done
+	done
+```
+
+These alignments were used to perform Braker gene prediction. As alternaria is
+a fungus, the fungi specific gene prediction option was turned on.
+
+```bash
+	for Assembly in $(ls repeat_masked/*/Fus2/*/*_contigs_softmasked.fa); do
+		Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+		Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+		echo "$Organism - $Strain"
+		mkdir -p merge alignment/$Organism/$Strain/concatenated
+		samtools merge -f alignment/$Organism/$Strain/concatenated/concatenated.bam \
+			alignment/$Organism/$Strain/55_72hrs_rep1/accepted_hits.bam \
+			alignment/$Organism/$Strain/55_72hrs_rep2/accepted_hits.bam \
+			alignment/$Organism/$Strain/55_72hrs_rep3/accepted_hits.bam \
+			alignment/$Organism/$Strain/FO47_72hrs_rep1/accepted_hits.bam \
+			alignment/$Organism/$Strain/FO47_72hrs_rep2/accepted_hits.bam \
+			alignment/$Organism/$Strain/FO47_72hrs_rep3/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_0hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_16hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_24hrs_prelim_rep1/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_36hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_48hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_4hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_72hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_72hrs_rep1/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_72hrs_rep2/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_72hrs_rep3/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_8hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_96hrs_prelim/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_CzapekDox/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_GlucosePeptone/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_PDA/accepted_hits.bam \
+			alignment/$Organism/$Strain/Fus2_PDB/accepted_hits.bam
+		OutDir=gene_pred/braker/$Organism/"$Strain"
+		AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
 		GeneModelName="$Organism"_"$Strain"_braker
+		rm -r /home/armita/prog/augustus-3.1/config/species/"$Organism"_"$Strain"_braker
 		ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/braker1
-		qsub $ProgDir/sub_braker.sh $Assembly $OutDir $AcceptedHits $GeneModelName
+		qsub $ProgDir/sub_braker_fungi.sh $Assembly $OutDir $AcceptedHits $GeneModelName
 	done
 ```
