@@ -22,13 +22,13 @@ generating a series of pair-wise alignments to “seed” the multiple alignment
 
 ```bash
   ProjDir=/home/groups/harrisonlab/project_files/alternaria
-  WorkDir=analysis/genome_alignment/tmp4
+  WorkDir=$ProjDir/analysis/genome_alignment/tmp4
   mkdir -p $WorkDir
   cd $WorkDir
 
   for Assembly in $(ls $ProjDir/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa); do
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
-    Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev | sed 's/\./-/g')
+    Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev | sed 's/\./_/g' | sed 's/-/_/g')
     # The commands to define strain also replace any '.' with a '-' character.
     cat $Assembly | sed "s/>/>Alt_$Strain:/g" > Alt_$Strain.fa
     get_standard_headers Alt_$Strain.fa > Alt_"$Strain"_headers.txt
@@ -44,11 +44,12 @@ generating a series of pair-wise alignments to “seed” the multiple alignment
 
   cat all_bz.log | grep 'blastzWrapper' > commands_part1.log
   while read Commands; do
-    Nodes="blacklace02.blacklace|blacklace02.blacklace|blacklace03.blacklace|blacklace04.blacklace|blacklace05.blacklace|blacklace06.blacklace|blacklace07.blacklace|blacklace08.blacklace"
+    Nodes="blacklace02.blacklace|blacklace02.blacklace|blacklace03.blacklace|blacklace04.blacklace|blacklace05.blacklace|blacklace06.blacklace|blacklace07.blacklace|blacklace08.blacklace|blacklace09.blacklace|blacklace10.blacklace"
     qsub -S /bin/bash -b y -pe smp 1 -l virtual_free=1G -N blastzWrapper -l h="$Nodes" -cwd "$Commands"
   done < commands_part1.log
 
   cat all_bz.log | grep 'single_cov2' > commands_part2.log
+  Nodes="blacklace02.blacklace|blacklace02.blacklace|blacklace03.blacklace|blacklace04.blacklace|blacklace05.blacklace|blacklace06.blacklace|blacklace07.blacklace|blacklace08.blacklace|blacklace09.blacklace|blacklace10.blacklace"
   while read Commands; do
     qsub -S /bin/bash -b y -pe smp 1 -l virtual_free=1G -N single_cov2 -l h="$Nodes" -cwd "$Commands"
   done < commands_part2.log
