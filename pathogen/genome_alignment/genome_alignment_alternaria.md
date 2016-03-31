@@ -22,7 +22,7 @@ generating a series of pair-wise alignments to “seed” the multiple alignment
 
 ```bash
   ProjDir=/home/groups/harrisonlab/project_files/alternaria
-  WorkDir=$ProjDir/analysis/genome_alignment/tmp4
+  WorkDir=$ProjDir/analysis/genome_alignment/TBA
   mkdir -p $WorkDir
   cd $WorkDir
 
@@ -40,7 +40,7 @@ generating a series of pair-wise alignments to “seed” the multiple alignment
   # cat $Reference | sed "s/>/>Alt_$Strain:/g" > Alt_$Strain.fa
 
   all_bz - \
-    "((Alt_648 Alt_1082 Alt_1164 Alt_24350 (Alt_635 Alt_743 Alt_1166 Alt_1177)) (Alt_675 Alt_97-0013 Alt_97-0016) (Alt_650))" >& all_bz.log
+    "((Alt_648 Alt_1082 Alt_1164 Alt_24350 (Alt_635 Alt_743 Alt_1166 Alt_1177)) (Alt_675 Alt_97_0013 Alt_97_0016) (Alt_650))" >& all_bz.log
 
   cat all_bz.log | grep 'blastzWrapper' > commands_part1.log
   while read Commands; do
@@ -74,7 +74,7 @@ generating a series of pair-wise alignments to “seed” the multiple alignment
 # done
 # done
 # maf_list=$(ls A*.maf)
-tba E=A1177 "((Alt_648 Alt_1082 Alt_1164 Alt_24350 (Alt_635 Alt_743 Alt_1166 Alt_1177)) (Alt_675 Alt_97-0013 Alt_97-0016) (Alt_650))" A*.maf tba.maf >& tba.log
+tba E=A1177 "((Alt_648 Alt_1082 Alt_1164 Alt_24350 (Alt_635 Alt_743 Alt_1166 Alt_1177)) (Alt_675 Alt_97_0013 Alt_97_0016) (Alt_650))" Alt*.maf tba.maf 2>&1 | tee tba.log
 ```
 
 ### 2.3) “projecting” the alignment onto a reference sequence
@@ -153,11 +153,12 @@ strains, facilitating identification of CDCs.
 ## Running Progressive Mauve
 
 ```bash
-  ProjDir=/home/groups/harrisonlab/project_files/fusarium
+  ProjDir=/home/groups/harrisonlab/project_files/alternaria
   WorkDir=$ProjDir/analysis/genome_alignment/mauve
   OutDir=$WorkDir/alignment
-  GenomeList=''
-  for Assembly in $(ls $ProjDir/repeat_masked/F.oxysporum*/*/filtered_contigs_repmask/*_contigs_softmasked.fa); do
+  Reference=$(ls $ProjDir/repeat_masked/*/1177/filtered_contigs_repmask/*_contigs_softmasked.fa)
+  GenomeList="$Reference "
+  for Assembly in $(ls $ProjDir/repeat_masked/**/*/filtered_contigs_repmask/*_contigs_softmasked.fa | grep -v '1177'); do
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
     Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
