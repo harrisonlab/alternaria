@@ -147,14 +147,14 @@ Quast
 The results of quast were shown using the following commands:
 
 ```bash
-  for Assembly in $(ls assembly/spades/*/1177/filtered_contigs/report.txt); do
+  for Assembly in $(ls assembly/spades/*/*/filtered_contigs/report.txt); do
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
     echo;
     echo $Organism;
     echo $Strain;
     cat $Assembly;
-  done
+  done > assembly/quast_results.txt
 ```
 
 The output of this analysis is in the assembly/quast_results.txt file of this
@@ -348,7 +348,7 @@ results were summarised:
 ## Gene prediction 1 - Braker1 gene model training and prediction
 
 Gene prediction was performed using Braker1.
- * The commands used to do this can be found in /gene_prediction/10300_braker1_prediction.md
+ * The commands used to do this can be found in /gene_prediction/braker/braker_gene_pred.md
 
 
 
