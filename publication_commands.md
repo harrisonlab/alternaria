@@ -456,7 +456,7 @@ Interproscan was used to give gene models functional annotations.
     done
   done
 ```
-<!--
+
 Following interproscan annotation split files were combined using the following commands:
 
 ```bash
@@ -469,7 +469,7 @@ Following interproscan annotation split files were combined using the following 
   InterProRaw=gene_pred/interproscan/"$Organism"/"$Strain"/raw
   $ProgDir/append_interpro.sh $PredGenes $InterProRaw
   done
-``` -->
+```
 
 ## Small secreted proteins
 
