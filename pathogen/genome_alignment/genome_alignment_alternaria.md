@@ -92,16 +92,16 @@ strains, facilitating identification of CDCs.
   mkdir ../maffilter
   cd ../maffilter
   # maffilter input.file=mydata.maf.gz input.file.compression=gzip input.format=Maf output.log=mydata.maffilter.log
-  maffilter input.file=../tmp2/tba.maf input.file.compression=none input.format=Maf output.log=mydata.maffilter.log maf.filter=" \
+  maffilter input.file=../TBA/tba.maf input.file.compression=none input.format=Maf output.log=mydata.maffilter.log maf.filter=" \
   SequenceStatistics(                     \
       statistics=( BlockLength,                    \
           AlnScore,                       \
           BlockCounts,                       \
           SiteStatistics(                 \
-                  species=A648 A1082 A1164 A24350 A635 A743 A1166 A1177 A675 A97.0013 A97.0016 A650      \
+                  species=Alt_648 Alt_1082 Alt_1164 Alt_24350 Alt_635 Alt_743 Alt_1166 Alt_1177 Alt_675 Alt_97_0013 Alt_97_0016 Alt_650      \
           ),                   \
         ),                   \
-      ref_species=species1,               \
+      ref_species=Alt_1177,               \
       file=data.statistics.csv       \
       )"
 
@@ -158,7 +158,7 @@ strains, facilitating identification of CDCs.
   OutDir=$WorkDir/alignment
   Reference=$(ls $ProjDir/repeat_masked/*/1177/filtered_contigs_repmask/*_contigs_softmasked.fa)
   GenomeList="$Reference "
-  for Assembly in $(ls $ProjDir/repeat_masked/**/*/filtered_contigs_repmask/*_contigs_softmasked.fa | grep -v '1177'); do
+  for Assembly in $(ls $ProjDir/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa | grep -v '1177'); do
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
     Strain=$(echo $Assembly| rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
