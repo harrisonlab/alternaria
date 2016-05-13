@@ -20,7 +20,7 @@
 ### for A. tenuissima isolate 648
 ```bash
   Taxon_code=At_1
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/648/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/648/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -29,7 +29,7 @@
 ### for A.alt_ssp.ten 1082
 ```bash
   Taxon_code=At_2
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/1082/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1082/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -38,7 +38,7 @@
 ### for A.alt_ssp.ten 1164
 ```bash
   Taxon_code=At_3
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/1164/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1164/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -47,7 +47,7 @@
 ### for A.alt_ssp.ten 24350
 ```bash
   Taxon_code=At_4
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/24350/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/24350/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -59,7 +59,7 @@
 ### for A.alt_ssp.ten_apple_path 635
 ```bash
   Taxon_code=At_5
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/635/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/635/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -68,7 +68,7 @@
 ### for A.alt_ssp.ten_apple_path 743
 ```bash
   Taxon_code=At_6
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/743/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/743/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -77,7 +77,7 @@
 ### for A.alt_ssp.ten_apple_path 1166
 ```bash
   Taxon_code=At_7
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/1166/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1166/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -86,7 +86,7 @@
 ### for A.alt_ssp.ten_apple_path 1177
 ```bash
   Taxon_code=At_8
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._tenuissima/1177/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1177/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -97,7 +97,7 @@
 ### for A.alt_ssp.arb 675
 ```bash
   Taxon_code=Aa_1
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._arborescens/675/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._arborescens/675/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -106,7 +106,7 @@
 ### for A.alt_ssp.arb 97.0013
 ```bash
   Taxon_code=Aa_2
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._arborescens/97.0013/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._arborescens/97.0013/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -115,7 +115,7 @@
 ### for A.alt_ssp.arb 97.0016
 ```bash
   Taxon_code=Aa_3
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._arborescens/97.0016/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._arborescens/97.0016/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -126,7 +126,7 @@
 ### for A.alt_ssp.gai 650
 ```bash
   Taxon_code=Ag_1
-  Fasta_file=$(ls gene_pred/braker/A.alternata_ssp._gaisen/650/*/*.aa)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._gaisen/650/*/final_genes_combined.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -189,7 +189,7 @@
   ProgDir=~/git_repos/emr_repos/tools/pathogen/orthology/orthoMCL
   MergeHits="$IsolateAbrv"_blast.tab
   GoodProts=$WorkDir/goodProteins/goodProteins.fasta
-  qsub $ProgDir/qsub_orthomcl.sh $MergeHits $GoodProts
+  qsub $ProgDir/qsub_orthomcl.sh $MergeHits $GoodProts 5
 ```
 
 
