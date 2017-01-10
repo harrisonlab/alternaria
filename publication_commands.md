@@ -176,6 +176,41 @@ Contigs were renamed in accordance with ncbi recomendations.
 ```
 
 
+A Bioproject and Biosample was made with NCBI genbank for submission of genomes.
+Following the creation of these submissions, the .fasta assembly was uploaded
+through the submission portal. A note was provided requesting that the assembly
+be run through the contamination screen to aid a more detailed resubmission in
+future. The returned FCSreport.txt was downloaded from the NCBI webportal and
+used to correct the assembly to NCBI standards.
+
+NCBI reports (FCSreport.txt) were manually downloaded to the following loactions:
+
+```bash
+  for Assembly in $(ls assembly/spades/*/*/*/contigs_min_500bp_renamed.fasta | grep -v 'ncbi_edits'); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
+    NCBI_report_dir=genome_submission/$Organism/$Strain/initial_submission
+    mkdir -p $NCBI_report_dir
+  done
+```
+
+
+These downloaded files were used to correct assemblies:
+
+```bash
+for Assembly in $(ls assembly/spades/*/*/filtered_contigs/contigs_min_500bp_renamed.fasta); do
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+echo "$Organism - $Strain"
+NCBI_report=$(ls genome_submission/$Organism/$Strain/initial_submission/Contamination*.txt)
+OutDir=assembly/spades/$Organism/$Strain/ncbi_edits
+mkdir -p $OutDir
+ProgDir=~/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/remove_contaminants
+$ProgDir/remove_contaminants.py --keep_mitochondria --inp $Assembly --out $OutDir/contigs_min_500bp_renamed.fasta --coord_file $NCBI_report > $OutDir/log.txt
+done
+```
+
+
 
 # Repeat masking
 Repeat masking was performed and used the following programs: Repeatmasker Repeatmodeler
@@ -183,16 +218,17 @@ Repeat masking was performed and used the following programs: Repeatmasker Repea
 The renamed assembly was used to perform repeatmasking.
 
 ```bash
-  for Assembly in $(ls assembly/spades/*/1177/filtered_contigs/contigs_min_500bp_renamed.fasta); do
-    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
-    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
-    echo "$Organism"
-    echo "$Strain"
-    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
-    qsub $ProgDir/rep_modeling.sh $Assembly
-    qsub $ProgDir/transposonPSI.sh $Assembly
-  done
- ```
+for Assembly in $(ls assembly/spades/*/*/ncbi_edits/contigs_min_500bp_renamed.fasta); do
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+echo "$Organism"
+echo "$Strain"
+OutDir=repeat_masked/$Organism/$Strain/filtered_contigs_repmask
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
+qsub $ProgDir/rep_modeling.sh $Assembly $OutDir
+qsub $ProgDir/transposonPSI.sh $Assembly $OutDir
+done
+```
 
 
  The number of bases masked by transposonPSI and Repeatmasker were summarised
@@ -216,65 +252,65 @@ The renamed assembly was used to perform repeatmasking.
  ```
 
 ```bash
- A.alternata_ssp._arborescens	675
- The number of bases masked by RepeatMasker:	679814
- The number of bases masked by TransposonPSI:	325226
- The total number of masked bases are:	778492
+  A.alternata_ssp._arborescens    675
+  The number of bases masked by RepeatMasker:     694458
+  The number of bases masked by TransposonPSI:    325226
+  The total number of masked bases are:   928262
 
- A.alternata_ssp._arborescens	97.0013
- The number of bases masked by RepeatMasker:	841134
- The number of bases masked by TransposonPSI:	355274
- The total number of masked bases are:	972725
+  A.alternata_ssp._arborescens    97.0013
+  The number of bases masked by RepeatMasker:     782525
+  The number of bases masked by TransposonPSI:    355274
+  The total number of masked bases are:   1057811
 
- A.alternata_ssp._arborescens	97.0016
- The number of bases masked by RepeatMasker:	555661
- The number of bases masked by TransposonPSI:	337525
- The total number of masked bases are:	712560
+  A.alternata_ssp._arborescens    97.0016
+  The number of bases masked by RepeatMasker:     710488
+  The number of bases masked by TransposonPSI:    337525
+  The total number of masked bases are:   957235
 
- A.alternata_ssp._gaisen	650
- The number of bases masked by RepeatMasker:	329570
- The number of bases masked by TransposonPSI:	213597
- The total number of masked bases are:	467341
+  A.alternata_ssp._gaisen 650
+  The number of bases masked by RepeatMasker:     305221
+  The number of bases masked by TransposonPSI:    213597
+  The total number of masked bases are:   501714
 
- A.alternata_ssp._tenuissima	1082
- The number of bases masked by RepeatMasker:	510714
- The number of bases masked by TransposonPSI:	244175
- The total number of masked bases are:	621605
+  A.alternata_ssp._tenuissima     1082
+  The number of bases masked by RepeatMasker:     558444
+  The number of bases masked by TransposonPSI:    244175
+  The total number of masked bases are:   780869
 
- A.alternata_ssp._tenuissima	1164
- The number of bases masked by RepeatMasker:	744712
- The number of bases masked by TransposonPSI:	270404
- The total number of masked bases are:	906187
+  A.alternata_ssp._tenuissima     1164
+  The number of bases masked by RepeatMasker:     791244
+  The number of bases masked by TransposonPSI:    270404
+  The total number of masked bases are:   1029717
 
- A.alternata_ssp._tenuissima	1166
- The number of bases masked by RepeatMasker:	709427
- The number of bases masked by TransposonPSI:	262625
- The total number of masked bases are:	855593
+  A.alternata_ssp._tenuissima     1166
+  The number of bases masked by RepeatMasker:     499657
+  The number of bases masked by TransposonPSI:    262625
+  The total number of masked bases are:   741024
 
- A.alternata_ssp._tenuissima	1177
- The number of bases masked by RepeatMasker:	855107
- The number of bases masked by TransposonPSI:	274429
- The total number of masked bases are:	1006851
+  A.alternata_ssp._tenuissima     1177
+  The number of bases masked by RepeatMasker:     665697
+  The number of bases masked by TransposonPSI:    274429
+  The total number of masked bases are:   904953
 
- A.alternata_ssp._tenuissima	24350
- The number of bases masked by RepeatMasker:	318302
- The number of bases masked by TransposonPSI:	159189
- The total number of masked bases are:	424669
+  A.alternata_ssp._tenuissima     24350
+  The number of bases masked by RepeatMasker:     342861
+  The number of bases masked by TransposonPSI:    159189
+  The total number of masked bases are:   490075
 
- A.alternata_ssp._tenuissima	635
- The number of bases masked by RepeatMasker:	849942
- The number of bases masked by TransposonPSI:	335963
- The total number of masked bases are:	1025475
+  A.alternata_ssp._tenuissima     635
+  The number of bases masked by RepeatMasker:     817535
+  The number of bases masked by TransposonPSI:    335963
+  The total number of masked bases are:   1120419
 
- A.alternata_ssp._tenuissima	648
- The number of bases masked by RepeatMasker:	547898
- The number of bases masked by TransposonPSI:	160220
- The total number of masked bases are:	652885
+  A.alternata_ssp._tenuissima     648
+  The number of bases masked by RepeatMasker:     586453
+  The number of bases masked by TransposonPSI:    160220
+  The total number of masked bases are:   725597
 
- A.alternata_ssp._tenuissima	743
- The number of bases masked by RepeatMasker:	627923
- The number of bases masked by TransposonPSI:	333470
- The total number of masked bases are:	829749
+  A.alternata_ssp._tenuissima     743
+  The number of bases masked by RepeatMasker:     674497
+  The number of bases masked by TransposonPSI:    333470
+  The total number of masked bases are:   974591
 ```
 
 
@@ -296,7 +332,7 @@ Quality of genome assemblies was assessed by looking for the gene space in the a
   	qsub $ProgDir/sub_cegma.sh $Assembly dna
   done
 ```
-
+<!--
 results were summarised:
 
 ```bash
@@ -343,7 +379,7 @@ results were summarised:
   743_dna_cegma.completeness_report
   Complete	241	97.18
   Partial	243	97.98
-```
+``` -->
 
 ## Gene prediction 1 - Braker1 gene model training and prediction
 
@@ -456,19 +492,19 @@ corrected using the following commands:
  Cufflinks was run to produce the fragment length and stdev statistics:
 
  ```bash
-  for Assembly in $(ls repeat_masked/*/1166/*/*_contigs_softmasked.fa | head -n1); do
-    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
-    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
-    AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
-    OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated_prelim
-    echo "$Organism - $Strain"
-    mkdir -p alignment/$Organism/$Strain/concatenated
-    mkdir -p $OutDir
-    samtools merge -f $AcceptedHits \
-    alignment/$Organism/$Strain/1166/accepted_hits.bam \
-    alignment/$Organism/$Strain/650/accepted_hits.bam
-    cufflinks -o $OutDir/cufflinks -p 8 --max-intron-length 4000 $AcceptedHits 2>&1 | tee $OutDir/cufflinks/cufflinks.log
-  done
+for Assembly in $(ls repeat_masked/*/1166/*/*_contigs_softmasked.fa | head -n1); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
+OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated_prelim
+echo "$Organism - $Strain"
+mkdir -p alignment/$Organism/$Strain/concatenated
+mkdir -p $OutDir
+samtools merge -f $AcceptedHits \
+alignment/$Organism/$Strain/1166/accepted_hits.bam \
+alignment/$Organism/$Strain/650/accepted_hits.bam
+cufflinks -o $OutDir/cufflinks -p 8 --max-intron-length 4000 $AcceptedHits 2>&1 | tee $OutDir/cufflinks/cufflinks.log
+done
  ```
 
 
@@ -476,16 +512,14 @@ corrected using the following commands:
  ```
  A.alternata_ssp._tenuissima - 1166
  You are using Cufflinks v2.2.1, which is the most recent release.
- [12:28:53] Inspecting reads and determining fragment length distribution.
- > Processed 21515 loci.                        [*************************] 100%
+ > Processed 21489 loci.                        [*************************] 100%
  > Map Properties:
- >	Normalized Map Mass: 10812067.92
- >	Raw Map Mass: 10812067.92
- >	Fragment Length Distribution: Empirical (learned)
- >	              Estimated Mean: 224.66
- >	           Estimated Std Dev: 61.11
- [12:30:13] Assembling transcripts and estimating abundances.
- > Processed 21530 loci.                        [*************************] 100%
+ >       Normalized Map Mass: 10986138.17
+ >       Raw Map Mass: 10986138.17
+ >       Fragment Length Distribution: Empirical (learned)
+ >                     Estimated Mean: 224.74
+ >                  Estimated Std Dev: 61.11
+ [19:17:08] Assembling transcripts and estimating abundances.                   [*************************] 100%
  ```
 
  The Estimated Mean: 224.66 allowed calculation of of the mean insert gap to be
@@ -522,9 +556,9 @@ corrected using the following commands:
   done
  ```
 
- #### Braker prediction
+#### Braker prediction
 
- ```bash
+```bash
   for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
     Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
     Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
@@ -540,18 +574,18 @@ corrected using the following commands:
     ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/braker1
     qsub $ProgDir/sub_braker_fungi.sh $Assembly $OutDir $AcceptedHits $GeneModelName
   done
- ```
+```
 
- Fasta and gff files were extracted from Braker1 output.
+Fasta and gff files were extracted from Braker1 output.
 
- ```bash
- 	for File in $(ls gene_pred/braker/F.*/*_braker/*/augustus.gff); do
- 		getAnnoFasta.pl $File
- 		OutDir=$(dirname $File)
- 		echo "##gff-version 3" > $OutDir/augustus_extracted.gff
- 		cat $File | grep -v '#' >> $OutDir/augustus_extracted.gff
- 	done
- ```
+```bash
+  for File in $(ls gene_pred/braker/A.*/*_braker/*/augustus.gff); do
+    getAnnoFasta.pl $File
+    OutDir=$(dirname $File)
+    echo "##gff-version 3" > $OutDir/augustus_extracted.gff
+    cat $File | grep -v '#' >> $OutDir/augustus_extracted.gff
+  done
+```
 
 <!--
  Cufflinks was run to compare the predicted genes to assembled transcripts:
@@ -575,28 +609,28 @@ corrected using the following commands:
  -->
 
 
- ## Supplimenting Braker gene models with CodingQuary genes
+## Supplimenting Braker gene models with CodingQuary genes
 
- Additional genes were added to Braker gene predictions, using CodingQuary in
- pathogen mode to predict additional regions.
+Additional genes were added to Braker gene predictions, using CodingQuary in
+pathogen mode to predict additional regions.
 
- Fistly, aligned RNAseq data was assembled into transcripts using Cufflinks.
+Fistly, aligned RNAseq data was assembled into transcripts using Cufflinks.
 
- Note - cufflinks doesn't always predict direction of a transcript and
- therefore features can not be restricted by strand when they are intersected.
+Note - cufflinks doesn't always predict direction of a transcript and
+therefore features can not be restricted by strand when they are intersected.
 
- ```bash
-  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
-    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
-    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
-    echo "$Organism - $Strain"
-    OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated
-    mkdir -p $OutDir
-    AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
-    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
-    qsub $ProgDir/sub_cufflinks.sh $AcceptedHits $OutDir
-  done
- ```
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated
+mkdir -p $OutDir
+AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+qsub $ProgDir/sub_cufflinks.sh $AcceptedHits $OutDir
+done
+```
 
  Secondly, genes were predicted using CodingQuary:
 
