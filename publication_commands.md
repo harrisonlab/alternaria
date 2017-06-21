@@ -253,64 +253,64 @@ done
 
 ```bash
   A.alternata_ssp._arborescens    675
-  The number of bases masked by RepeatMasker:     694458
-  The number of bases masked by TransposonPSI:    325226
-  The total number of masked bases are:   928262
+  The number of bases masked by RepeatMasker:     667057
+  The number of bases masked by TransposonPSI:    330735
+  The total number of masked bases are:   756455
 
   A.alternata_ssp._arborescens    97.0013
-  The number of bases masked by RepeatMasker:     782525
-  The number of bases masked by TransposonPSI:    355274
-  The total number of masked bases are:   1057811
+  The number of bases masked by RepeatMasker:     689319
+  The number of bases masked by TransposonPSI:    346346
+  The total number of masked bases are:   847870
 
   A.alternata_ssp._arborescens    97.0016
-  The number of bases masked by RepeatMasker:     710488
-  The number of bases masked by TransposonPSI:    337525
-  The total number of masked bases are:   957235
+  The number of bases masked by RepeatMasker:     547762
+  The number of bases masked by TransposonPSI:    348895
+  The total number of masked bases are:   703239
 
   A.alternata_ssp._gaisen 650
-  The number of bases masked by RepeatMasker:     305221
-  The number of bases masked by TransposonPSI:    213597
-  The total number of masked bases are:   501714
+  The number of bases masked by RepeatMasker:     347743
+  The number of bases masked by TransposonPSI:    211034
+  The total number of masked bases are:   484279
 
   A.alternata_ssp._tenuissima     1082
-  The number of bases masked by RepeatMasker:     558444
-  The number of bases masked by TransposonPSI:    244175
-  The total number of masked bases are:   780869
+  The number of bases masked by RepeatMasker:     517100
+  The number of bases masked by TransposonPSI:    245543
+  The total number of masked bases are:   652433
 
   A.alternata_ssp._tenuissima     1164
-  The number of bases masked by RepeatMasker:     791244
-  The number of bases masked by TransposonPSI:    270404
-  The total number of masked bases are:   1029717
+  The number of bases masked by RepeatMasker:     774735
+  The number of bases masked by TransposonPSI:    268881
+  The total number of masked bases are:   921640
 
   A.alternata_ssp._tenuissima     1166
-  The number of bases masked by RepeatMasker:     499657
-  The number of bases masked by TransposonPSI:    262625
-  The total number of masked bases are:   741024
+  The number of bases masked by RepeatMasker:     809458
+  The number of bases masked by TransposonPSI:    251126
+  The total number of masked bases are:   928141
 
   A.alternata_ssp._tenuissima     1177
-  The number of bases masked by RepeatMasker:     665697
-  The number of bases masked by TransposonPSI:    274429
-  The total number of masked bases are:   904953
+  The number of bases masked by RepeatMasker:     831959
+  The number of bases masked by TransposonPSI:    269647
+  The total number of masked bases are:   961830
 
   A.alternata_ssp._tenuissima     24350
-  The number of bases masked by RepeatMasker:     342861
-  The number of bases masked by TransposonPSI:    159189
-  The total number of masked bases are:   490075
+  The number of bases masked by RepeatMasker:     350330
+  The number of bases masked by TransposonPSI:    160521
+  The total number of masked bases are:   422571
 
   A.alternata_ssp._tenuissima     635
-  The number of bases masked by RepeatMasker:     817535
-  The number of bases masked by TransposonPSI:    335963
-  The total number of masked bases are:   1120419
+  The number of bases masked by RepeatMasker:     845652
+  The number of bases masked by TransposonPSI:    334677
+  The total number of masked bases are:   995496
 
   A.alternata_ssp._tenuissima     648
-  The number of bases masked by RepeatMasker:     586453
-  The number of bases masked by TransposonPSI:    160220
-  The total number of masked bases are:   725597
+  The number of bases masked by RepeatMasker:     582929
+  The number of bases masked by TransposonPSI:    159935
+  The total number of masked bases are:   678200
 
   A.alternata_ssp._tenuissima     743
-  The number of bases masked by RepeatMasker:     674497
-  The number of bases masked by TransposonPSI:    333470
-  The total number of masked bases are:   974591
+  The number of bases masked by RepeatMasker:     771343
+  The number of bases masked by TransposonPSI:    329935
+  The total number of masked bases are:   917461
 ```
 
 
@@ -332,6 +332,185 @@ Quality of genome assemblies was assessed by looking for the gene space in the a
   	qsub $ProgDir/sub_cegma.sh $Assembly dna
   done
 ```
+
+
+
+Busco has replaced CEGMA and was run to check gene space in assemblies
+
+```bash
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+		Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+		Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+		echo "$Organism - $Strain"
+		ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+		# BuscoDB="Fungal"
+		BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/sordariomyceta_odb9)
+		OutDir=gene_pred/busco/$Organism/$Strain/assembly
+		qsub $ProgDir/sub_busco2.sh $Assembly $BuscoDB $OutDir
+	done
+```
+
+```bash
+	for File in $(ls gene_pred/busco/F*/*/assembly/*/short_summary_*.txt); do  
+		echo $File;
+		cat $File | grep -e '(C)' -e 'Total';
+	done
+```
+
+#Gene prediction
+
+Gene prediction was performed for Alternaria genomes. Two gene prediction
+approaches were used:
+
+Gene prediction using Braker1
+Prediction of all putative ORFs in the genome using the ORF finder (atg.pl)
+approach.
+
+
+## Gene prediction 1 - Braker1 gene model training and prediction
+
+Gene prediction was performed using Braker1.
+
+Data quality was visualised using fastqc:
+```bash
+	for RawData in raw_rna/paired/*/*/*/*.fastq.gz; do
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
+		echo $RawData;
+		qsub $ProgDir/run_fastqc.sh $RawData
+	done
+```
+
+Trimming was performed on data to trim adapters from
+sequences and remove poor quality data. This was done with fastq-mcf
+
+```bash
+	for StrainPath in raw_rna/paired/*/*; do
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/rna_qc
+		IlluminaAdapters=/home/armita/git_repos/emr_repos/tools/seq_tools/ncbi_adapters.fa
+		ReadsF=$(ls $StrainPath/F/*.fastq.gz)
+		ReadsR=$(ls $StrainPath/R/*.fastq.gz)
+		echo $ReadsF
+		echo $ReadsR
+		qsub $ProgDir/rna_qc_fastq-mcf.sh $ReadsF $ReadsR $IlluminaAdapters RNA
+	done
+```
+
+Data quality was visualised once again following trimming:
+```bash
+	for TrimData in qc_rna/paired/*/*/*/*.fastq.gz; do
+		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
+		echo $RawData;
+		qsub $ProgDir/run_fastqc.sh $TrimData
+	done
+```
+
+
+#### Aligning
+
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+for FileF in $(ls qc_rna/paired/*/*/F/*.fastq.gz); do
+Jobs=$(qstat | grep 'sub_sta' | grep 'qw'| wc -l)
+while [ $Jobs -gt 1 ]; do
+sleep 1m
+printf "."
+Jobs=$(qstat | grep 'sub_sta' | grep 'qw'| wc -l)
+done
+printf "\n"
+FileR=$(echo $FileF | sed 's&/F/&/R/&g' | sed 's/F.fastq.gz/R.fastq.gz/g')
+echo $FileF
+echo $FileR
+Prefix=$(echo $FileF | rev | cut -f3 -d '/' | rev)
+# Timepoint=$(echo $FileF | rev | cut -f2 -d '/' | rev)
+Timepoint="treatment"
+#echo "$Timepoint"
+OutDir=alignment/star/$Organism/$Strain/$Timepoint/$Prefix
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+qsub $ProgDir/sub_star.sh $Assembly $FileF $FileR $OutDir
+done
+done
+```
+
+Accepted hits .bam file were concatenated and indexed for use for gene model training:
+
+
+```bash
+for OutDir in $(ls -d alignment/star/*/*); do
+  Strain=$(echo $OutDir | rev | cut -d '/' -f1 | rev)
+  Organism=$(echo $OutDir | rev | cut -d '/' -f2 | rev)
+  echo "$Organism - $Strain"
+  # For all alignments
+  BamFiles=$(ls $OutDir/treatment/*/*.sortedByCoord.out.bam | tr -d '\n' | sed 's/.bam/.bam /g')
+  mkdir -p $OutDir/concatenated
+  samtools merge -f $OutDir/concatenated/concatenated.bam $BamFiles
+done
+```
+
+
+#### Braker prediction
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+mkdir -p alignment/$Organism/$Strain/concatenated
+OutDir=gene_pred/braker/$Organism/"$Strain"_braker
+AcceptedHits=$(ls alignment/star/$Organism/$Strain/concatenated/concatenated.bam)
+GeneModelName="$Organism"_"$Strain"_braker
+rm -r /home/armita/prog/augustus-3.1/config/species/"$Organism"_"$Strain"_braker
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/braker1
+qsub $ProgDir/sub_braker_fungi.sh $Assembly $OutDir $AcceptedHits $GeneModelName
+done
+```
+
+** Number of genes predicted:  **
+
+
+## Supplimenting Braker gene models with CodingQuary genes
+
+Additional genes were added to Braker gene predictions, using CodingQuary in
+pathogen mode to predict additional regions.
+
+Firstly, aligned RNAseq data was assembled into transcripts using Cufflinks.
+
+Note - cufflinks doesn't always predict direction of a transcript and
+therefore features can not be restricted by strand when they are intersected.
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated
+mkdir -p $OutDir
+AcceptedHits=$(ls alignment/star/$Organism/$Strain/concatenated/concatenated.bam)
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+qsub $ProgDir/sub_cufflinks.sh $AcceptedHits $OutDir
+done
+```
+
+
+Secondly, genes were predicted using CodingQuary:
+
+```bash
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+    echo "$Organism - $Strain"
+    OutDir=gene_pred/codingquary/$Organism/$Strain
+    CufflinksGTF=$(ls gene_pred/cufflinks/$Organism/$Strain/concatenated/transcripts.gtf)
+    ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+    qsub $ProgDir/sub_CodingQuary.sh $Assembly $CufflinksGTF $OutDir
+  done
+```
+
+
+
 <!--
 results were summarised:
 
@@ -620,21 +799,28 @@ Note - cufflinks doesn't always predict direction of a transcript and
 therefore features can not be restricted by strand when they are intersected.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
-Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
-Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
-echo "$Organism - $Strain"
-OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated
-mkdir -p $OutDir
-AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
-ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
-qsub $ProgDir/sub_cufflinks.sh $AcceptedHits $OutDir
-done
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+    echo "$Organism - $Strain"
+    OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated
+    mkdir -p $OutDir
+    AcceptedHits=alignment/$Organism/$Strain/concatenated/concatenated.bam
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+    qsub $ProgDir/sub_cufflinks.sh $AcceptedHits $OutDir
+  done
 ```
 
  Secondly, genes were predicted using CodingQuary:
 
  ```bash
+  Jobs=$(qstat | grep 'sub_cuffli' | wc -l)
+  while [ $Jobs -gt 1 ]; do
+    sleep 10
+    printf "."
+    Jobs=$(qstat | grep 'sub_cuffli' | wc -l)
+  done
+  printf "\n"
   for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa); do
     Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
     Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
