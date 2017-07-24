@@ -697,7 +697,7 @@ done
 
 ## Small secreted proteins
 
-Putative RxLR genes were identified within Augustus gene models using a number
+Putative effectors identified within Augustus gene models using a number
 of approaches:
 
  * A) From Braker gene models - Signal peptide & small cystein rich protein
@@ -836,9 +836,9 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 Predicted gene models were searched against the PHIbase database using tBLASTx.
 
 ```bash
-  for Subject in $(ls repeat_masked/A.alternata_ssp._*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Subject in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
-    Query=../../phibase/v3.8/PHI_accessions.fa
+    Query=../../phibase/v4.2/PHI_accessions.fa
     qsub $ProgDir/blast_pipe.sh $Query protein $Subject
   done
 ```
@@ -851,7 +851,7 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 
 
 ```bash
-  for Subject in $(ls repeat_masked/A.alternata_ssp._*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Subject in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
     Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa
     qsub $ProgDir/blast_pipe.sh $Query dna $Subject
