@@ -9,8 +9,8 @@ fasta file of contigs and the gff file of annotations must be combined to form a
 files and gff files to be formatted correctly. In the case of the gff file, this
 means parsing it to a .tbl file.
 
-The commands used to parse these files and prepare the F. oxysporum f. sp.
-cepae genome for submisson are shown below.
+The commands used to parse these files and prepare the Alternaria spp. genomes
+for submisson are shown below.
 
 
 # Preliminary submission
