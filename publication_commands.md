@@ -618,27 +618,34 @@ In preperation for submission to ncbi, gene models were renamed and duplicate ge
 
 ```bash
 for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3); do
-  Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
-  Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
-  echo "$Organism - $Strain"
-  ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
-  $ProgDir/remove_dup_features.py --inp_gff $GffAppended
+Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
+Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+$ProgDir/remove_dup_features.py --inp_gff $GffAppended
+$ProgDir/remove_dup_features.py --inp_gff $GffAppended | grep -A2 'Duplicate gene found' | tail -n1 | cut -f2 -d'=' > $FinalDir/filter_list.tmp
+GffFiltered=$FinalDir/filtered_duplicates.gff
+cat $GffAppended | grep -v -w -f $FinalDir/filter_list.tmp > $GffFiltered
+rm $FinalDir/filter_list.tmp
+FinalDir=gene_pred/final/$Organism/$Strain/final
+GffRenamed=$FinalDir/final_genes_appended_renamed.gff3
+LogFile=$FinalDir/final_genes_appended_renamed.log
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+$ProgDir/gff_rename_genes.py --inp_gff $GffFiltered --conversion_log $LogFile > $GffRenamed
+rm $GffFiltered
 
-  GffRenamed=$FinalDir/final_genes_appended_renamed.gff3
-  ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
-  $ProgDir/gff_rename_genes.py --inp_gff $GffAppended > $GffRenamed
+Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs_repmask/*_softmasked_repeatmasker_TPSI_appended.fa)
+$ProgDir/gff2fasta.pl $Assembly $GffRenamed gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed
 
-  Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs_repmask/*_softmasked_repeatmasker_TPSI_appended.fa)
-  $ProgDir/gff2fasta.pl $Assembly $GffRenamed gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed
-
-  # The proteins fasta file contains * instead of Xs for stop codons, these should
-  # be changed
-  sed -i 's/\*/X/g' gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.pep.fasta
+# The proteins fasta file contains * instead of Xs for stop codons, these should
+# be changed
+sed -i 's/\*/X/g' gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.pep.fasta
 done
 ```
 
-No duplicate genes were found as a result of editing codingquary splice variants
+No duplicate genes were found.
 ```bash
+
 ```
 
 #Functional annotation
