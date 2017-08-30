@@ -136,10 +136,10 @@ Quast
 
 ```bash
   ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
-    for Assembly in $(ls assembly/spades/*/*/filtered_contigs/contigs_min_500bp.fasta); do
+    for Assembly in $(ls assembly/spades/*/*/ncbi_edits/contigs_min_500bp.fasta); do
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
-    OutDir=assembly/spades/$Organism/$Strain/filtered_contigs
+    OutDir=assembly/spades/$Organism/$Strain/ncbi_edits
     qsub $ProgDir/sub_quast.sh $Assembly $OutDir
   done
 ```
@@ -147,7 +147,7 @@ Quast
 The results of quast were shown using the following commands:
 
 ```bash
-  for Assembly in $(ls assembly/spades/*/*/filtered_contigs/report.txt); do
+  for Assembly in $(ls assembly/spades/*/*/ncbi_edits/report.txt); do
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
     echo;
@@ -166,10 +166,10 @@ Contigs were renamed in accordance with ncbi recomendations.
 ```bash
   ProgDir=~/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/remove_contaminants
   touch tmp.csv
-  for Assembly in $(ls assembly/spades/*/*/filtered_contigs/contigs_min_500bp.fasta); do
+  for Assembly in $(ls assembly/spades/*/*/ncbi_edits/contigs_min_500bp.fasta); do
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
-    OutDir=assembly/spades/$Organism/$Strain/filtered_contigs
+    OutDir=assembly/spades/$Organism/$Strain/ncbi_edits
     $ProgDir/remove_contaminants.py --inp $Assembly --out $OutDir/contigs_min_500bp_renamed.fasta --coord_file tmp.csv
   done
   rm tmp.csv
@@ -198,7 +198,7 @@ NCBI reports (FCSreport.txt) were manually downloaded to the following loactions
 These downloaded files were used to correct assemblies:
 
 ```bash
-for Assembly in $(ls assembly/spades/*/*/filtered_contigs/contigs_min_500bp_renamed.fasta); do
+for Assembly in $(ls assembly/spades/*/*/ncbi_edits/contigs_min_500bp_renamed.fasta); do
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -223,7 +223,7 @@ Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 echo "$Organism"
 echo "$Strain"
-OutDir=repeat_masked/$Organism/$Strain/filtered_contigs_repmask
+OutDir=repeat_masked/$Organism/$Strain/ncbi_edits_repmask
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
 qsub $ProgDir/rep_modeling.sh $Assembly $OutDir
 qsub $ProgDir/transposonPSI.sh $Assembly $OutDir
@@ -235,7 +235,7 @@ done
  using the following commands:
 
  ```bash
-  for RepDir in $(ls -d repeat_masked/*/*/filtered_contigs_repmask); do
+  for RepDir in $(ls -d repeat_masked/*/*/ncbi_edits_repmask); do
     Strain=$(echo $RepDir | rev | cut -f2 -d '/' | rev)
     Organism=$(echo $RepDir | rev | cut -f3 -d '/' | rev)  
     RepMaskGff=$(ls $RepDir/*_contigs_hardmasked.gff)
@@ -318,7 +318,7 @@ repeatmasker / repeatmodeller softmasked and hardmasked files.
 
 ```bash
 
-for File in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_softmasked.fa); do
+for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_softmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_softmasked.fa/_contigs_softmasked_repeatmasker_TPSI_appended.fa/g')
@@ -328,7 +328,7 @@ echo "Number of masked bases:"
 cat $OutFile | grep -v '>' | tr -d '\n' | awk '{print $0, gsub("[a-z]", ".")}' | cut -f2 -d ' '
 done
 # The number of N's in hardmasked sequence are not counted as some may be present within the assembly and were therefore not repeatmasked.
-for File in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_hardmasked.fa); do
+for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_hardmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_hardmasked.fa/_contigs_hardmasked_repeatmasker_TPSI_appended.fa/g')
@@ -338,7 +338,7 @@ done
 ```
 
 ```bash
-for RepDir in $(ls -d repeat_masked/*/*/filtered_contigs_repmask); do
+for RepDir in $(ls -d repeat_masked/*/*/ncbi_edits_repmask); do
 Strain=$(echo $RepDir | rev | cut -f2 -d '/' | rev)
 Organism=$(echo $RepDir | rev | cut -f3 -d '/' | rev)  
 RepMaskGff=$(ls $RepDir/*_contigs_hardmasked.gff)
@@ -354,18 +354,18 @@ done
 ```
 
 ```
-A.alternata_ssp._arborescens	675	667057	330735	756455
-A.alternata_ssp._arborescens	97.0013	689319	346346	847870
-A.alternata_ssp._arborescens	97.0016	547762	348895	703239
-A.alternata_ssp._gaisen	650	347743	211034	484279
-A.alternata_ssp._tenuissima	1082	517100	245543	652433
-A.alternata_ssp._tenuissima	1164	774735	268881	921640
-A.alternata_ssp._tenuissima	1166	809458	251126	928141
-A.alternata_ssp._tenuissima	1177	831959	269647	961830
-A.alternata_ssp._tenuissima	24350	350330	160521	422571
-A.alternata_ssp._tenuissima	635	845652	334677	995496
-A.alternata_ssp._tenuissima	648	582929	159935	678200
-A.alternata_ssp._tenuissima	743	771343	329935	917461
+A.alternata_ssp._arborescens	675	764901	330735	853273
+A.alternata_ssp._arborescens	97.0013	846080	346346	955052
+A.alternata_ssp._arborescens	97.0016	653247	348895	783649
+A.alternata_ssp._gaisen	650	347610	211034	480031
+A.alternata_ssp._tenuissima	1082	485588	245543	627818
+A.alternata_ssp._tenuissima	1164	845729	268881	983226
+A.alternata_ssp._tenuissima	1166	563743	251126	684063
+A.alternata_ssp._tenuissima	1177	699137	269647	865317
+A.alternata_ssp._tenuissima	24350	406564	160521	466485
+A.alternata_ssp._tenuissima	635	747976	334677	953149
+A.alternata_ssp._tenuissima	648	538913	159935	657864
+A.alternata_ssp._tenuissima	743	703937	329935	868641
 ```
 
 
@@ -378,7 +378,7 @@ Gene models were used to predict genes in the Alternaria genomes.
 Quality of genome assemblies was assessed by looking for the gene space in the assemblies.
 <!--
 ```bash
-  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
     echo "$Organism"
@@ -391,12 +391,11 @@ Quality of genome assemblies was assessed by looking for the gene space in the a
 Busco has replaced CEGMA and was run to check gene space in assemblies
 
 ```bash
-  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
 		Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 		Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 		echo "$Organism - $Strain"
 		ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
-		# BuscoDB="Fungal"
 		BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/sordariomyceta_odb9)
 		OutDir=gene_pred/busco/$Organism/$Strain/assembly
 		qsub $ProgDir/sub_busco2.sh $Assembly $BuscoDB $OutDir
@@ -462,7 +461,7 @@ Data quality was visualised once again following trimming:
 
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -492,7 +491,7 @@ Accepted hits .bam file were concatenated and indexed for use for gene model tra
 
 
 ```bash
-for OutDir in $(ls -d alignment/star/*/*); do
+for OutDir in $(ls -d alignment/star/*/* | grep '1177'); do
   Strain=$(echo $OutDir | rev | cut -d '/' -f1 | rev)
   Organism=$(echo $OutDir | rev | cut -d '/' -f2 | rev)
   echo "$Organism - $Strain"
@@ -507,7 +506,7 @@ done
 #### Braker prediction
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -535,7 +534,7 @@ Note - cufflinks doesn't always predict direction of a transcript and
 therefore features can not be restricted by strand when they are intersected.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -551,7 +550,7 @@ done
 Secondly, genes were predicted using CodingQuary:
 
 ```bash
-  for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
     Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
     Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
     echo "$Organism - $Strain"
@@ -568,11 +567,11 @@ genes were predicted in regions of the genome, not containing Braker gene
 models:
 
 ```bash
-for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3); do
+for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep '1177'); do
 Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker//g')
 Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
-Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs_repmask/*_softmasked_repeatmasker_TPSI_appended.fa)
+Assembly=$(ls repeat_masked/$Organism/$Strain/ncbi_edits_repmask/*_softmasked_repeatmasker_TPSI_appended.fa)
 CodingQuaryGff=gene_pred/codingquary/$Organism/$Strain/out/PredictedPass.gff3
 PGNGff=gene_pred/codingquary/$Organism/$Strain/out/PGN_predictedPass.gff3
 AddDir=gene_pred/codingquary/$Organism/$Strain/additional
@@ -634,7 +633,7 @@ ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
 $ProgDir/gff_rename_genes.py --inp_gff $GffFiltered --conversion_log $LogFile > $GffRenamed
 rm $GffFiltered
 
-Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs_repmask/*_softmasked_repeatmasker_TPSI_appended.fa)
+Assembly=$(ls repeat_masked/$Organism/$Strain/ncbi_edits_repmask/*_softmasked_repeatmasker_TPSI_appended.fa)
 $ProgDir/gff2fasta.pl $Assembly $GffRenamed gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed
 
 # The proteins fasta file contains * instead of Xs for stop codons, these should
@@ -843,7 +842,7 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 Predicted gene models were searched against the PHIbase database using tBLASTx.
 
 ```bash
-  for Subject in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Subject in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
     Query=../../phibase/v4.2/PHI_accessions.fa
     qsub $ProgDir/blast_pipe.sh $Query protein $Subject
@@ -858,7 +857,7 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 
 
 ```bash
-  for Subject in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+  for Subject in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
     Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa
     qsub $ProgDir/blast_pipe.sh $Query dna $Subject
