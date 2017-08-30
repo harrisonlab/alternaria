@@ -39,71 +39,6 @@ the fasta files to be screened by the contamination screen
 prior to creating your final annotated submission.'
 ```
 
-<!--
-# Submission of sequence data to SRA
-
-Reads were submitted to the SRA at https://submit.ncbi.nlm.nih.gov/subs/sra/ .
-To do this, a metadata file was provided detailing each of the files in the
-bioproject. The file was downloaded in excel format and edited manually. A copy
-of the edited file and the final .tsv file is present at:
-
-```bash
-  # For genmic reads:
-  ls genome_submission/SRA_metadata_acc.txt genome_submission/SRA_metadata_acc.xlsx
-  # For RNAseq reads:
-  ls genome_submission/SRA_metadata_acc.txt genome_submission/RNAseq_SRA_metadata_acc.txt
-```
-
-As these files included a file > 500 Mb, a presubmission folder was requested.
-This aids submission of large data files. This file was created on the ftp server
-at ftp-private.ncbi.nlm.nih.gov, with a private folder named
-uploads/andrew.armitage@emr.ac.uk_6L2oakBI. Ncbi provided a username a password.
-Files were uploaded into a folder created within my preload folder using ftp.
-
-For genomic reads:
-```bash
-  # Bioproject="PRJNA338236"
-  SubFolder="FoC_PRJNA338256"
-  mkdir $SubFolder
-  for Read in $(ls raw_dna/paired/F.*/*/*/*.fastq.gz | grep -w -e '125' -e 'A23' -e 'A13' -e 'A28' -e 'CB3' -e 'PG' -e 'A8' -e 'Fus2' | grep -v s_6_*_sequence.fastq.gz); do
-    echo $Read;
-    cp $Read $SubFolder/.
-  done
-  cp raw_dna/pacbio/F.oxysporum_fsp_cepae/Fus2/extracted/concatenated_pacbio.fastq $SubFolder/.
-  cd $SubFolder
-  gzip concatenated_pacbio.fastq
-  ftp ftp-private.ncbi.nlm.nih.gov
-  cd uploads/andrew.armitage@emr.ac.uk_6L2oakBI
-  mkdir FoC_PRJNA338256_2
-  cd FoC_PRJNA338256_2
-  # put FoN_PRJNA338236
-  prompt
-  mput *
-  bye
-  cd ../
-  rm -r $SubFolder
-```
-
-For RNAseq Reads:
-```bash
-  SubFolder="FoC_RNAseq_PRJNA338256"
-  mkdir $SubFolder
-  for Read in $(ls qc_rna/paired/F.*/*/*/*_trim.fq.gz); do
-    echo $Read;
-    cp $Read $SubFolder/.
-  done
-  cd $SubFolder
-  ftp ftp-private.ncbi.nlm.nih.gov
-  cd uploads/andrew.armitage@emr.ac.uk_6L2oakBI
-  mkdir FoC_RNAseq_PRJNA338256
-  cd FoC_RNAseq_PRJNA338256
-  prompt
-  mput *
-  bye
-  cd ../
-  rm -r $SubFolder
-``` -->
-
 ## Making a table for locus tags:
 
 locus tags were provided by ncbi when the bioproject was registered.
@@ -138,7 +73,7 @@ These commands were used in the final submission of Alternaria spp. genomes:
 An output and working directory was made for genome submission:
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
   Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
   Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
   echo "$Organism - $Strain"
@@ -163,35 +98,8 @@ AnnieDir="/home/armita/prog/annie/genomeannotation-annie-c1e848b"
 ProgDir="/home/armita/git_repos/emr_repos/tools/genbank_submission"
 # File locations:
 SbtFile="genome_submission/template.sbt"
-# Assembly=$(ls repeat_masked/F.oxysporum_fsp_cepae/Fus2_canu_new/edited_contigs_repmask/Fus2_canu_contigs_unmasked.fa)
-# InterProTab=$(ls gene_pred/interproscan/F.oxysporum_fsp_cepae/Fus2_canu_new/Fus2_canu_new_interproscan.tsv)
-# SwissProtBlast=$(ls gene_pred/swissprot/F.oxysporum_fsp_cepae/Fus2_canu_new/swissprot_vJul2016_tophit_parsed.tbl)
-# SwissProtFasta=$(ls /home/groups/harrisonlab/uniprot/swissprot/uniprot_sprot.fasta)
-# GffFile=$(ls gene_pred/final_genes/F.oxysporum_fsp_cepae/Fus2_canu_new/final/final_genes_appended.gff3)
-# tbl2asn options:
-# Organism="Fusarium oxysporum f. sp. cepae"
-# Strain="Fus2"
-# ncbi_tbl_corrector script options:
-# SubmissionID="BFJ65"
 LabID="ArmitageEMR"
-# GeneSource='ab initio prediction:Braker:1.9, CodingQuary:2.0'
-# IDSource='similar to AA sequence:SwissProt:2016_07'
-# IDSource='similar to AA sequence:UniProtKB/Swiss-Prot'
-# Final submisison file name:
-# FinalName="FoC_Fus2_Armitage_2016"
 ```
-
-<!-- ## Preparing Gff input file
-
-Parse the Augustus Gff file.
-Transcripts should be renamed as mRNA features. Exons should be added to the
-Gff and unique IDs should be given to all features in the file.
-
-```bash
-# cat $GffFile | sed 's/transcript/mRNA/g' > $OutDir/GffMRNA.gff
-# $ProgDir/generate_tbl_file/exon_generator.pl $OutDir/GffMRNA.gff > $OutDir/corrected_exons.gff
-# $ProgDir/generate_tbl_file/gff_add_id.py --inp_gff $OutDir/corrected_exons.gff --out_gff $OutDir/corrected_exons_id.gff
-``` -->
 
 ## Generating .tbl file (GAG)
 
@@ -210,7 +118,7 @@ Note - It is important that transcripts have been re-labelled as mRNA by this
 point.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa | grep '1164'); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   echo "$Organism - $Strain"
@@ -232,7 +140,7 @@ Gag was run using the modified gff file as well as the annie annotation file.
 Gag was noted to output database references incorrectly, so these were modified.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 echo "$Organism - $Strain"
@@ -264,7 +172,7 @@ Note - all input files for tbl2asn need to be in the same directory and have the
 same basename.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 echo "$Organism - $Strain"
@@ -302,7 +210,7 @@ them as incomplete ('unknown_UTR').
 ``` -->
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   echo "$Organism - $Strain"
@@ -320,7 +228,7 @@ done
 ## Generating a structured comment detailing annotation methods
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   echo "$Organism - $Strain"
@@ -344,11 +252,12 @@ sequence, these options show that paired-ends have been used to estimate gaps
 and that runs of N's longer than 10 bp should be labelled as gaps.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   echo "$Organism - $Strain"
   OutDir="genome_submission/$Organism/$Strain"
+  FinalName="$Organism"_"$Strain"_Armitage_2017
   cp $Assembly $OutDir/gag/edited/genome.fsa
   cp $SbtFile $OutDir/gag/edited/genome.sbt
   mkdir $OutDir/tbl2asn/final
@@ -378,7 +287,7 @@ BFJ70 SAMN05529102 Fo_PG
 BFJ71 SAMN05529103 Fo_CB3
 BFJ72 SAMN05529104 Fp_A8" \
 > $LocusTags
-for Assembly in $(ls repeat_masked/F.oxysporum_fsp_cepae/*/filtered_contigs_repmask/*_contigs_unmasked.fa | grep -e '125' -e 'A23' | grep -v -e 'ncbi'); do
+for Assembly in $(ls repeat_masked/F.oxysporum_fsp_cepae/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep -e '125' -e 'A23' | grep -v -e 'ncbi'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
