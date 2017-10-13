@@ -567,7 +567,7 @@ genes were predicted in regions of the genome, not containing Braker gene
 models:
 
 ```bash
-for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep '1177'); do
+for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3); do
 Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker//g')
 Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
