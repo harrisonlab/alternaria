@@ -118,7 +118,7 @@ Note - It is important that transcripts have been re-labelled as mRNA by this
 point.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '675'); do
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   echo "$Organism - $Strain"
@@ -140,7 +140,7 @@ Gag was run using the modified gff file as well as the annie annotation file.
 Gag was noted to output database references incorrectly, so these were modified.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '675'); do
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 echo "$Organism - $Strain"
@@ -172,7 +172,7 @@ Note - all input files for tbl2asn need to be in the same directory and have the
 same basename.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '675'); do
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 echo "$Organism - $Strain"
@@ -210,17 +210,17 @@ them as incomplete ('unknown_UTR').
 ``` -->
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
-  Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
-  Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
-  echo "$Organism - $Strain"
-  OutDir="genome_submission/$Organism/$Strain"
-  SubmissionID=$(cat genome_submission/Aalt_PRJNA360212_locus_tags.txt | grep "$Strain" | cut -f1 -d ' ')
-  echo $SubmissionID
-  mkdir -p $OutDir/gag/edited
-  ProgDir=/home/armita/git_repos/emr_repos/tools/genbank_submission
-  $ProgDir/edit_tbl_file/ncbi_tbl_corrector.py --inp_tbl $OutDir/gag/round1/genome.tbl --inp_val $OutDir/tbl2asn/round1/genome.val --locus_tag $SubmissionID --lab_id $LabID --gene_id "remove" --edits stop pseudo unknown_UTR correct_partial --remove_product_locus_tags "True" --out_tbl $OutDir/gag/edited/genome.tbl
-  # $OutDir/tbl2asn/round1/genome.val --locus_tag $SubmissionID --lab_id $LabID --gene_id "remove" --edits stop pseudo unknown_UTR correct_partial --rename_genes "g" --remove_product_locus_tags "True" --out_tbl $OutDir/gag/edited/genome.tbl
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '675'); do
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+echo "$Organism - $Strain"
+OutDir="genome_submission/$Organism/$Strain"
+SubmissionID=$(cat genome_submission/Aalt_PRJNA360212_locus_tags.txt | grep "$Strain" | cut -f1 -d ' ')
+echo $SubmissionID
+mkdir -p $OutDir/gag/edited
+ProgDir=/home/armita/git_repos/emr_repos/tools/genbank_submission
+$ProgDir/edit_tbl_file/ncbi_tbl_corrector.py --inp_tbl $OutDir/gag/round1/genome.tbl --inp_val $OutDir/tbl2asn/round1/genome.val --locus_tag $SubmissionID --lab_id $LabID --gene_id "remove" --edits stop pseudo unknown_UTR correct_partial --remove_product_locus_tags "True" --del_name_from_prod "True" --out_tbl $OutDir/gag/edited/genome.tbl
+# $OutDir/tbl2asn/round1/genome.val --locus_tag $SubmissionID --lab_id $LabID --gene_id "remove" --edits stop pseudo unknown_UTR correct_partial --rename_genes "g" --remove_product_locus_tags "True" --out_tbl $OutDir/gag/edited/genome.tbl
 done
 ```
 
@@ -252,7 +252,7 @@ sequence, these options show that paired-ends have been used to estimate gaps
 and that runs of N's longer than 10 bp should be labelled as gaps.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '675'); do
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   echo "$Organism - $Strain"
