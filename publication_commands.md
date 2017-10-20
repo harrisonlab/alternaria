@@ -506,7 +506,7 @@ done
 #### Braker prediction
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -567,7 +567,7 @@ genes were predicted in regions of the genome, not containing Braker gene
 models:
 
 ```bash
-  for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3); do
+  for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep '1177'); do
     Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker//g')
     Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
     echo "$Organism - $Strain"
@@ -614,7 +614,7 @@ In preperation for submission to ncbi, gene models were renamed and duplicate ge
 
 
 ```bash
-  for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3); do
+  for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3 | grep -v '1177'); do
     Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
     Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
     echo "$Organism - $Strain"
@@ -657,7 +657,7 @@ was redirected to a temporary output file named interproscan_submission.log .
 ```bash
 	screen -a
 	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
-	for Genes in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta); do
+	for Genes in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep '1177'); do
 	echo $Genes
 	$ProgDir/sub_interproscan.sh $Genes
 	done 2>&1 | tee -a interproscan_submisison.log
