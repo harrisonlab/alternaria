@@ -521,6 +521,23 @@ done
 ```
 
 ** Number of genes predicted:  **
+<!--
+Prediction of V.inequalis gene models for tom
+```bash
+for Assembly in $(ls ../venturia/repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa | grep '172_pacbio'); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+mkdir -p alignment/$Organism/$Strain/concatenated
+OutDir=gene_pred/braker/$Organism/"$Strain"_braker
+# AcceptedHits=$(ls alignment/star/$Organism/$Strain/concatenated/concatenated.bam)
+AcceptedHits=$(ls ../venturia/alignment/repeat_masked/v.inaequalis/172_pacbio/concatenated/concatenated.bam)
+GeneModelName="$Organism"_"$Strain"_braker
+rm -r /home/armita/prog/augustus-3.1/config/species/"$Organism"_"$Strain"_braker
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/braker1
+qsub $ProgDir/sub_braker_fungi.sh $Assembly $OutDir $AcceptedHits $GeneModelName
+done
+``` -->
 
 
 ## Supplimenting Braker gene models with CodingQuary genes
