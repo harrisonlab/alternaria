@@ -229,6 +229,14 @@ number of unique groups of inparalogs
 ```
 -->
 
+## Plot venn diagrams:
+
+```bash
+  ProgDir=~/git_repos/emr_repos/scripts/alternaria/pathogen/orthology
+  $ProgDir/Aten_Aarb_Agai_venn.r --inp $WorkDir/"$IsolateAbrv"_orthogroups.tab --out $WorkDir/"$IsolateAbrv"_orthogroups.pdf
+```
+
+
 
 # 6) Downstream analysis
 
@@ -254,50 +262,50 @@ First variables were set:
 ```bash
 for num in 1; do
   # AtenUniq
-  AtenUniqDir=$WorkDir/A.tenuissima_unique
-  Uniq_Aten_groups=$AtenPathUniqDir/A.tenuissima_unique.txt
-  mkdir -p $AtenUniqDir
-  cat $Orthogroups | grep -e 'At_1' | grep -e 'At_2' | grep -e 'At_3' | grep -e 'At_4' | grep -e 'At_5' | grep -e 'At_6' | grep -e 'At_7' | grep -e 'At_8' | grep -v -e 'Aa' -e 'Ag' > $Uniq_Aten_groups
-  echo "The number of orthogroups unique to A.tenuissima apple pathotype are:"
-  cat $Uniq_Aten_groups | wc -l
-  echo "The following number genes from isolate 648 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_1' | wc -l
-  echo "The following number genes from isolate 1082 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_2' | wc -l
-  echo "The following number genes from isolate 1164 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_3' | wc -l
-  echo "The following number genes from isolate 24350 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_4' | wc -l
-  echo "The following number genes from isolate 648 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_5' | wc -l
-  echo "The following number genes from isolate 743 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_6' | wc -l
-  echo "The following number genes from isolate 1166 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_7' | wc -l
-  echo "The following number genes from isolate 1177 are contained in these orthogorups:"
-  cat $Uniq_Aten_groups | grep -o -e 'At_8' | wc -l
+AtenUniqDir=$WorkDir/A.tenuissima_unique
+Uniq_Aten_groups=$AtenUniqDir/A.tenuissima_unique.txt
+mkdir -p $AtenUniqDir
+cat $Orthogroups | grep -e 'At_1' | grep -e 'At_2' | grep -e 'At_3' | grep -e 'At_4' | grep -e 'At_5' | grep -e 'At_6' | grep -e 'At_7' | grep -e 'At_8' | grep -v -e 'Aa' -e 'Ag' > $Uniq_Aten_groups
+echo "The number of orthogroups unique to A.tenuissima apple pathotype are:"
+cat $Uniq_Aten_groups | wc -l
+echo "The following number genes from isolate 648 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_1' | wc -l
+echo "The following number genes from isolate 1082 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_2' | wc -l
+echo "The following number genes from isolate 1164 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_3' | wc -l
+echo "The following number genes from isolate 24350 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_4' | wc -l
+echo "The following number genes from isolate 648 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_5' | wc -l
+echo "The following number genes from isolate 743 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_6' | wc -l
+echo "The following number genes from isolate 1166 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_7' | wc -l
+echo "The following number genes from isolate 1177 are contained in these orthogorups:"
+cat $Uniq_Aten_groups | grep -o -e 'At_8' | wc -l
 done
 ```
 
 ```
-The number of orthogroups unique to A. tenuissima are:
-21
+The number of orthogroups unique to A.tenuissima apple pathotype are:
+42
 The following number genes from isolate 648 are contained in these orthogorups:
-22
+43
 The following number genes from isolate 1082 are contained in these orthogorups:
-25
+45
 The following number genes from isolate 1164 are contained in these orthogorups:
-24
+43
 The following number genes from isolate 24350 are contained in these orthogorups:
-23
+43
 The following number genes from isolate 648 are contained in these orthogorups:
-23
+43
 The following number genes from isolate 743 are contained in these orthogorups:
-25
+43
 The following number genes from isolate 1166 are contained in these orthogorups:
-22
+42
 The following number genes from isolate 1177 are contained in these orthogorups:
-22
+43
 ```
 
 #### 6.1.b ) Orthologroups only containing A. arborescens genes were extracted:
@@ -321,14 +329,14 @@ done
 ```
 
 ```
-The number of orthogroups unique to A. arborescens are:
-41
+The number of orthogroups unique to A.arborescens are:
+141
 The following number genes from isolate 675 are contained in these orthogorups:
-45
+146
 The following number genes from isolate 97.0013 are contained in these orthogorups:
-45
+150
 The following number genes from isolate 97.0016 are contained in these orthogorups:
-44
+145
 ```
 
 #### 6.1.c ) Orthologroups only containing A. gaisen genes were extracted:
@@ -348,10 +356,10 @@ done
 ```
 
 ```
-The number of orthogroups unique to A. gaisen pear pathotype pathotype are:
-7
+The number of orthogroups unique to A.gaisen pear pathotype pathotype are:
+8
 The following number genes from isolate 650 are contained in these orthogorups:
-15
+13
 ```
 
 #### 6.1.d ) Orthologroups only containing A. tenuissima non pathotype genes were extracted:
@@ -360,10 +368,10 @@ The following number genes from isolate 650 are contained in these orthogorups:
 for num in 1; do
   # AtenNonPathUniq
   AtenNonPathUniqDir=$WorkDir/A.tenuissima_non_pathotype_unique
-  Uniq_AtenNonPath_groups=$AtenPathUniqDir/A.tenuissima_non_pathotype_unique.txt
+  Uniq_AtenNonPath_groups=$AtenNonPathUniqDir/A.tenuissima_non_pathotype_unique.txt
   mkdir -p $AtenNonPathUniqDir
   cat $Orthogroups | grep -e 'At_1' | grep -e 'At_2' | grep -e 'At_3' | grep -e 'At_4' | grep -v -e 'At_5' -e 'At_6' -e 'At_7' -e 'At_8' -e 'Aa' -e 'Ag' > $Uniq_AtenNonPath_groups
-  echo "The number of orthogroups unique to A.tenuissima apple pathotype are:"
+  echo "The number of orthogroups unique to A.tenuissima non-apple pathotype are:"
   cat $Uniq_AtenNonPath_groups | wc -l
   echo "The following number genes from isolate 648 are contained in these orthogorups:"
   cat $Uniq_AtenNonPath_groups | grep -o -e 'At_1' | wc -l
@@ -377,16 +385,16 @@ done
 ```
 
 ```
-The number of orthogroups unique to A.tenuissima non pathotypes are:
-0
+The number of orthogroups unique to A.tenuissima non-apple pathotype are:
+1
 The following number genes from isolate 648 are contained in these orthogorups:
-0
+1
 The following number genes from isolate 1082 are contained in these orthogorups:
-0
+1
 The following number genes from isolate 1164 are contained in these orthogorups:
-0
+1
 The following number genes from isolate 24350 are contained in these orthogorups:
-0
+1
 ```
 
 #### 6.1.d ) Orthologroups only containing A. tenuissima apple pathotype genes were extracted:
@@ -413,15 +421,15 @@ done
 
 ```
 The number of orthogroups unique to A.tenuissima apple pathotype are:
-9
+33
 The following number genes from isolate 635 are contained in these orthogorups:
-10
+34
 The following number genes from isolate 743 are contained in these orthogorups:
-10
+35
 The following number genes from isolate 1166 are contained in these orthogorups:
-10
+35
 The following number genes from isolate 1177 are contained in these orthogorups:
-10
+33
 ```
 
 
@@ -451,53 +459,15 @@ done
 
 ```
 The number of orthogroups unique to apple and pear pathotypes are:
-18
+53
 The following number genes from isolate 650 are contained in these orthogorups:
-20
+60
 The following number genes from isolate 648 are contained in these orthogorups:
-25
+64
 The following number genes from isolate 743 are contained in these orthogorups:
-23
+62
 The following number genes from isolate 1166 are contained in these orthogorups:
-18
+57
 The following number genes from isolate 1177 are contained in these orthogorups:
-25
-```
-
-### 6.2.a) P. cactorum unique RxLR families
-
-P. cactorum strain 10300 RxLR genes were parsed to the same format as the gene
-names used in the analysis:
-
-```bash
-  RxLR_Names_10300=analysis/RxLR_effectors/combined_evidence/P.cactorum/10300/10300_Aug_RxLR_EER_motif_hmm_headers.txt
-  WorkDir=analysis/orthology/orthomcl/Pcac_Pinf_Ppar_Pcap_Psoj
-  RxLR_Dir=$WorkDir/Pcac_RxLR
-  Orthogroups=$WorkDir/Pcac_Pinf_Ppar_Pcap_Psoj_orthogroups.txt
-  RxLR_ID_10300=$RxLR_Dir/10300_aug_RxLR_EER_IDs.txt
-  mkdir -p $RxLR_Dir
-  cat $RxLR_Names_10300 | sed 's/g/Pcac|g/g' > $RxLR_ID_10300
-```
-
-Ortholog groups containing RxLR proteins were identified using the following
-commands:
-```bash
-  echo "The number of RxLRs searched for is:"
-  cat $RxLR_ID_10300 | wc -l
-  echo "Of these, the following number were found in orthogroups:"
-  RxLR_Orthogroup_hits_10300=$RxLR_Dir/Pcac_RxLR_Orthogroups_hits.txt
-  cat $Orthogroups | grep -o -w -f $RxLR_ID_10300 > $RxLR_Orthogroup_hits_10300
-  cat $RxLR_Orthogroup_hits_10300 | wc -l
-  echo "These were distributed through the following number of Orthogroups:"
-  RxLR_Orthogroup_10300=$RxLR_Dir/Pcac_RxLR_Orthogroups.txt
-  cat $Orthogroups | grep -w -f $RxLR_ID_10300 > $RxLR_Orthogroup_10300
-  cat $RxLR_Orthogroup_10300 | wc -l
-  echo "The following RxLRs were found in Pcac unique orthogroups:"
-  RxLR_Pcac_uniq_groups=$RxLR_Dir/Pcac_uniq_RxLR_Orthogroups_hits.txt
-  cat $RxLR_Orthogroup_10300 | grep -v 'Pinf' | grep -v 'Ppar' | grep -v 'Pcap' | grep -v 'Psoj' > $RxLR_Pcac_uniq_groups
-  cat $RxLR_Pcac_uniq_groups | wc -l
-  echo "The following RxLRs were found in Group1 unique orthogroups:"
-  RxLR_Group1_uniq_groups=$RxLR_Dir/Group1_RxLR_Orthogroups_hits.txt
-  cat $RxLR_Orthogroup_10300 | grep -v 'Pcap' | grep -v 'Psoj' > $RxLR_Group1_uniq_groups
-  cat $RxLR_Group1_uniq_groups | wc -l
+64
 ```
