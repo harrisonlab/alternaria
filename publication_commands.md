@@ -73,46 +73,52 @@ Data quality was visualised once again following trimming:
 ```
 
 
-kmer counting was performed using kmc.
-This allowed estimation of sequencing depth and total genome size:
+
+Sequencing coveraqge was estimated:
 
 ```bash
-  for StrainPath in $(ls -d qc_dna/paired/*/*); do
-    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc
-    TrimF=$(ls $StrainPath/F/*.fq.gz)
-    TrimR=$(ls $StrainPath/R/*.fq.gz)
-    echo $TrimF
-    echo $TrimR
-    qsub $ProgDir/kmc_kmer_counting.sh $Trim_F $Trim_R
-  done
+for RawData in $(ls qc_dna/paired/*/*/*/*fq.gz | grep 'appended'); do
+echo $RawData;
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
+qsub $ProgDir/run_fastqc.sh $RawData;
+# GenomeSz=65
+GenomeSz=33
+OutDir=$(dirname $RawData)
+qsub $ProgDir/sub_count_nuc.sh $GenomeSz $RawData $OutDir
+done
 ```
 
-** Estimated Genome Size is: 48490129
+Find predicted coverage for these isolates:
 
-** Esimated Coverage is: 35
+```bash
+for StrainDir in $(ls -d qc_dna/paired/*/*); do
+Strain=$(basename $StrainDir)
+printf "$Strain\t"
+for File in $(ls qc_dna/paired/*/"$Strain"/*/*.txt); do
+echo $(basename $File);
+cat $File | tail -n1 | rev | cut -f2 -d ' ' | rev;
+done | grep -v '.txt' | awk '{ SUM += $1} END { print SUM }'
+done
+```
+
+```
+675	39.11
+97.0013	40.1
+97.0016	30.29
+650	39.24
+1082	24.6
+1164	32.82
+1166	ls: cannot access qc_dna/paired/*/1166/*/*.txt: No such file or directory
+
+1177	76.19
+24350	38.17
+635	33.77
+648	57.59
+743	50.08
+```
 
 # Assembly
 Assembly was performed using: Velvet / Abyss / Spades
-
-<!-- ## Velvet Assembly
-A range of hash lengths were used and the best assembly selected for subsequent analysis
-
-```bash
-
-  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/velvet
-  MinHash=41
-  MaxHash=81
-  HashStep=2
-  Trim_F=qc_dna/paired/fusarium_ex_strawberry/FeChina/F/FeChina_S1_L001_R1_001_trim.fq.gz
-	Trim_R=qc_dna/paired/fusarium_ex_strawberry/FeChina/R/FeChina_S1_L001_R1_001_trim.fq.gz
-  GenomeSz=36
-  echo $Strain
-  ExpCov=35
-  MinCov=10
-  InsLgth=600
-  qsub $ProgDir/submit_velvet_range.sh \
-  $MinHash $MaxHash $HashStep $Trim_F $Trim_R $GenomeSz $ExpCov $MinCov $InsLgth
-``` -->
 
 ## Spades Assembly
 
@@ -210,6 +216,30 @@ $ProgDir/remove_contaminants.py --keep_mitochondria --inp $Assembly --out $OutDi
 done
 ```
 
+Quast
+
+```bash
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
+  for Assembly in $(ls assembly/spades/*/*/ncbi_edits/contigs_min_500bp_renamed.fasta); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
+    OutDir=assembly/spades/$Organism/$Strain/ncbi_edits
+    qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+  done
+```
+
+The results of quast were shown using the following commands:
+
+```bash
+  for Assembly in $(ls assembly/spades/*/*/ncbi_edits/report.txt); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev);
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev);
+    echo;
+    echo $Organism;
+    echo $Strain;
+    cat $Assembly;
+  done > assembly/quast_results.txt
+```
 
 
 # Repeat masking
@@ -229,89 +259,6 @@ qsub $ProgDir/rep_modeling.sh $Assembly $OutDir
 qsub $ProgDir/transposonPSI.sh $Assembly $OutDir
 done
 ```
-
-<!--
- The number of bases masked by transposonPSI and Repeatmasker were summarised
- using the following commands:
-
- ```bash
-  for RepDir in $(ls -d repeat_masked/*/*/ncbi_edits_repmask); do
-    Strain=$(echo $RepDir | rev | cut -f2 -d '/' | rev)
-    Organism=$(echo $RepDir | rev | cut -f3 -d '/' | rev)  
-    RepMaskGff=$(ls $RepDir/*_contigs_hardmasked.gff)
-    TransPSIGff=$(ls $RepDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
-    printf "$Organism\t$Strain\n"
-    printf "The number of bases masked by RepeatMasker:\t"
-    sortBed -i $RepMaskGff | bedtools merge | awk -F'\t' 'BEGIN{SUM=0}{ SUM+=$3-$2 }END{print SUM}'
-    printf "The number of bases masked by TransposonPSI:\t"
-    sortBed -i $TransPSIGff | bedtools merge | awk -F'\t' 'BEGIN{SUM=0}{ SUM+=$3-$2 }END{print SUM}'
-    printf "The total number of masked bases are:\t"
-    cat $RepMaskGff $TransPSIGff | sortBed | bedtools merge | awk -F'\t' 'BEGIN{SUM=0}{ SUM+=$3-$2 }END{print SUM}'
-    echo
-  done
- ```
-
-```bash
-  A.alternata_ssp._arborescens    675
-  The number of bases masked by RepeatMasker:     667057
-  The number of bases masked by TransposonPSI:    330735
-  The total number of masked bases are:   756455
-
-  A.alternata_ssp._arborescens    97.0013
-  The number of bases masked by RepeatMasker:     689319
-  The number of bases masked by TransposonPSI:    346346
-  The total number of masked bases are:   847870
-
-  A.alternata_ssp._arborescens    97.0016
-  The number of bases masked by RepeatMasker:     547762
-  The number of bases masked by TransposonPSI:    348895
-  The total number of masked bases are:   703239
-
-  A.alternata_ssp._gaisen 650
-  The number of bases masked by RepeatMasker:     347743
-  The number of bases masked by TransposonPSI:    211034
-  The total number of masked bases are:   484279
-
-  A.alternata_ssp._tenuissima     1082
-  The number of bases masked by RepeatMasker:     517100
-  The number of bases masked by TransposonPSI:    245543
-  The total number of masked bases are:   652433
-
-  A.alternata_ssp._tenuissima     1164
-  The number of bases masked by RepeatMasker:     774735
-  The number of bases masked by TransposonPSI:    268881
-  The total number of masked bases are:   921640
-
-  A.alternata_ssp._tenuissima     1166
-  The number of bases masked by RepeatMasker:     809458
-  The number of bases masked by TransposonPSI:    251126
-  The total number of masked bases are:   928141
-
-  A.alternata_ssp._tenuissima     1177
-  The number of bases masked by RepeatMasker:     831959
-  The number of bases masked by TransposonPSI:    269647
-  The total number of masked bases are:   961830
-
-  A.alternata_ssp._tenuissima     24350
-  The number of bases masked by RepeatMasker:     350330
-  The number of bases masked by TransposonPSI:    160521
-  The total number of masked bases are:   422571
-
-  A.alternata_ssp._tenuissima     635
-  The number of bases masked by RepeatMasker:     845652
-  The number of bases masked by TransposonPSI:    334677
-  The total number of masked bases are:   995496
-
-  A.alternata_ssp._tenuissima     648
-  The number of bases masked by RepeatMasker:     582929
-  The number of bases masked by TransposonPSI:    159935
-  The total number of masked bases are:   678200
-
-  A.alternata_ssp._tenuissima     743
-  The number of bases masked by RepeatMasker:     771343
-  The number of bases masked by TransposonPSI:    329935
-  The total number of masked bases are:   917461
-``` -->
 
 The TransposonPSI masked bases were used to mask additional bases from the
 repeatmasker / repeatmodeller softmasked and hardmasked files.
@@ -392,21 +339,27 @@ Busco has replaced CEGMA and was run to check gene space in assemblies
 
 ```bash
   for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
-		Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
-		Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
-		echo "$Organism - $Strain"
-		ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
-		BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/sordariomyceta_odb9)
-		OutDir=gene_pred/busco/$Organism/$Strain/assembly
-		qsub $ProgDir/sub_busco2.sh $Assembly $BuscoDB $OutDir
-	done
+    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+    echo "$Organism - $Strain"
+    ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+    BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
+    OutDir=gene_pred/busco/$Organism/$Strain/assembly
+    qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
+  done
 ```
 
 ```bash
-	for File in $(ls gene_pred/busco/F*/*/assembly/*/short_summary_*.txt); do  
-		echo $File;
-		cat $File | grep -e '(C)' -e 'Total';
-	done
+  for File in $(ls gene_pred/busco/*/*/assembly/*/short_summary_*.txt); do
+  Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
+  Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
+  Complete=$(cat $File | grep "(C)" | cut -f2)
+  Single=$(cat $File | grep "(S)" | cut -f2)
+  Fragmented=$(cat $File | grep "(F)" | cut -f2)
+  Missing=$(cat $File | grep "(M)" | cut -f2)
+  Total=$(cat $File | grep "Total" | cut -f2)
+  echo -e "$Organism\t$Strain\t$Complete\t$Single\t$Fragmented\t$Missing\t$Total"
+  done
 ```
 
 #Gene prediction
@@ -667,7 +620,59 @@ cat tmp.gff | grep -v 'CUFF_8208_1_74' > $GffAppended
 
 No duplicate genes were found.
 ```bash
+  for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3); do
+    Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
+    Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
+    Gene=$(cat $GffAppended | grep -w 'gene' | wc -l)
+    Protein=$(cat $GffAppended | grep -w 'mRNA' | wc -l)
+    Augustus=$(cat $GffAppended | grep -w 'gene' | grep 'AUGUSTUS' | wc -l)
+    CodingQuary=$(cat $GffAppended | grep -w 'gene' | grep 'CodingQuarry_v2.0' | wc -l)
+    printf "$Organism\t$Strain\t$Gene\t$Protein\t$Augustus\t$CodingQuary\n"
+  done
+```
 
+```
+A.alternata_ssp._arborescens	675	12896	12936	12031	865
+A.alternata_ssp._arborescens	97.0013	12766	12813	11974	792
+A.alternata_ssp._arborescens	97.0016	12820	12863	11988	832
+A.alternata_ssp._gaisen	650	13176	13233	12409	767
+A.alternata_ssp._tenuissima	1082	13028	13091	12345	683
+A.alternata_ssp._tenuissima	1164	13114	13169	12330	784
+A.alternata_ssp._tenuissima	1166	13524	13592	12900	624
+A.alternata_ssp._tenuissima	1177	13580	13647	12707	873
+A.alternata_ssp._tenuissima	24350	12806	12856	12118	688
+A.alternata_ssp._tenuissima	635	13733	13812	13049	684
+A.alternata_ssp._tenuissima	648	12757	12798	12036	721
+A.alternata_ssp._tenuissima	743	13707	13776	12991	716
+```
+
+## Checking gene prediction accruacy using BUSCO
+
+
+
+```bash
+  for Assembly in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gene.fasta); do
+    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+    echo "$Organism - $Strain"
+    ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+    BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
+    OutDir=gene_pred/busco/$Organism/$Strain/transcript
+    qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
+  done
+```
+
+```bash
+  for File in $(ls gene_pred/busco/*/*/transcript/*/short_summary_*.txt); do
+  Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
+  Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
+  Complete=$(cat $File | grep "(C)" | cut -f2)
+  Single=$(cat $File | grep "(S)" | cut -f2)
+  Fragmented=$(cat $File | grep "(F)" | cut -f2)
+  Missing=$(cat $File | grep "(M)" | cut -f2)
+  Total=$(cat $File | grep "Total" | cut -f2)
+  echo -e "$Organism\t$Strain\t$Complete\t$Single\t$Fragmented\t$Missing\t$Total"
+  done
 ```
 
 #Functional annotation
@@ -813,6 +818,49 @@ Proteins containing a transmembrane domain were identified:
   done
 ```
 
+Those proteins with transmembrane domains were removed from lists of Signal
+peptide containing proteins
+
+```bash
+for File in $(ls gene_pred/trans_mem/*/*/*_TM_genes_neg.txt); do
+Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+# echo "$Organism - $Strain"
+NonTmHeaders=$(echo "$File" | sed 's/neg.txt/neg_headers.txt/g')
+cat $File | cut -f1 > $NonTmHeaders
+SigP=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/"$Strain"_aug_sp.aa)
+OutDir=$(dirname $SigP)
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+$ProgDir/extract_from_fasta.py --fasta $SigP --headers $NonTmHeaders > $OutDir/"$Strain"_final_sp_no_trans_mem.aa
+# echo "Number of SigP proteins:"
+TotalProts=$(cat $SigP | grep '>' | wc -l)
+# echo "Number without transmembrane domains:"
+SecProt=$(cat $OutDir/"$Strain"_final_sp_no_trans_mem.aa | grep '>' | wc -l)
+# echo "Number of gene models:"
+SecGene=$(cat $OutDir/"$Strain"_final_sp_no_trans_mem.aa | grep '>' | cut -f1 -d't' | sort | uniq |wc -l)
+# A text file was also made containing headers of proteins testing +ve
+PosFile=$(ls gene_pred/trans_mem/$Organism/$Strain/"$Strain"_TM_genes_pos.txt)
+TmHeaders=$(echo $PosFile | sed 's/.txt/_headers.txt/g')
+cat $PosFile | cut -f1 > $TmHeaders
+printf "$Organism\t$Strain\t$TotalProts\t$SecProt\t$SecGene\n"
+done
+```
+
+```
+  A.alternata_ssp._arborescens	675	1475	1202	1199
+  A.alternata_ssp._arborescens	97.0013	1466	1191	1189
+  A.alternata_ssp._arborescens	97.0016	1448	1187	1185
+  A.alternata_ssp._gaisen	650	1467	1216	1214
+  A.alternata_ssp._tenuissima	1082	1510	1248	1246
+  A.alternata_ssp._tenuissima	1164	1503	1238	1235
+  A.alternata_ssp._tenuissima	1166	1510	1256	1251
+  A.alternata_ssp._tenuissima	1177	1537	1272	1270
+  A.alternata_ssp._tenuissima	24350	1485	1227	1225
+  A.alternata_ssp._tenuissima	635	1539	1267	1261
+  A.alternata_ssp._tenuissima	648	1483	1229	1228
+  A.alternata_ssp._tenuissima	743	1525	1254	1247
+```
+
 ### C) From Augustus gene models - Effector identification using EffectorP
 
 Required programs:
@@ -829,13 +877,435 @@ Required programs:
   done
 ```
 
+Those genes that were predicted as secreted and tested positive by effectorP
+were identified:
 
+Note - this doesnt exclude proteins with TM domains or GPI anchors
+
+```bash
+  for File in $(ls analysis/effectorP/*/*/*_EffectorP.txt); do
+    Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+    Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+    echo "$Organism - $Strain"
+    Headers=$(echo "$File" | sed 's/_EffectorP.txt/_EffectorP_headers.txt/g')
+    cat $File | grep 'Effector' | cut -f1 > $Headers
+    printf "EffectorP headers:\t"
+    cat $Headers | wc -l
+    Secretome=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/"$Strain"_final_sp_no_trans_mem.aa)
+    OutFile=$(echo "$File" | sed 's/_EffectorP.txt/_EffectorP_secreted.aa/g')
+    ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+    $ProgDir/extract_from_fasta.py --fasta $Secretome --headers $Headers > $OutFile
+    OutFileHeaders=$(echo "$File" | sed 's/_EffectorP.txt/_EffectorP_secreted_headers.txt/g')
+    cat $OutFile | grep '>' | tr -d '>' > $OutFileHeaders
+    printf "Secreted effectorP headers:\t"
+    cat $OutFileHeaders | wc -l
+    Gff=$(ls gene_pred/final/$Organism/$Strain/*/final_genes_appended_renamed.gff3)
+    EffectorP_Gff=$(echo "$File" | sed 's/_EffectorP.txt/_EffectorP_secreted.gff/g')
+    ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+    $ProgDir/extract_gff_for_sigP_hits.pl $OutFileHeaders $Gff effectorP ID > $EffectorP_Gff
+  done
+```
+
+```
+A.alternata_ssp._arborescens - 675
+EffectorP headers:	3844
+Secreted effectorP headers:	236
+A.alternata_ssp._arborescens - 97.0013
+EffectorP headers:	3776
+Secreted effectorP headers:	229
+A.alternata_ssp._arborescens - 97.0016
+EffectorP headers:	3812
+Secreted effectorP headers:	229
+A.alternata_ssp._gaisen - 650
+EffectorP headers:	4012
+Secreted effectorP headers:	247
+A.alternata_ssp._tenuissima - 1082
+EffectorP headers:	3814
+Secreted effectorP headers:	252
+A.alternata_ssp._tenuissima - 1164
+EffectorP headers:	3824
+Secreted effectorP headers:	252
+A.alternata_ssp._tenuissima - 1166
+EffectorP headers:	4032
+Secreted effectorP headers:	257
+A.alternata_ssp._tenuissima - 1177
+EffectorP headers:	4170
+Secreted effectorP headers:	268
+A.alternata_ssp._tenuissima - 24350
+EffectorP headers:	3644
+Secreted effectorP headers:	241
+A.alternata_ssp._tenuissima - 635
+EffectorP headers:	4122
+Secreted effectorP headers:	264
+A.alternata_ssp._tenuissima - 648
+EffectorP headers:	3598
+Secreted effectorP headers:	233
+A.alternata_ssp._tenuissima - 743
+EffectorP headers:	4124
+Secreted effectorP headers:	263
+```
+
+## SSCP
+
+Small secreted cysteine rich proteins were identified within secretomes. These
+proteins may be identified by EffectorP, but this approach allows direct control
+over what constitutes a SSCP.
+
+```bash
+for Secretome in $(ls gene_pred/braker_signalp-4.1/*/*/*_final_sp_no_trans_mem.aa); do
+Strain=$(echo $Secretome| rev | cut -f2 -d '/' | rev)
+Organism=$(echo $Secretome | rev | cut -f3 -d '/' | rev)
+echo "$Organism - $Strain"
+OutDir=analysis/sscp/$Organism/$Strain
+mkdir -p $OutDir
+ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/sscp
+$ProgDir/sscp_filter.py --inp_fasta $Secretome --max_length 300 --threshold 3 --out_fasta $OutDir/"$Strain"_sscp_all_results.fa
+cat $OutDir/"$Strain"_sscp_all_results.fa | grep 'Yes' > $OutDir/"$Strain"_sscp.fa
+printf "number of SSC-rich genes:\t"
+cat $OutDir/"$Strain"_sscp.fa | grep '>' | tr -d '>' | cut -f1 -d '.' | sort | uniq | wc -l
+# printf "Number of effectors predicted by EffectorP:\t"
+# EffectorP=$(ls analysis/effectorP/$Organism/$Strain/*_EffectorP_secreted_headers.txt)
+# cat $EffectorP | wc -l
+# printf "Number of SSCPs predicted by both effectorP and this approach: \t"
+# cat $OutDir/"$Strain"_sscp.fa | grep '>' | tr -d '>' > $OutDir/"$Strain"_sscp_headers.txt
+# cat $OutDir/"$Strain"_sscp_headers.txt $EffectorP | cut -f1 | sort | uniq -d | wc -l
+# echo ""
+done
+```
+
+```
+A.alternata_ssp._arborescens - 675
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	196
+number of SSC-rich genes:	196
+A.alternata_ssp._arborescens - 97.0013
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	187
+number of SSC-rich genes:	187
+A.alternata_ssp._arborescens - 97.0016
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	190
+number of SSC-rich genes:	190
+A.alternata_ssp._gaisen - 650
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	201
+number of SSC-rich genes:	201
+A.alternata_ssp._tenuissima - 1082
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	199
+number of SSC-rich genes:	199
+A.alternata_ssp._tenuissima - 1164
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	202
+number of SSC-rich genes:	202
+A.alternata_ssp._tenuissima - 1166
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	204
+number of SSC-rich genes:	204
+A.alternata_ssp._tenuissima - 1177
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	217
+number of SSC-rich genes:	217
+A.alternata_ssp._tenuissima - 24350
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	190
+number of SSC-rich genes:	190
+A.alternata_ssp._tenuissima - 635
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	212
+number of SSC-rich genes:	212
+A.alternata_ssp._tenuissima - 648
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	184
+number of SSC-rich genes:	184
+A.alternata_ssp._tenuissima - 743
+% cysteine content threshold set to:	3
+maximum length set to:	300
+No. short-cysteine rich proteins in input fasta:	211
+number of SSC-rich genes:	211
+```
+
+## CAZY proteins
+
+Carbohydrte active enzymes were idnetified using CAZYfollowing recomendations
+at http://csbl.bmb.uga.edu/dbCAN/download/readme.txt :
+
+```bash
+for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta); do
+Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
+OutDir=gene_pred/CAZY/$Organism/$Strain
+mkdir -p $OutDir
+Prefix="$Strain"_CAZY
+CazyHmm=../../dbCAN/dbCAN-fam-HMMs.txt
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/HMMER
+qsub $ProgDir/sub_hmmscan.sh $CazyHmm $Proteome $Prefix $OutDir
+done
+```
+
+The Hmm parser was used to filter hits by an E-value of E1x10-5 or E1x10-e3 if they had a hit over a length of X %.
+
+Those proteins with a signal peptide were extracted from the list and gff files
+representing these proteins made.
+
+```bash
+for File in $(ls gene_pred/CAZY/*/*/*CAZY.out.dm); do
+Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+OutDir=$(dirname $File)
+# echo "$Organism - $Strain"
+ProgDir=/home/groups/harrisonlab/dbCAN
+$ProgDir/hmmscan-parser.sh $OutDir/"$Strain"_CAZY.out.dm > $OutDir/"$Strain"_CAZY.out.dm.ps
+CazyHeaders=$(echo $File | sed 's/.out.dm/_headers.txt/g')
+cat $OutDir/"$Strain"_CAZY.out.dm.ps | cut -f3 | sort | uniq > $CazyHeaders
+# echo "number of CAZY proteins identified:"
+TotalProts=$(cat $CazyHeaders | wc -l)
+# Gff=$(ls gene_pred/codingquary/$Organism/$Strain/final/final_genes_appended_renamed.gff3)
+Gff=$(ls gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.gff3)
+CazyGff=$OutDir/"$Strain"_CAZY.gff
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+$ProgDir/extract_gff_for_sigP_hits.pl $CazyHeaders $Gff CAZyme ID > $CazyGff
+# echo "number of CAZY genes identified:"
+TotalGenes=$(cat $CazyGff | grep -w 'gene' | wc -l)
+
+SecretedProts=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/"$Strain"_final_sp_no_trans_mem.aa)
+SecretedHeaders=$(echo $SecretedProts | sed 's/.aa/_headers.txt/g')
+cat $SecretedProts | grep '>' | tr -d '>' > $SecretedHeaders
+CazyGffSecreted=$OutDir/"$Strain"_CAZY_secreted.gff
+$ProgDir/extract_gff_for_sigP_hits.pl $SecretedHeaders $CazyGff Secreted_CAZyme ID > $CazyGffSecreted
+# echo "number of Secreted CAZY proteins identified:"
+cat $CazyGffSecreted | grep -w 'mRNA' | cut -f9 | tr -d 'ID=' | cut -f1 -d ';' > $OutDir/"$Strain"_CAZY_secreted_headers.txt
+SecProts=$(cat $OutDir/"$Strain"_CAZY_secreted_headers.txt | wc -l)
+# echo "number of Secreted CAZY genes identified:"
+SecGenes=$(cat $CazyGffSecreted | grep -w 'gene' | wc -l)
+# cat $OutDir/"$Strain"_CAZY_secreted_headers.txt | cut -f1 -d '.' | sort | uniq | wc -l
+printf "$Organism\t$Strain\t$TotalProts\t$TotalGenes\t$SecProts\t$SecGenes\n"
+done
+```
+
+```
+A.alternata_ssp._arborescens	675	766	766	375	375
+A.alternata_ssp._arborescens	97.0013	753	753	372	372
+A.alternata_ssp._arborescens	97.0016	767	767	382	382
+A.alternata_ssp._gaisen	650	780	780	383	383
+A.alternata_ssp._tenuissima	1082	787	787	401	401
+A.alternata_ssp._tenuissima	1164	774	774	385	385
+A.alternata_ssp._tenuissima	1166	783	783	384	384
+A.alternata_ssp._tenuissima	1177	791	791	397	397
+A.alternata_ssp._tenuissima	24350	770	770	391	391
+A.alternata_ssp._tenuissima	635	791	791	397	397
+A.alternata_ssp._tenuissima	648	773	773	392	392
+A.alternata_ssp._tenuissima	743	788	788	390	390
+```
+
+Note - the CAZY genes identified may need further filtering based on e value and
+cuttoff length - see below:
+
+Cols in yourfile.out.dm.ps:
+1. Family HMM
+2. HMM length
+3. Query ID
+4. Query length
+5. E-value (how similar to the family HMM)
+6. HMM start
+7. HMM end
+8. Query start
+9. Query end
+10. Coverage
+
+* For fungi, use E-value < 1e-17 and coverage > 0.45
+
+* The best threshold varies for different CAZyme classes (please see http://www.ncbi.nlm.nih.gov/pmc/articles/PMC4132414/ for details). Basically to annotate GH proteins, one should use a very relax coverage cutoff or the sensitivity will be low (Supplementary Tables S4 and S9); (ii) to annotate CE families a very stringent E-value cutoff and coverage cutoff should be used; otherwise the precision will be very low due to a very high false positive rate (Supplementary Tables S5 and S10)
+
+
+### Summary of CAZY families by organism
+
+
+```bash
+for CAZY in $(ls gene_pred/CAZY/*/*/*_CAZY.out.dm.ps); do
+Strain=$(echo $CAZY | rev | cut -f2 -d '/' | rev)
+Organism=$(echo $CAZY | rev | cut -f3 -d '/' | rev)
+OutDir=$(dirname $CAZY)
+echo "$Organism - $Strain"
+Secreted=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/*_final_sp_no_trans_mem_headers.txt)
+Gff=gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.gff3
+ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/CAZY
+$ProgDir/summarise_CAZY.py --cazy $CAZY --inp_secreted $Secreted --inp_gff $Gff --summarise_family --trim_gene_id 2 --kubicek_2014
+done
+```
+
+```
+A.alternata_ssp._arborescens - 675
+B-Galactosidases - 4
+B-Glucuronidases - 3
+Polygalacturonase - 8
+A-Arabinosidases - 12
+Xylanases - 13
+Polygalacturonate lyases - 22
+A-Galactosidases - 2
+B-Glycosidases - 12
+Cellulases - 29
+other - 268
+Xyloglucanases - 1
+
+A.alternata_ssp._arborescens - 97.0013
+B-Galactosidases - 4
+B-Glucuronidases - 3
+Polygalacturonase - 10
+A-Arabinosidases - 12
+Xylanases - 12
+Polygalacturonate lyases - 20
+A-Galactosidases - 2
+B-Glycosidases - 10
+Cellulases - 31
+other - 266
+Xyloglucanases - 1
+
+A.alternata_ssp._arborescens - 97.0016
+B-Galactosidases - 4
+A-Galactosidases - 3
+Polygalacturonase - 8
+A-Arabinosidases - 13
+Xylanases - 14
+Polygalacturonate lyases - 22
+B-Glucuronidases - 3
+B-Glycosidases - 13
+Cellulases - 29
+other - 271
+Xyloglucanases - 1
+
+A.alternata_ssp._gaisen - 650
+B-Galactosidases - 4
+B-Glucuronidases - 4
+Polygalacturonase - 12
+A-Arabinosidases - 14
+Xylanases - 14
+Polygalacturonate lyases - 21
+A-Galactosidases - 3
+B-Glycosidases - 11
+Cellulases - 29
+other - 269
+Xyloglucanases - 1
+
+A.alternata_ssp._tenuissima - 1082
+B-Galactosidases - 3
+B-Glucuronidases - 3
+Polygalacturonase - 8
+A-Arabinosidases - 15
+Xylanases - 14
+Polygalacturonate lyases - 21
+A-Galactosidases - 3
+B-Glycosidases - 13
+Cellulases - 31
+other - 288
+Xyloglucanases - 1
+
+A.alternata_ssp._tenuissima - 1164
+B-Galactosidases - 3
+B-Glucuronidases - 3
+Polygalacturonase - 10
+A-Arabinosidases - 15
+Xylanases - 14
+Polygalacturonate lyases - 21
+A-Galactosidases - 2
+B-Glycosidases - 13
+Cellulases - 31
+other - 272
+
+A.alternata_ssp._tenuissima - 1166
+B-Galactosidases - 4
+A-Galactosidases - 3
+Polygalacturonase - 8
+A-Arabinosidases - 15
+Xylanases - 14
+Polygalacturonate lyases - 20
+B-Glucuronidases - 3
+B-Glycosidases - 12
+Cellulases - 31
+other - 271
+Xyloglucanases - 1
+
+A.alternata_ssp._tenuissima - 1177
+B-Galactosidases - 4
+A-Galactosidases - 2
+Polygalacturonase - 9
+A-Arabinosidases - 14
+Xylanases - 14
+Polygalacturonate lyases - 22
+B-Glucuronidases - 4
+B-Glycosidases - 12
+Cellulases - 30
+other - 284
+Xyloglucanases - 1
+
+A.alternata_ssp._tenuissima - 24350
+B-Galactosidases - 3
+A-Galactosidases - 2
+Polygalacturonase - 9
+A-Arabinosidases - 15
+Xylanases - 14
+Polygalacturonate lyases - 21
+B-Glucuronidases - 4
+B-Glycosidases - 12
+B-Mannase - 1
+Cellulases - 31
+other - 276
+Xyloglucanases - 1
+
+A.alternata_ssp._tenuissima - 635
+B-Galactosidases - 4
+A-Galactosidases - 2
+Polygalacturonase - 8
+A-Arabinosidases - 14
+Xylanases - 14
+Polygalacturonate lyases - 22
+B-Glucuronidases - 3
+B-Glycosidases - 13
+Cellulases - 29
+other - 285
+
+A.alternata_ssp._tenuissima - 648
+B-Galactosidases - 4
+B-Glucuronidases - 3
+Polygalacturonase - 8
+A-Arabinosidases - 15
+Xylanases - 13
+Polygalacturonate lyases - 22
+A-Galactosidases - 3
+B-Glycosidases - 12
+Cellulases - 31
+other - 279
+Xyloglucanases - 1
+
+A.alternata_ssp._tenuissima - 743
+B-Galactosidases - 4
+A-Galactosidases - 2
+Polygalacturonase - 8
+A-Arabinosidases - 14
+Xylanases - 14
+Polygalacturonate lyases - 22
+B-Glucuronidases - 3
+B-Glycosidases - 13
+Cellulases - 29
+other - 278
+```
 
 
 ## D) Secondary metabolites (Antismash and SMURF)
 
 Antismash was run to identify clusters of secondary metabolite genes within
-the genome. Antismash was run using the weserver at:
+the genome. Antismash was run using the webserver at:
 http://antismash.secondarymetabolites.org
 
 
@@ -876,7 +1346,7 @@ the following directories:
     cat "$Prefix"_secmet_genes.gff | grep -w 'mRNA' | cut -f9 | cut -f2 -d '=' | cut -f1 -d ';' > "$Prefix"_antismash_secmet_genes.txt
     bedtools intersect -wo -a $GeneGff -b "$Prefix"_secmet_clusters.gff | grep 'mRNA' | cut -f9,10,12,18 | sed "s/ID=//g" | perl -p -i -e "s/;Parent=g\w+//g" | perl -p -i -e "s/;Notes=.*//g" > "$Prefix"_secmet_genes.tsv
     printf "Number of predicted proteins in secondary metabolite clusters:\t"
-    cat "$Prefix"_secmet_genes.txt | wc -l
+    cat "$Prefix"_secmet_genes.tsv | wc -l
     printf "Number of predicted genes in secondary metabolite clusters:\t"
     cat "$Prefix"_secmet_genes.gff | grep -w 'gene' | wc -l
 
@@ -967,6 +1437,44 @@ done
 
 
 
+# Genes with transcription factor annotations:
+
+
+A list of PFAM domains, superfamily annotations used as part of the DBD database
+and a further set of interproscan annotations listed by Shelest et al 2017 were made
+http://www.transcriptionfactor.org/index.cgi?Domain+domain:all
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5415576/
+
+```bash
+  for Interpro in $(ls gene_pred/interproscan/*/*/*_interproscan.tsv); do
+    Organism=$(echo $Interpro | rev | cut -f3 -d '/' | rev)
+    Strain=$(echo $Interpro | rev | cut -f2 -d '/' | rev)
+    # echo "$Organism - $Strain"
+    OutDir=analysis/transcription_factors/$Organism/$Strain
+    mkdir -p $OutDir
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/transcription_factors
+    $ProgDir/interpro2TFs.py --InterPro $Interpro > $OutDir/"$Strain"_TF_domains.tsv
+    # echo "total number of transcription factors"
+    cat $OutDir/"$Strain"_TF_domains.tsv | cut -f1 | sort | uniq > $OutDir/"$Strain"_TF_gene_headers.txt
+    NumTF=$(cat $OutDir/"$Strain"_TF_gene_headers.txt | wc -l)
+    printf "$Organism\t$Strain\t$NumTF\n"
+  done
+```
+
+```
+A.alternata_ssp._arborescens	675	605
+A.alternata_ssp._arborescens	97.0013	601
+A.alternata_ssp._arborescens	97.0016	593
+A.alternata_ssp._gaisen	650	640
+A.alternata_ssp._tenuissima	1082	640
+A.alternata_ssp._tenuissima	1164	627
+A.alternata_ssp._tenuissima	1166	660
+A.alternata_ssp._tenuissima	1177	647
+A.alternata_ssp._tenuissima	24350	619
+A.alternata_ssp._tenuissima	635	677
+A.alternata_ssp._tenuissima	648	606
+A.alternata_ssp._tenuissima	743	676
+```
 
 
 
@@ -978,13 +1486,35 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 ## Genes with homology to PHIbase
 Predicted gene models were searched against the PHIbase database using tBLASTx.
 
-```bash
+<!-- ```bash
   for Subject in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
     Query=../../phibase/v4.2/PHI_accessions.fa
     qsub $ProgDir/blast_pipe.sh $Query protein $Subject
   done
+``` -->
+
+
+```bash
+qlogin -l h=blacklace11.blacklace
+cd /home/groups/harrisonlab/project_files/alternaria
+dbFasta=$(ls ../../phibase/v4.4/phi_accessions.fa)
+dbType="prot"
+for QueryFasta in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.cds.fasta); do
+Organism=$(echo $QueryFasta | rev | cut -f4 -d '/' | rev)
+Strain=$(echo $QueryFasta | rev | cut -f3 -d '/' | rev)
+echo "$Organism - $Strain"
+Prefix="${Strain}_phi_accessions"
+Eval="1e-30"
+# WorkDir=$TMPDIR
+OutDir=analysis/blast_homology/$Organism/$Strain
+mkdir -p $OutDir
+makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+blastx -num_threads 20 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+cat $OutDir/${Prefix}_hits.txt | grep 'effector' | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
+done
 ```
+
 
 
 ## Presence and genes with homology to Alternaria toxins
@@ -1001,6 +1531,21 @@ The first analysis was based upon BLAST searches for genes known to be involved 
   done
 ```
 
+```bash
+  HitsList=""
+  StrainList=""
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
+    sed -i "s/\t\t/\t/g" $BlastHits
+    sed -i "s/Grp1\t//g" $BlastHits
+    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
+    HitsList="$HitsList $BlastHits"
+    StrainList="$StrainList $Strain"
+  done
+  ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+  $ProgDir/blast_parse.py --blast_csv $HitsList --headers $StrainList --identity 0.7 --evalue 1e-30
+```
+
+
 Once blast searches had completed, the BLAST hits were converted to GFF
 annotations:
 
@@ -1011,7 +1556,7 @@ annotations:
     Organism=$(echo $BlastHits | rev | cut -f3 -d '/' | rev)
     HitsGff=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs.gff
     Column2=toxin_homolog
-    NumHits=1
+    NumHits=2
     $ProgDir/blast2gff.pl $Column2 $NumHits $BlastHits > $HitsGff
   done
 ```
@@ -1024,7 +1569,7 @@ to identify if genes were predicted for these homologs:
 for HitsGff in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.gff); do
 Strain=$(echo $HitsGff | rev | cut -f2 -d '/' | rev)
 Organism=$(echo $HitsGff | rev | cut -f3 -d '/' | rev)
-Proteins=$(ls gene_pred/braker/$Organism/$Strain/*/augustus.gff)
+Proteins=$(ls gene_pred/final/$Organism/$Strain/*/final_genes_appended_renamed.gff3)
 OutDir=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes
 IntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_Intersect.gff
 # NoIntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
@@ -1056,4 +1601,130 @@ cat analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orth
 cat analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt | grep 'At_6|g4087' | sed 's/\s/\n/g' | grep -v 'orthogroup' |  cut -f1 -d '|' | sort | uniq -c | less
 # AMT4
 cat analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt | grep 'At_6|g4038' | less
+```
+
+<!--
+```bash
+qlogin -l h=blacklace01.blacklace -pe smp 12
+cd /home/groups/harrisonlab/project_files/alternaria
+dbFasta=$(ls analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa)
+dbType="nucl"
+for QueryFasta in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.cds.fasta | grep -v '650'); do
+Organism=$(echo $QueryFasta | rev | cut -f4 -d '/' | rev)
+Strain=$(echo $QueryFasta | rev | cut -f3 -d '/' | rev)
+echo "$Organism - $Strain"
+Prefix="${Strain}_CDC_genes"
+Eval="1e-30"
+# WorkDir=$TMPDIR
+OutDir=analysis/blast_homology/$Organism/$Strain
+mkdir -p $OutDir
+makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+tblastx -num_threads 12 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 10 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+cat $OutDir/${Prefix}_hits.txt | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
+done
+``` -->
+
+
+
+
+# Build Annotation Tables
+
+
+```bash
+for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep '650'); do
+Strain=$(echo $GeneGff | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $GeneGff | rev | cut -f4 -d '/' | rev)
+Assembly=$(ls repeat_masked/$Organism/$Strain/ncbi_edits_repmask/*_contigs_unmasked.fa)
+# GeneConversions=$(ls genome_submission/$Organism/$Strain/gag/edited/genome_gene_conversions.tsv)
+Antismash=$(ls analysis/secondary_metabolites/antismash/$Organism/$Strain/*/geneclusters.txt)
+# Smurf=$(ls analysis/secondary_metabolites/smurf/F.venenatum/WT/WT_smurf_secmet_genes.tsv)
+TFs=$(ls analysis/transcription_factors/$Organism/$Strain/"$Strain"_TF_domains.tsv)
+SigP=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/"$Strain"_aug_sp.aa)
+TM_out=$(ls gene_pred/trans_mem/$Organism/$Strain/"$Strain"_TM_genes_pos.txt)
+# GPI_out=$(ls gene_pred/trans_mem/$Organism/$Strain/GPIsom/GPI_pos.fa)
+# MIMP_list=$(ls analysis/mimps/$Organism/$Strain/"$Strain"_genes_in_2kb_mimp.txt)
+EffP_list=$(ls analysis/effectorP/$Organism/$Strain/"$Organism"_"$Strain"_EffectorP_headers.txt)
+CAZY_list=$(ls gene_pred/CAZY/$Organism/$Strain/"$Strain"_CAZY_headers.txt)
+PhiHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_phi_accessions_hits_headers.txt)
+ToxinHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_CDC_genes_hits_headers.txt)
+InterPro=$(ls gene_pred/interproscan/$Organism/$Strain/*_interproscan.tsv)
+SwissProt=$(ls gene_pred/swissprot/$Organism/$Strain/swissprot_vJul2016_tophit_parsed.tbl)
+Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt)
+if [[ $Strain == '648' ]]; then
+  OrthoStrainID='At_1'
+  echo $OrthoStrainID
+elif [[ $Strain == '1082' ]]; then
+  OrthoStrainID='At_2'
+  echo $OrthoStrainID
+elif [[ $Strain == '1164' ]]; then
+  OrthoStrainID='At_3'
+  echo $OrthoStrainID
+elif [[ $Strain == '24350' ]]; then
+  OrthoStrainID='At_4'
+  echo $OrthoStrainID
+elif [[ $Strain == '635' ]]; then
+  OrthoStrainID='At_5'
+  echo $OrthoStrainID
+elif [[ $Strain == '743' ]]; then
+  OrthoStrainID='At_6'
+  echo $OrthoStrainID
+elif [[ $Strain == '1166' ]]; then
+  OrthoStrainID='At_7'
+  echo $OrthoStrainID
+elif [[ $Strain == '1177' ]]; then
+  OrthoStrainID='At_8'
+  echo $OrthoStrainID
+elif [[ $Strain == '675' ]]; then
+  OrthoStrainID='Aa_1'
+  echo $OrthoStrainID
+elif [[ $Strain == '97.0013' ]]; then
+  OrthoStrainID='Aa_2'
+  echo $OrthoStrainID
+elif [[ $Strain == '97.0016' ]]; then
+  OrthoStrainID='Aa_3'
+  echo $OrthoStrainID
+elif [[ $Strain == '650' ]]; then
+  OrthoStrainID='Ag_1'
+  echo $OrthoStrainID
+fi
+OrthoStrainAll='At_1 At_2 At_3 At_4 At_5 At_6 At_6 At_7 At_8 Aa_1 Aa_2 Aa_3 Ag_1'
+OutDir=gene_pred/annotation/$Organism/$Strain
+mkdir -p $OutDir
+ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/annotation
+$ProgDir/build_annot_table_Alt.py \
+  --genome $Assembly \
+  --genes_gff $GeneGff \
+  --Antismash $Antismash \
+  --TFs $TFs \
+  --SigP $SigP \
+  --TM_list $TM_out \
+  --EffP_list $EffP_list \
+  --CAZY_list $CAZY_list \
+  --PhiHits $PhiHits \
+  --ToxinHits $ToxinHits \
+  --InterPro $InterPro \
+  --Swissprot $SwissProt \
+  --orthogroups $Orthology \
+  --strain_id $OrthoStrainID \
+  --OrthoMCL_all $OrthoStrainAll \
+  > $OutDir/"$Strain"_annotation_ncbi.tsv
+# $ProgDir/FoN_build_gene_annot_table.py \
+#   --genome $Assembly \
+#   --genes_gff $GeneGff \
+#   --genes_renamed $GeneConversions \
+#   --Antismash $Antismash \
+#   --TFs $TFs \
+#   --SigP $SigP \
+#   --TM_list $TM_out \
+#   --GPI_list $GPI_out \
+#   --MIMP_list $MIMP_list \
+#   --EffP_list $EffP_list \
+#   --CAZY_list $CAZY_list \
+#   --InterPro $InterPro \
+#   --Swissprot $SwissProt \
+#   --orthogroups $Orthology \
+#   --strain_id $OrthoStrainID \
+#   --OrthoMCL_all $OrthoStrainAll \
+#   > $OutDir/"$Strain"_annotation_ncbi.tsv
+done
 ```
