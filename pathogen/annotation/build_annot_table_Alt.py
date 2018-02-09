@@ -227,7 +227,7 @@ for line in swissprot_lines:
 i = 0
 antismash_dict = defaultdict(list)
 for line in antismash_lines:
-    if 'cf_putative' in amtismash_lines:
+    if 'cf_putative' in line:
         continue
     i += 1
     cluster = "cluster_" + str(i)
