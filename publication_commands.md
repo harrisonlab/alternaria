@@ -675,6 +675,21 @@ A.alternata_ssp._tenuissima	743	13707	13776	12991	716
   done
 ```
 
+```
+A.alternata_ssp._arborescens	675	1287	1285	20	8	1315
+A.alternata_ssp._arborescens	97.0013	1291	1290	17	7	1315
+A.alternata_ssp._arborescens	97.0016	1289	1287	18	8	1315
+A.alternata_ssp._gaisen	650	1292	1291	18	5	1315
+A.alternata_ssp._tenuissima	1082	1293	1291	17	5	1315
+A.alternata_ssp._tenuissima	1164	1297	1295	12	6	1315
+A.alternata_ssp._tenuissima	1166	1291	1289	18	6	1315
+A.alternata_ssp._tenuissima	1177	1288	1285	19	8	1315
+A.alternata_ssp._tenuissima	24350	1295	1294	12	8	1315
+A.alternata_ssp._tenuissima	635	1293	1290	13	9	1315
+A.alternata_ssp._tenuissima	648	1293	1292	13	9	1315
+A.alternata_ssp._tenuissima	743	1293	1291	15	7	1315
+```
+
 #Functional annotation
 
 ## A) Interproscan
@@ -1631,7 +1646,7 @@ done
 
 
 ```bash
-for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep '650'); do
+for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3); do
 Strain=$(echo $GeneGff | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $GeneGff | rev | cut -f4 -d '/' | rev)
 Assembly=$(ls repeat_masked/$Organism/$Strain/ncbi_edits_repmask/*_contigs_unmasked.fa)
@@ -1728,3 +1743,15 @@ $ProgDir/build_annot_table_Alt.py \
 #   > $OutDir/"$Strain"_annotation_ncbi.tsv
 done
 ```
+
+
+## NLPs
+
+```bash
+for AnnotTab in $(ls gene_pred/annotation/A.*/*/*_annotation_ncbi.tsv); do
+echo "$AnnotTab"
+cat $AnnotTab | grep 'Necrosis' | wc -l
+done
+```
+
+Two NLP proteins were identified in each genome
