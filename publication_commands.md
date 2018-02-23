@@ -1659,7 +1659,7 @@ TM_out=$(ls gene_pred/trans_mem/$Organism/$Strain/"$Strain"_TM_genes_pos.txt)
 # GPI_out=$(ls gene_pred/trans_mem/$Organism/$Strain/GPIsom/GPI_pos.fa)
 # MIMP_list=$(ls analysis/mimps/$Organism/$Strain/"$Strain"_genes_in_2kb_mimp.txt)
 EffP_list=$(ls analysis/effectorP/$Organism/$Strain/"$Organism"_"$Strain"_EffectorP_headers.txt)
-CAZY_list=$(ls gene_pred/CAZY/$Organism/$Strain/"$Strain"_CAZY_headers.txt)
+CAZY_list=$(ls gene_pred/CAZY/$Organism/$Strain/"$Strain"_CAZY.out.dm.ps)
 PhiHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_phi_accessions_hits_headers.txt)
 ToxinHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_CDC_genes_hits_headers.txt)
 InterPro=$(ls gene_pred/interproscan/$Organism/$Strain/*_interproscan.tsv)
@@ -1745,7 +1745,7 @@ done
 ```
 
 
-## NLPs
+### NLPs
 
 ```bash
 for AnnotTab in $(ls gene_pred/annotation/A.*/*/*_annotation_ncbi.tsv); do
@@ -1755,3 +1755,32 @@ done
 ```
 
 Two NLP proteins were identified in each genome
+
+### CAZY proteins:
+
+```bash
+for AnnotTab in $(ls gene_pred/annotation/A.*/*/*_annotation_ncbi.tsv); do
+echo "$AnnotTab"
+Strain=$(echo $AnnotTab| rev | cut -f2 -d '/' | rev)
+Organism=$(echo $AnnotTab | rev | cut -f3 -d '/' | rev)
+# OutDir=$(dirname $AnnotTab)/subset
+OutDir=/data/scratch/armita/alternaria/$(dirname $AnnotTab)/subset
+mkdir -p $OutDir
+cat $AnnotTab | cut -f1,7,8,9,10,19,20,21 | grep 'CAZY' | wc -l
+cat $AnnotTab | cut -f1,7,8,9,10,19,20,21| grep 'CAZY' > $OutDir/10300_gene_table_CAZY.tsv
+cat $AnnotTab | cut -f1,7,8,9,10,19,20,21 | grep 'CAZY' | grep 'SigP' | wc -l
+cat $AnnotTab | cut -f1,7,8,9,10,19,20,21 | grep 'CAZY' | grep 'SigP' > $OutDir/10300_gene_table_CAZY_secreted.tsv
+
+cat $OutDir/10300_gene_table_CAZY_secreted.tsv | grep 'GBGX' | wc -l
+cat $OutDir/10300_gene_table_CAZY_secreted.tsv | grep 'GBGX' | cut -f5 | sort | uniq -c | wc -l
+
+
+cat $AnnotTab | cut -f1,7,8,9,10,19,20,21 | grep 'CAZY' | grep 'SigP' | cut -f5 | sort | uniq -c | sort -nr > $OutDir/10300_gene_table_CAZY_hmm_models.txt
+# cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep 'GH'
+# cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep -v 'GH' | grep 'CBM'
+# cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep 'AA'
+# cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep 'CE'
+# cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep -v 'GH' | grep 'GT'
+# cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep 'PL'
+done
+```
