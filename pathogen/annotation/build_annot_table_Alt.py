@@ -360,13 +360,17 @@ for line in effectorP_lines:
     effectorP_set.add(header)
 
 #-----------------------------------------------------
-# Load CAZY proteins into a set
+# Load CAZY genes and hit domains into a dictionary
 #-----------------------------------------------------
 
-cazy_set = Set()
+cazy_dict = defaultdict(list)
 for line in cazy_lines:
-    header = line.rstrip()
-    cazy_set.add(header)
+    if line.startswith('#'):
+        continue
+    line = line.rstrip()
+    split_line = line.split()
+    cazy_dict[split_line[2]].append(split_line[0])
+
 
 #-----------------------------------------------------
 # Load PHIbase hits into a blast hits dictionary
@@ -399,7 +403,6 @@ for line in toxin_lines:
 
 print ("\t".join([
 "ncbi_gene_id", "internal_id", "contig", "gene_start", "gene_end", "gene_strand",
-"2kb_flank",
 "Signal_peptide", "Trans-membrane_domain",
 "EffectorP", "CAZY",
 "Cluster_ID", "SecMet_function",
@@ -450,10 +453,13 @@ for gene_id in gene_id_list:
     else:
         useful_columns.append("")
 
-    if gene_id in cazy_set:
-        useful_columns.append("CAZY")
+
+    if cazy_dict[gene_id]:
+        model_set = set(cazy_dict[gene_id])
+        cazy_hit = "CAZY:" + ",".join(sorted(model_set))
     else:
-        useful_columns.append("")
+        cazy_hit = ''
+    useful_columns.append(cazy_hit)
 
     if antismash_dict[base_id]:
         antismash_cols = antismash_dict[base_id]
