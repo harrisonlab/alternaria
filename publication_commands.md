@@ -265,7 +265,7 @@ repeatmasker / repeatmodeller softmasked and hardmasked files.
 
 ```bash
 
-for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_softmasked.fa); do
+for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_softmasked.fa | grep -v -e '1166' -e '650'); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_softmasked.fa/_contigs_softmasked_repeatmasker_TPSI_appended.fa/g')
@@ -275,7 +275,7 @@ echo "Number of masked bases:"
 cat $OutFile | grep -v '>' | tr -d '\n' | awk '{print $0, gsub("[a-z]", ".")}' | cut -f2 -d ' '
 done
 # The number of N's in hardmasked sequence are not counted as some may be present within the assembly and were therefore not repeatmasked.
-for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_hardmasked.fa); do
+for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_softmasked.fa | grep -v -e '1166' -e '650'); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_hardmasked.fa/_contigs_hardmasked_repeatmasker_TPSI_appended.fa/g')
@@ -414,7 +414,7 @@ Data quality was visualised once again following trimming:
 
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
