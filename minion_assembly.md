@@ -443,17 +443,17 @@ Quast and busco were run to assess the effects of nanopolish on assembly quality
 ```bash
 
 for Assembly in $(ls assembly/SMARTdenovo/*/*/nanopolish/*_nanoplish_min_500bp_renamed.fasta); do
-  Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
-  Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
-	# Quast
-  OutDir=$(dirname $Assembly)
-	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
-  qsub $ProgDir/sub_quast.sh $Assembly $OutDir
-	# Busco
-	BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
-	OutDir=gene_pred/busco/$Organism/$Strain/assembly
-	ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
-	qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
+# Quast
+OutDir=$(dirname $Assembly)
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
+qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+# Busco
+BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
+OutDir=gene_pred/busco/$Organism/$Strain/assembly
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
 done
 ```
 
@@ -463,7 +463,7 @@ done
 Assemblies were polished using Pilon
 
 ```bash
-for Assembly in $(ls assembly/SMARTdenovo/*/*/nanopolish/*_nanoplish_min_500bp_renamed.fasta); do
+for Assembly in $(ls assembly/SMARTdenovo/*/*/nanopolish/*_nanoplish_min_500bp_renamed.fasta | grep 'tenuissima'); do
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -592,7 +592,7 @@ done
 
 
 ```bash
-  for File in $(ls assembly/spades_minion/P.cactorum/414/*/polished/*/short_summary_*.txt ); do
+  for File in $(ls assembly/spades_minion/*/*/*/polished/*/short_summary_*.txt ); do
   Strain=$(echo $File| rev | cut -d '/' -f5 | rev)
   Organism=$(echo $File | rev | cut -d '/' -f6 | rev)
   Prefix=$(basename $File)
@@ -640,7 +640,7 @@ done
 This merged assembly was polished using Pilon
 
 ```bash
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta | grep '650'); do
 Organism=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -654,24 +654,31 @@ qsub $ProgDir/sub_pilon.sh $Assembly $TrimF1_Read $TrimR1_Read $OutDir $Iteratio
 done
 ```
 
-
-
-
+Contigs were renamed
+```bash
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta | grep 'pilon_5'); do
+echo $Assembly
+echo "" > tmp.txt
+OutDir=$(dirname $Assembly)
+ProgDir=~/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/remove_contaminants
+$ProgDir/remove_contaminants.py --keep_mitochondria --inp $Assembly --out $OutDir/pilon_min_500bp_renamed.fasta --coord_file tmp.txt > $OutDir/log.txt
+done
+```
 
 # Repeat Masking
 
 Repeat masking was performed on the non-hybrid assembly.
 
 ```bash
-	for Assembly in $(ls assembly/SMARTdenovo/*/*/pilon/pilon_min_500bp_renamed.fasta | grep 'FON_63'); do
-		Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
-		Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
-		echo "$Organism - $Strain"
-		OutDir=repeat_masked/$Organism/"$Strain"/filtered_contigs
-		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
-		qsub $ProgDir/rep_modeling.sh $Assembly $OutDir
-		qsub $ProgDir/transposonPSI.sh $Assembly $OutDir
-	done
+  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/pilon_min_500bp_renamed.fasta); do
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    echo "$Organism - $Strain"
+    OutDir=repeat_masked/$Organism/"$Strain"/filtered_contigs
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
+    qsub $ProgDir/rep_modeling.sh $Assembly $OutDir
+    qsub $ProgDir/transposonPSI.sh $Assembly $OutDir
+  done
 ```
 
 The TransposonPSI masked bases were used to mask additional bases from the
@@ -679,7 +686,7 @@ repeatmasker / repeatmodeller softmasked and hardmasked files.
 
 ```bash
 
-for File in $(ls repeat_masked/*/*/*/*_contigs_softmasked.fa | grep 'FON_63'); do
+for File in $(ls repeat_masked/*/*/*/*_contigs_softmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_softmasked.fa/_contigs_softmasked_repeatmasker_TPSI_appended.fa/g')
@@ -689,7 +696,7 @@ echo "Number of masked bases:"
 cat $OutFile | grep -v '>' | tr -d '\n' | awk '{print $0, gsub("[a-z]", ".")}' | cut -f2 -d ' '
 done
 # The number of N's in hardmasked sequence are not counted as some may be present within the assembly and were therefore not repeatmasked.
-for File in $(ls repeat_masked/*/*/*/*_contigs_hardmasked.fa | grep 'FON_63'); do
+for File in $(ls repeat_masked/*/*/*/*_contigs_hardmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_hardmasked.fa/_contigs_hardmasked_repeatmasker_TPSI_appended.fa/g')
@@ -698,6 +705,356 @@ bedtools maskfasta -fi $File -bed $TPSI -fo $OutFile
 done
 ```
 ```
+repeat_masked/A.alternata_ssp_tenuissima/1166/filtered_contigs/1166_contigs_softmasked_repeatmasker_TPSI_appended.fa
 Number of masked bases:
-9075386
+1200890
+repeat_masked/A.gaisen/650/filtered_contigs/650_contigs_softmasked_repeatmasker_TPSI_appended.fa
+Number of masked bases:
+572244
+```
+
+Quast and BUSCO
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+OutDir=$(dirname $Assembly)
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
+qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
+OutDir=$(dirname $Assembly)
+qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
+done
+```
+
+# Gene Prediction
+
+#### Aligning
+
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+for FileF in $(ls ../../../../home/groups/harrisonlab/project_files/alternaria/qc_rna/paired/*/*/F/*.fastq.gz); do
+Jobs=$(qstat | grep 'sub_sta' | grep 'qw'| wc -l)
+while [ $Jobs -gt 1 ]; do
+sleep 1m
+printf "."
+Jobs=$(qstat | grep 'sub_sta' | grep 'qw'| wc -l)
+done
+printf "\n"
+FileR=$(echo $FileF | sed 's&/F/&/R/&g' | sed 's/F.fastq.gz/R.fastq.gz/g')
+echo $FileF
+echo $FileR
+Prefix=$(echo $FileF | rev | cut -f3 -d '/' | rev)
+# Timepoint=$(echo $FileF | rev | cut -f2 -d '/' | rev)
+Timepoint="treatment"
+#echo "$Timepoint"
+OutDir=alignment/star/$Organism/$Strain/$Timepoint/$Prefix
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+qsub $ProgDir/sub_star.sh $Assembly $FileF $FileR $OutDir
+done
+done
+```
+
+Accepted hits .bam file were concatenated and indexed for use for gene model training:
+
+```bash
+  for OutDir in $(ls -d alignment/star/*/*); do
+    Strain=$(echo $OutDir | rev | cut -d '/' -f1 | rev)
+    Organism=$(echo $OutDir | rev | cut -d '/' -f2 | rev)
+    echo "$Organism - $Strain"
+    # For all alignments
+    BamFiles=$(ls $OutDir/treatment/*/*.sortedByCoord.out.bam | tr -d '\n' | sed 's/.bam/.bam /g')
+    mkdir -p $OutDir/concatenated
+    samtools merge -@ 12 -f $OutDir/concatenated/concatenated.bam $BamFiles
+  done
+```
+
+
+#### Braker prediction
+
+Before braker predictiction was performed, I double checked that I had the
+genemark key in my user area and copied it over from the genemark install
+directory:
+
+```bash
+	ls ~/.gm_key
+	cp /home/armita/prog/genemark/gm_key_64 ~/.gm_key
+```
+
+```bash
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+    Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+    Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+    echo "$Organism - $Strain"
+    OutDir=gene_pred/braker/$Organism/"$Strain"_braker
+    AcceptedHits=$(ls alignment/star/$Organism/$Strain/concatenated/concatenated.bam)
+    GeneModelName="$Organism"_"$Strain"_braker
+    rm -r /home/armita/prog/augustus-3.1/config/species/"$Organism"_"$Strain"_braker
+    ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/braker1
+    qsub $ProgDir/sub_braker_fungi.sh $Assembly $OutDir $AcceptedHits $GeneModelName
+  done
+```
+
+
+## Supplimenting Braker gene models with CodingQuary genes
+
+Additional genes were added to Braker gene predictions, using CodingQuary in
+pathogen mode to predict additional regions.
+
+Firstly, aligned RNAseq data was assembled into transcripts using Cufflinks.
+
+Note - cufflinks doesn't always predict direction of a transcript and
+therefore features can not be restricted by strand when they are intersected.
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+OutDir=gene_pred/cufflinks/$Organism/$Strain/concatenated
+mkdir -p $OutDir
+AcceptedHits=$(ls alignment/star/$Organism/$Strain/concatenated/concatenated.bam)
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/RNAseq
+qsub $ProgDir/sub_cufflinks.sh $AcceptedHits $OutDir
+done
+```
+
+Secondly, genes were predicted using CodingQuary:
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+OutDir=gene_pred/codingquary/$Organism/$Strain
+CufflinksGTF=$(ls gene_pred/cufflinks/$Organism/$Strain/concatenated/transcripts.gtf)
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+qsub $ProgDir/sub_CodingQuary.sh $Assembly $CufflinksGTF $OutDir
+done
+```
+
+Then, additional transcripts were added to Braker gene models, when CodingQuary
+genes were predicted in regions of the genome, not containing Braker gene
+models:
+
+```bash
+for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3); do
+Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker_new//g' | sed 's/_braker_pacbio//g' | sed 's/_braker//g')
+Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa)
+CodingQuaryGff=$(ls gene_pred/codingquary/$Organism/$Strain/out/PredictedPass.gff3)
+PGNGff=$(ls gene_pred/codingquary/$Organism/$Strain/out/PGN_predictedPass.gff3)
+AddDir=gene_pred/codingquary/$Organism/$Strain/additional
+FinalDir=gene_pred/final/$Organism/$Strain/final
+AddGenesList=$AddDir/additional_genes.txt
+AddGenesGff=$AddDir/additional_genes.gff
+FinalGff=$AddDir/combined_genes.gff
+mkdir -p $AddDir
+mkdir -p $FinalDir
+
+for x in $CodingQuaryGff $PGNGff; do
+  bedtools intersect -v -a $x -b $BrakerGff | grep 'gene'| cut -f2 -d'=' | cut -f1 -d';'
+done > $AddGenesList
+
+for y in $CodingQuaryGff $PGNGff; do
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation
+  $ProgDir/gene_list_to_gff.pl $AddGenesList $y CodingQuarry_v2.0 ID CodingQuary
+done > $AddGenesGff
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+# -
+# This section is edited
+$ProgDir/add_CodingQuary_features.pl $AddGenesGff $Assembly > $AddDir/add_genes_CodingQuary_unspliced.gff3
+$ProgDir/correct_CodingQuary_splicing.py --inp_gff $AddDir/add_genes_CodingQuary_unspliced.gff3 > $FinalDir/final_genes_CodingQuary.gff3
+# -
+$ProgDir/gff2fasta.pl $Assembly $FinalDir/final_genes_CodingQuary.gff3 $FinalDir/final_genes_CodingQuary
+cp $BrakerGff $FinalDir/final_genes_Braker.gff3
+$ProgDir/gff2fasta.pl $Assembly $FinalDir/final_genes_Braker.gff3 $FinalDir/final_genes_Braker
+cat $FinalDir/final_genes_Braker.pep.fasta $FinalDir/final_genes_CodingQuary.pep.fasta | sed -r 's/\*/X/g' > $FinalDir/final_genes_combined.pep.fasta
+cat $FinalDir/final_genes_Braker.cdna.fasta $FinalDir/final_genes_CodingQuary.cdna.fasta > $FinalDir/final_genes_combined.cdna.fasta
+cat $FinalDir/final_genes_Braker.gene.fasta $FinalDir/final_genes_CodingQuary.gene.fasta > $FinalDir/final_genes_combined.gene.fasta
+cat $FinalDir/final_genes_Braker.upstream3000.fasta $FinalDir/final_genes_CodingQuary.upstream3000.fasta > $FinalDir/final_genes_combined.upstream3000.fasta
+
+GffBraker=$FinalDir/final_genes_CodingQuary.gff3
+GffQuary=$FinalDir/final_genes_Braker.gff3
+GffAppended=$FinalDir/final_genes_appended.gff3
+cat $GffBraker $GffQuary > $GffAppended
+done
+```
+
+The final number of genes per isolate was observed using:
+```bash
+  for DirPath in $(ls -d gene_pred/final/*/*/final); do
+    Strain=$(echo $DirPath| rev | cut -d '/' -f2 | rev)
+    Organism=$(echo $DirPath | rev | cut -d '/' -f3 | rev)
+    echo "$Organism - $Strain"
+    cat $DirPath/final_genes_Braker.pep.fasta | grep '>' | wc -l;
+    cat $DirPath/final_genes_CodingQuary.pep.fasta | grep '>' | wc -l;
+    cat $DirPath/final_genes_combined.pep.fasta | grep '>' | wc -l;
+    echo "";
+  done
+```
+
+The number of genes predicted by Braker, supplimented by CodingQuary and in the
+final combined dataset was shown:
+
+
+In preperation for submission to ncbi, gene models were renamed and duplicate gene features were identified and removed.
+ * no duplicate genes were identified
+
+
+```bash
+for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3); do
+Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
+Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
+echo "$Organism - $Strain"
+FinalDir=gene_pred/final/$Organism/$Strain/final
+GffFiltered=$FinalDir/filtered_duplicates.gff
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+$ProgDir/remove_dup_features.py --inp_gff $GffAppended --out_gff $GffFiltered
+GffRenamed=$FinalDir/final_genes_appended_renamed.gff3
+LogFile=$FinalDir/final_genes_appended_renamed.log
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
+$ProgDir/gff_rename_genes.py --inp_gff $GffFiltered --conversion_log $LogFile > $GffRenamed
+rm $GffFiltered
+Assembly=$(ls repeat_masked/$Organism/$Strain/*/*_softmasked_repeatmasker_TPSI_appended.fa)
+$ProgDir/gff2fasta.pl $Assembly $GffRenamed gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed
+# The proteins fasta file contains * instead of Xs for stop codons, these should
+# be changed
+sed -i 's/\*/X/g' gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.pep.fasta
+done
+```
+
+
+
+
+
+
+
+# Genomic analysis
+
+
+## Alignment vs minion genomes
+
+Illumina sequence data from each of the isoaltes was aligned against the minion
+assemblies.
+
+
+### Read alignemnt
+
+```bash
+for Reference in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+RefStrain=$(echo $Reference | rev | cut -f3 -d '/' | rev)
+for StrainPath in $(ls -d ../../../../home/groups/harrisonlab/project_files/alternaria/qc_dna/paired/*/* | grep 'arborescens'); do
+Jobs=$(qstat | grep 'sub_bowtie' | grep 'qw'| wc -l)
+while [ $Jobs -gt 1 ]; do
+sleep 1m
+printf "."
+Jobs=$(qstat | grep 'sub_bowtie' | grep 'qw'| wc -l)
+done
+printf "\n"
+echo $StrainPath
+Strain=$(echo $StrainPath | rev | cut -f1 -d '/' | rev)
+Organism=$(echo $StrainPath | rev | cut -f2 -d '/' | rev)
+echo "$Organism - $Strain"
+F_Read=$(ls $StrainPath/F/*_trim.fq.gz | head -n1 | tail -n1)
+R_Read=$(ls $StrainPath/R/*_trim.fq.gz | head -n1 | tail -n1)
+echo $F_Read
+echo $R_Read
+OutDir=analysis/genome_alignment/bowtie/$Organism/$Strain/vs_${RefStrain}
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/genome_alignment
+qsub $ProgDir/bowtie/sub_bowtie.sh $Reference $F_Read $R_Read $OutDir $Strain
+done
+done
+```
+
+### Read coverage
+
+Identify read coverage over each bp
+
+```bash
+  for Bam in $(ls analysis/genome_alignment/bowtie/*/*/vs_*/*_aligned_sorted.bam); do
+    Target=$(echo $Bam | rev | cut -f2 -d '/' | rev)
+    Strain=$(echo $Bam | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Bam | rev | cut -f4 -d '/' | rev)
+    echo "$Organism - $Strain - $Target"
+    OutDir=$(dirname $Bam)
+    samtools depth -aa $Bam > $OutDir/${Organism}_${Strain}_${Target}_depth.tsv
+    ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/genome_alignment/coverage_analysis
+    $ProgDir/cov_by_window.py --cov $OutDir/${Organism}_${Strain}_${Target}_depth.tsv > $OutDir/${Organism}_${Strain}_${Target}_depth_10kb.tsv
+    sed -i "s/$/\t$Strain/g" $OutDir/${Organism}_${Strain}_${Target}_depth_10kb.tsv
+  done
+  for Target in "vs_650" "vs_1166"; do
+    OutDir=analysis/genome_alignment/bowtie/grouped_${Target}
+    mkdir -p $OutDir
+    cat analysis/genome_alignment/bowtie/*/*/*/*_*_${Target}_depth_10kb.tsv > $OutDir/${Target}_grouped_depth.tsv
+  done
+```
+
+### Plot read coverage
+
+
+```R
+library(readr)
+setwd("~/Downloads/Aalt/coverage")
+
+appended_df <- read_delim("~/Downloads/Aalt/coverage/vs_1166_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
+
+
+colnames(appended_df) <- c("contig","position", "depth", "strain")
+
+appended_df$depth <- ifelse(appended_df$depth > 100, 100, appended_df$depth)
+
+# install.packages("ggplot2")
+library(ggplot2)
+require(scales)
+
+for (i in 1:23){
+contig = paste("contig", i, sep = "_")
+p0 <- ggplot(data=appended_df[appended_df$contig == contig, ], aes(x=`position`, y=`depth`, group=1)) +
+geom_line() +
+labs(x = "Position (bp)", y = "Coverage") +
+scale_y_continuous(breaks=seq(0,100,25), limits=c(0,100)) +
+facet_wrap(~strain, nrow = 12, ncol = 1, strip.position = "left")
+outfile = paste("1166_contig", i, "cov.jpg", sep = "_")
+ggsave(outfile , plot = p0, device = 'jpg', path = NULL,
+scale = 1, width = 500, height = 500, units = 'mm',
+dpi = 150, limitsize = TRUE)
+}
+```
+
+
+```R
+library(readr)
+setwd("~/Downloads/Aalt/coverage")
+
+df_650 <- read_delim("~/Downloads/Aalt/coverage/vs_650_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
+
+
+colnames(df_650) <- c("contig","position", "depth", "strain")
+
+df_650$depth <- ifelse(df_650$depth > 100, 100, df_650$depth)
+
+# install.packages("ggplot2")
+library(ggplot2)
+require(scales)
+
+for (i in 1:24){
+contig = paste("contig", i, sep = "_")
+p0 <- ggplot(data=df_650[df_650$contig == contig, ], aes(x=`position`, y=`depth`, group=1)) +
+geom_line() +
+labs(x = "Position (bp)", y = "Coverage") +
+scale_y_continuous(breaks=seq(0,100,25), limits=c(0,100)) +
+facet_wrap(~strain, nrow = 12, ncol = 1, strip.position = "left")
+outfile = paste("650_contig", i, "cov.jpg", sep = "_")
+ggsave(outfile , plot = p0, device = 'jpg', path = NULL,
+scale = 1, width = 500, height = 500, units = 'mm',
+dpi = 150, limitsize = TRUE)
+}
 ```
