@@ -444,14 +444,14 @@ Accepted hits .bam file were concatenated and indexed for use for gene model tra
 
 
 ```bash
-for OutDir in $(ls -d alignment/star/*/* | grep '1177'); do
+for OutDir in $(ls -d alignment/star/*/* | grep -v -e '1166' -e '650'); do
   Strain=$(echo $OutDir | rev | cut -d '/' -f1 | rev)
   Organism=$(echo $OutDir | rev | cut -d '/' -f2 | rev)
   echo "$Organism - $Strain"
   # For all alignments
   BamFiles=$(ls $OutDir/treatment/*/*.sortedByCoord.out.bam | tr -d '\n' | sed 's/.bam/.bam /g')
   mkdir -p $OutDir/concatenated
-  samtools merge -f $OutDir/concatenated/concatenated.bam $BamFiles
+  samtools merge -@ 4 -f $OutDir/concatenated/concatenated.bam $BamFiles
 done
 ```
 
@@ -459,7 +459,7 @@ done
 #### Braker prediction
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep -v -e '1166' -e '650'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -504,7 +504,7 @@ Note - cufflinks doesn't always predict direction of a transcript and
 therefore features can not be restricted by strand when they are intersected.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep '1177'); do
+for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep -v -e '1166' -e '650'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -520,7 +520,7 @@ done
 Secondly, genes were predicted using CodingQuary:
 
 ```bash
-  for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa); do
+  for Assembly in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep -v -e '1166' -e '650'); do
     Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
     Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
     echo "$Organism - $Strain"
@@ -539,7 +539,7 @@ models:
 Note - Ensure that the "TPSI_appended.fa" assembly file is correct.
 
 ```bash
-for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep '1177'); do
+for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep -v -e '1166' -e '650'); do
 Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker//g')
 Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -597,7 +597,7 @@ cat tmp.gff | grep -v 'CUFF_8208_1_74' > $GffAppended
 
 
 ```bash
-  for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3 | grep '1177'); do
+  for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3 | grep -v -e '1166' -e '650'); do
     Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
     Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
     echo "$Organism - $Strain"
