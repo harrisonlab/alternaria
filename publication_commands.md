@@ -903,7 +903,7 @@ Note - this doesnt exclude proteins with TM domains or GPI anchors
     Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
     Headers=$(echo "$File" | sed 's/_EffectorP.txt/_EffectorP_headers.txt/g')
-    cat $File | grep 'Effector' | cut -f1 > $Headers
+    cat $File | grep 'Effector' | grep -v 'Effector probability:' | cut -f1 > $Headers
     printf "EffectorP headers:\t"
     cat $Headers | wc -l
     Secretome=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/"$Strain"_final_sp_no_trans_mem.aa)
