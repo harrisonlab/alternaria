@@ -13,6 +13,53 @@ The commands used to parse these files and prepare the Alternaria spp. genomes
 for submisson are shown below.
 
 
+# SRA archive
+
+A Bioproject and biosample number was prepared for the genome submission at:
+https://submit.ncbi.nlm.nih.gov
+Following this a metadata file was created for the dataset. This was copied
+into the following folder:
+
+```bash
+mkdir -p genome_submission/P.cac_comparative
+ls genome_submission/P.cac_comparative/Pc_Pi_SRA_metadata_acc.txt
+```
+
+read data was copied to this location in preperation for submission to ncbi:
+
+```bash
+screen -a
+OutDir=/data/scratch/armita/alternaria/genome_submission/Alt_comparative/SRA
+mkdir -p $OutDir
+for File in $(ls raw_dna/paired/*/*/*/*.fastq.gz); do
+ cp $File $OutDir/.
+done
+for File in $(ls raw_dna/paired/A.alternata_ssp._tenuissima/1166/*/*.fastq); do
+ cp $File $OutDir/.
+done
+for File in $(ls /data/scratch/nanopore_tmp_data/Alternaria/albacore_v2.1.10/*.fastq.gz); do
+  cp $File $OutDir/.
+done
+gzip $OutDir/*.fastq
+
+cd /data/scratch/armita/alternaria/genome_submission/Alt_comparative
+tar -cz -f Aalt_SRA.tar.gz SRA
+```
+
+FTP upload of data
+
+```bash
+cd /data/scratch/armita/alternaria/genome_submission/Alt_comparative
+ftp ftp-private.ncbi.nlm.nih.gov
+# User is: subftp
+# Password is given in the FTP upload instrucitons during SRA submission
+cd uploads/andrew.armitage@emr.ac.uk_6L2oakBI
+mkdir Alt_comparative_PRJNA360212
+cd Alt_comparative_PRJNA360212
+put Aalt_SRA.tar.gz
+```
+
+
 # Preliminary submission
 
 A Bioproject and biosample number was prepared for the genome submission at:
