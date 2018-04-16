@@ -4,7 +4,7 @@
 
 
 ```bash
-  ProjDir=/home/groups/harrisonlab/project_files/alternaria
+  ProjDir=/data/scratch/armita/alternaria
   cd $ProjDir
   IsolateAbrv=At_Aa_Ag_all_isolates
   WorkDir=analysis/orthology/orthomcl/$IsolateAbrv
@@ -20,7 +20,7 @@
 ### for A. tenuissima isolate 648
 ```bash
   Taxon_code=At_1
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/648/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/648/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -29,7 +29,7 @@
 ### for A.alt_ssp.ten 1082
 ```bash
   Taxon_code=At_2
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1082/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/1082/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -38,7 +38,7 @@
 ### for A.alt_ssp.ten 1164
 ```bash
   Taxon_code=At_3
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1164/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/1164/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -47,7 +47,7 @@
 ### for A.alt_ssp.ten 24350
 ```bash
   Taxon_code=At_4
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/24350/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/24350/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -59,7 +59,7 @@
 ### for A.alt_ssp.ten_apple_path 635
 ```bash
   Taxon_code=At_5
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/635/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/635/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -68,7 +68,7 @@
 ### for A.alt_ssp.ten_apple_path 743
 ```bash
   Taxon_code=At_6
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/743/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/743/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -77,7 +77,7 @@
 ### for A.alt_ssp.ten_apple_path 1166
 ```bash
   Taxon_code=At_7
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1166/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls gene_pred/final/A.alternata_ssp_tenuissima/1166/final/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -86,7 +86,7 @@
 ### for A.alt_ssp.ten_apple_path 1177
 ```bash
   Taxon_code=At_8
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._tenuissima/1177/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._tenuissima/1177/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -97,7 +97,7 @@
 ### for A.alt_ssp.arb 675
 ```bash
   Taxon_code=Aa_1
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._arborescens/675/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._arborescens/675/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -106,7 +106,7 @@
 ### for A.alt_ssp.arb 97.0013
 ```bash
   Taxon_code=Aa_2
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._arborescens/97.0013/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._arborescens/97.0013/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -115,7 +115,7 @@
 ### for A.alt_ssp.arb 97.0016
 ```bash
   Taxon_code=Aa_3
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._arborescens/97.0016/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._arborescens/97.0016/*/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -126,7 +126,7 @@
 ### for A.alt_ssp.gai 650
 ```bash
   Taxon_code=Ag_1
-  Fasta_file=$(ls gene_pred/final/A.alternata_ssp._gaisen/650/*/final_genes_combined.pep.fasta)
+  Fasta_file=$(ls gene_pred/final/A.gaisen/650/final/final_genes_appended_renamed.pep.fasta)
   Id_field=1
   orthomclAdjustFasta $Taxon_code $Fasta_file $Id_field
   mv "$Taxon_code".fasta $WorkDir/formatted/"$Taxon_code".fasta
@@ -148,28 +148,28 @@
 ## 3.1) Perform an all-vs-all blast of the proteins
 
 ```bash
-  BlastDB=$WorkDir/blastall/$IsolateAbrv.db
+BlastDB=$WorkDir/blastall/$IsolateAbrv.db
 
-  makeblastdb -in $Good_proteins_file -dbtype prot -out $BlastDB
-  BlastOut=$WorkDir/all-vs-all_results.tsv
-  mkdir -p $WorkDir/splitfiles
+makeblastdb -in $Good_proteins_file -dbtype prot -out $BlastDB
+BlastOut=$WorkDir/all-vs-all_results.tsv
+mkdir -p $WorkDir/splitfiles
 
-  SplitDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
-  $SplitDir/splitfile_500.py --inp_fasta $Good_proteins_file --out_dir $WorkDir/splitfiles --out_base goodProteins
+SplitDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
+$SplitDir/splitfile_500.py --inp_fasta $Good_proteins_file --out_dir $WorkDir/splitfiles --out_base goodProteins
 
-  ProgDir=/home/armita/git_repos/emr_repos/scripts/phytophthora/pathogen/orthology  
-  for File in $(find $WorkDir/splitfiles); do
-    Jobs=$(qstat | grep 'blast_500' | grep 'qw' | wc -l)
-    while [ $Jobs -gt 1 ]; do
-      sleep 10
-      printf "."
-      Jobs=$(qstat | grep 'blast_500' | grep 'qw' | wc -l)
-    done
-    printf "\n"
-    echo $File
-    BlastOut=$(echo $File | sed 's/.fa/.tab/g')
-    qsub $ProgDir/blast_500.sh $BlastDB $File $BlastOut
-  done
+ProgDir=/home/armita/git_repos/emr_repos/scripts/phytophthora/pathogen/orthology  
+for File in $(find $WorkDir/splitfiles); do
+Jobs=$(qstat | grep 'blast_500' | grep 'qw' | wc -l)
+while [ $Jobs -gt 1 ]; do
+sleep 10
+printf "."
+Jobs=$(qstat | grep 'blast_500' | grep 'qw' | wc -l)
+done
+printf "\n"
+echo $File
+BlastOut=$(echo $File | sed 's/.fa/.tab/g')
+qsub $ProgDir/blast_500.sh $BlastDB $File $BlastOut
+done
 ```
 
 
@@ -193,12 +193,48 @@
 ```
 
 
-<!--
-## 5) Plot venn diagrams:
+Also try using orthofinder
 
 ```bash
-  ProgDir=~/git_repos/emr_repos/tools/pathogen/orthology/venn_diagrams
-  $ProgDir/ven_diag_5_way.R --inp $WorkDir/"$IsolateAbrv"_orthogroups.tab --out $WorkDir/"$IsolateAbrv"_orthogroups.pdf
+qlogin -pe smp 8
+
+#16 threads used
+ProjDir=/data/scratch/armita/alternaria
+cd $ProjDir
+IsolateAbrv=At_Aa_Ag_all_isolates
+WorkDir=analysis/orthology/orthomcl/$IsolateAbrv
+orthofinder -f $WorkDir/formatted -t 8 -a 8
+```
+
+orthofinder results:
+
+```
+OrthoFinder assigned 157080 genes (99.2% of total) to 14190 orthogroups. Fifty percent of all genes were in orthogroups
+with 12 or more genes (G50 was 12) and were contained in the largest 6161 orthogroups (O50 was 6161). There were 10661
+orthogroups with all species present and 10011 of these consisted entirely of single-copy genes.
+```
+
+output files are in:
+```bash
+ls $WorkDir/formatted/Results_Apr10
+```
+
+## 5) Plot venn diagrams:
+
+Orthofinder output:
+
+```bash
+  GoodProts=$WorkDir/goodProteins/goodProteins.fasta
+  ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/orthology/orthoMCL
+  $ProgDir/orthoMCLgroups2tab.py $GoodProts $WorkDir/formatted/Results_Apr10/Orthogroups.txt > $WorkDir/formatted/Results_Apr10/"$IsolateAbrv"_orthogroups.tab
+  ProgDir=~/git_repos/emr_repos/scripts/phytophthora/pathogen/orthology
+  $ProgDir/Pcac_Pinf_Ppar_Pcap_Psoj_venn.r --inp $WorkDir/formatted/Results_Apr10/"$IsolateAbrv"_orthogroups.tab --out $WorkDir/formatted/Results_Apr10/"$IsolateAbrv"_orthogroups.pdf
+```
+
+Orthomcl output:
+```bash
+  ProgDir=~/git_repos/emr_repos/scripts/phytophthora/pathogen/orthology
+  $ProgDir/Pcac_Pinf_Ppar_Pcap_Psoj_venn.r --inp $WorkDir/"$IsolateAbrv"_orthogroups.tab --out $WorkDir/"$IsolateAbrv"_orthogroups.pdf
 ```
 
 Output was a pdf file of the venn diagram.
@@ -206,37 +242,31 @@ Output was a pdf file of the venn diagram.
 The following additional information was also provided. The format of the
 following lines is as follows:
 
-Isolate name (total number of orthogroups)
+Isolate name
+total number of orthogroups
 number of unique singleton genes
 number of unique groups of inparalogs
 
 ```
-  [1] "Pcac (8814)"
-  [1] 567
-  [1] 118
-  [1] "Pcap (7646)"
-  [1] 333
-  [1] 52
-  [1] "Pinf (8335)"
-  [1] 562
-  [1] 100
-  [1] "Ppar (8987)"
-  [1] 695
-  [1] 79
-  [1] "Psoj (9156)"
-  [1] 883
-  [1] 388
 ```
--->
 
-## Plot venn diagrams:
+# 6) Downstream analysis
+
+Particular orthogroups were analysed for expansion in isolates.
+
+This section details the commands used and the results observed.
+
+
+## Extracting fasta files for orthogroups:
 
 ```bash
-  ProgDir=~/git_repos/emr_repos/scripts/alternaria/pathogen/orthology
-  $ProgDir/Aten_Aarb_Agai_venn.r --inp $WorkDir/"$IsolateAbrv"_orthogroups.tab --out $WorkDir/"$IsolateAbrv"_orthogroups.pdf
+  ProgDir=~/git_repos/emr_repos/tools/pathogen/orthology/orthoMCL
+  OrthogroupsTxt=$(ls $WorkDir/formatted/Results_Apr10/Orthogroups.txt)
+  GoodProts=$WorkDir/goodProteins/goodProteins.fasta
+  OutDir=$WorkDir/orthogroups_fasta
+  mkdir -p $OutDir
+  $ProgDir/orthoMCLgroups2fasta.py --orthogroups $OrthogroupsTxt --fasta $GoodProts --out_dir $OutDir
 ```
-
-
 
 # 6) Downstream analysis
 
@@ -252,9 +282,9 @@ The genes unique to A. tenuissima apple pathotypes were identified within the or
 First variables were set:
 ```bash
   WorkDir=analysis/orthology/orthomcl/At_Aa_Ag_all_isolates
-  Orthogroups=$WorkDir/At_Aa_Ag_all_isolates_orthogroups.txt
+  Orthogroups=$(ls $WorkDir/formatted/Results_Apr10/Orthogroups.txt)
   GoodProts=$WorkDir/goodProteins/goodProteins.fasta
-  Braker_genes=
+  # Braker_genes=
 ```
 
 #### 6.1.a ) Orthologroups only containing A. tenuissima genes were extracted:
@@ -289,23 +319,23 @@ done
 
 ```
 The number of orthogroups unique to A.tenuissima apple pathotype are:
-42
+52
 The following number genes from isolate 648 are contained in these orthogorups:
-43
+52
 The following number genes from isolate 1082 are contained in these orthogorups:
-45
+52
 The following number genes from isolate 1164 are contained in these orthogorups:
-43
+52
 The following number genes from isolate 24350 are contained in these orthogorups:
-43
+53
 The following number genes from isolate 648 are contained in these orthogorups:
-43
+52
 The following number genes from isolate 743 are contained in these orthogorups:
-43
+52
 The following number genes from isolate 1166 are contained in these orthogorups:
-42
+52
 The following number genes from isolate 1177 are contained in these orthogorups:
-43
+52
 ```
 
 #### 6.1.b ) Orthologroups only containing A. arborescens genes were extracted:
@@ -330,13 +360,13 @@ done
 
 ```
 The number of orthogroups unique to A.arborescens are:
-141
-The following number genes from isolate 675 are contained in these orthogorups:
-146
-The following number genes from isolate 97.0013 are contained in these orthogorups:
 150
+The following number genes from isolate 675 are contained in these orthogorups:
+155
+The following number genes from isolate 97.0013 are contained in these orthogorups:
+155
 The following number genes from isolate 97.0016 are contained in these orthogorups:
-145
+156
 ```
 
 #### 6.1.c ) Orthologroups only containing A. gaisen genes were extracted:
@@ -357,9 +387,9 @@ done
 
 ```
 The number of orthogroups unique to A.gaisen pear pathotype pathotype are:
-8
+327
 The following number genes from isolate 650 are contained in these orthogorups:
-13
+327
 ```
 
 #### 6.1.d ) Orthologroups only containing A. tenuissima non pathotype genes were extracted:
@@ -386,15 +416,15 @@ done
 
 ```
 The number of orthogroups unique to A.tenuissima non-apple pathotype are:
-1
+0
 The following number genes from isolate 648 are contained in these orthogorups:
-1
+0
 The following number genes from isolate 1082 are contained in these orthogorups:
-1
+0
 The following number genes from isolate 1164 are contained in these orthogorups:
-1
+0
 The following number genes from isolate 24350 are contained in these orthogorups:
-1
+0
 ```
 
 #### 6.1.d ) Orthologroups only containing A. tenuissima apple pathotype genes were extracted:
@@ -421,15 +451,15 @@ done
 
 ```
 The number of orthogroups unique to A.tenuissima apple pathotype are:
-33
+46
 The following number genes from isolate 635 are contained in these orthogorups:
-34
+55
 The following number genes from isolate 743 are contained in these orthogorups:
-35
+56
 The following number genes from isolate 1166 are contained in these orthogorups:
-35
+69
 The following number genes from isolate 1177 are contained in these orthogorups:
-33
+54
 ```
 
 
@@ -461,13 +491,13 @@ done
 The number of orthogroups unique to apple and pear pathotypes are:
 53
 The following number genes from isolate 650 are contained in these orthogorups:
-60
+65
 The following number genes from isolate 648 are contained in these orthogorups:
-64
+61
 The following number genes from isolate 743 are contained in these orthogorups:
-62
+61
 The following number genes from isolate 1166 are contained in these orthogorups:
-57
+62
 The following number genes from isolate 1177 are contained in these orthogorups:
 64
 ```
