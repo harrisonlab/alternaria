@@ -74,10 +74,10 @@ Data quality was visualised once again following trimming:
 
 
 
-Sequencing coveraqge was estimated:
+Sequencing coverage was estimated:
 
 ```bash
-for RawData in $(ls qc_dna/paired/*/*/*/*fq.gz | grep 'appended'); do
+for RawData in $(ls qc_dna/paired/*/*/*/*fq.gz | grep -e 'appended' -e 's_6' | grep -e 's_6'); do
 echo $RawData;
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
 qsub $ProgDir/run_fastqc.sh $RawData;
