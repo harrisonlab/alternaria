@@ -252,7 +252,7 @@ for line in antismash_lines:
 
 #-----------------------------------------------------
 # Step 6
-# Build a dictionary of vitamin TF genes
+# Build a dictionary of TF genes
 #-----------------------------------------------------
 
 TF_dict = defaultdict(list)
