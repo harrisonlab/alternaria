@@ -264,7 +264,6 @@ The TransposonPSI masked bases were used to mask additional bases from the
 repeatmasker / repeatmodeller softmasked and hardmasked files.
 
 ```bash
-
 for File in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_softmasked.fa | grep -v -e '1166' -e '650'); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
