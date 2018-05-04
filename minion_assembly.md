@@ -392,7 +392,7 @@ done
  nanopolish correction
 
 ```bash
-for Assembly in $(ls assembly/SMARTdenovo/*/1166/racon2_10/racon_min_500bp_renamed.fasta); do
+for Assembly in $(ls assembly/SMARTdenovo/*/*/racon2_10/racon_min_500bp_renamed.fasta); do
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -405,7 +405,7 @@ python $NanoPolishDir/nanopolish_makerange.py $Assembly --segment-length 50000 >
 
 Ploidy=1
 echo "nanopolish log:" > $OutDir/nanopolish_log.txt
-for Region in $(cat $OutDir/nanopolish_range.txt | grep 'contig_25:0-50200'); do
+for Region in $(cat $OutDir/nanopolish_range.txt); do
 Jobs=$(qstat | grep 'sub_nanopo' | grep 'qw' | wc -l)
 while [ $Jobs -gt 1 ]; do
 sleep 1m
@@ -463,7 +463,7 @@ done
 Assemblies were polished using Pilon
 
 ```bash
-for Assembly in $(ls assembly/SMARTdenovo/*/*/nanopolish/*_nanoplish_min_500bp_renamed.fasta | grep 'tenuissima'); do
+for Assembly in $(ls assembly/SMARTdenovo/*/*/nanopolish/*_nanoplish_min_500bp_renamed.fasta); do
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -492,23 +492,31 @@ Quast and busco were run to assess the effects of pilon on assembly quality:
 
 ```bash
 
-for Assembly in $(ls assembly/SMARTdenovo/*/*/pilon/*.fasta | grep 'pilon_min_500bp_renamed.fasta'); do
+for Assembly in $(ls assembly/SMARTdenovo/*/*/pilon/*.fasta); do
   Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
   Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
-  OutDir=$(dirname $Assembly)
   echo "$Organism - $Strain"
-  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
-  qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+  # OutDir=$(dirname $Assembly)
+  # ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
+  # qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+  Jobs=$(qstat | grep 'sub_busco' | grep 'qw'| wc -l)
+  while [ $Jobs -gt 1 ]; do
+  sleep 1m
+  printf "."
+  Jobs=$(qstat | grep 'sub_busco' | grep 'qw'| wc -l)
+  done
+  printf "\n"
   ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
   BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
-  OutDir=gene_pred/busco/$Organism/$Strain/assembly
+  # OutDir=gene_pred/busco/$Organism/$Strain/assembly
+  OutDir=$(dirname $Assembly)
   qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
 done
 ```
 
 ```bash
 printf "Filename\tComplete\tDuplicated\tFragmented\tMissing\tTotal\n"
-for File in $(ls gene_pred/busco/*/*/assembly/*/short_summary_*.txt); do  
+for File in $(ls assembly/SMARTdenovo/*/*/pilon/*/short_summary_*.txt); do  
 FileName=$(basename $File)
 Complete=$(cat $File | grep "(C)" | cut -f2)
 Duplicated=$(cat $File | grep "(D)" | cut -f2)
@@ -520,26 +528,28 @@ done
 ```
 
 ```
-short_summary_650_smartdenovo.dmo.lay.txt	283	0	453	2989	3725
-short_summary_1166_nanoplish_min_500bp_renamed.txt	1203	2	59	53	1315
-short_summary_1166_smartdenovo.dmo.lay.txt	294	0	466	2965	3725
-short_summary_1166_smartdenovo_racon_round_10.txt	1719	4	966	1040	3725
-short_summary_1166_smartdenovo_racon_round_1.txt	1525	4	931	1269	3725
-short_summary_1166_smartdenovo_racon_round_2.txt	1688	4	935	1102	3725
-short_summary_1166_smartdenovo_racon_round_3.txt	1672	4	944	1109	3725
-short_summary_1166_smartdenovo_racon_round_4.txt	1975	4	523	1227	3725
-short_summary_1166_smartdenovo_racon_round_5.txt	1981	6	505	1239	3725
-short_summary_1166_smartdenovo_racon_round_6.txt	1717	5	939	1069	3725
-short_summary_1166_smartdenovo_racon_round_7.txt	1714	4	934	1077	3725
-short_summary_1166_smartdenovo_racon_round_8.txt	1736	5	935	1054	3725
-short_summary_1166_smartdenovo_racon_round_9.txt	1731	7	940	1054	3725
-short_summary_racon_min_500bp_renamed.txt	1719	4	966	1040	3725
-short_summary_650_nanoplish_min_500bp_renamed.txt	384	1	34	897	1315
-short_summary_650_smartdenovo_racon_round_10.txt	1636	8	926	1163	3725
-short_summary_650_smartdenovo_racon_round_1.txt	1427	5	987	1311	3725
-short_summary_650_smartdenovo_racon_round_2.txt	1594	7	916	1215	3725
-short_summary_650_smartdenovo_racon_round_3.txt	1586	8	946	1193	3725
-short_summary_650_smartdenovo_racon_round_4.txt	1596	6	912	1217	3725
+short_summary_pilon_1.txt	1301	1	4	10	1315
+short_summary_pilon_2.txt	1302	1	3	10	1315
+short_summary_pilon_3.txt	1302	1	3	10	1315
+short_summary_pilon_4.txt	1302	1	3	10	1315
+short_summary_pilon_5.txt	1302	1	3	10	1315
+short_summary_pilon_6.txt	1302	1	3	10	1315
+short_summary_pilon_7.txt	1302	1	3	10	1315
+short_summary_pilon_8.txt	1302	1	3	10	1315
+short_summary_pilon_9.txt	1302	1	3	10	1315
+short_summary_pilon_10.txt	1302	1	3	10	1315
+short_summary_pilon_min_500bp_renamed.txt	1302	1	3	10	131
+short_summary_pilon_1.txt	1290	2	8	17	1315
+short_summary_pilon_2.txt	1294	2	5	16	1315
+short_summary_pilon_3.txt	1298	2	5	12	1315
+short_summary_pilon_4.txt	1298	2	5	12	1315
+short_summary_pilon_5.txt	1298	2	5	12	1315
+short_summary_pilon_6.txt	1298	2	5	12	1315
+short_summary_pilon_7.txt	1298	2	5	12	1315
+short_summary_pilon_8.txt	1298	2	5	12	1315
+short_summary_pilon_9.txt	1298	2	5	12	1315
+short_summary_pilon_10.txt	1298	2	5	12	1315
+short_summary_pilon_min_500bp_renamed.txt	1298	2	5	12	1315
 ```
 
 # Hybrid Assembly
@@ -612,7 +622,7 @@ for MinionAssembly in $(ls assembly/SMARTdenovo/*/*/pilon/pilon_min_500bp_rename
 Organism=$(echo $MinionAssembly | rev | cut -f4 -d '/' | rev)
 Strain=$(echo $MinionAssembly | rev | cut -f3 -d '/' | rev)
 HybridAssembly=$(ls assembly/spades_*/${Organism}/${Strain}*/filtered_contigs/contigs_min_500bp.fasta)
-OutDir=assembly/merged_SMARTdenovo_spades/$Organism/$Strain
+OutDir=assembly/merged_SMARTdenovo_spades/$Organism/${Strain}
 AnchorLength=500000
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/quickmerge
 qsub $ProgDir/sub_quickmerge.sh $MinionAssembly $HybridAssembly $OutDir $AnchorLength
@@ -636,11 +646,23 @@ qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
 done
 ```
 
+```bash
+  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/short_summary_*.txt ); do
+  Strain=$(echo $File| rev | cut -d '/' -f3 | rev)
+  Organism=$(echo $File | rev | cut -d '/' -f4 | rev)
+  Prefix=$(basename $File)
+  Complete=$(cat $File | grep "(C)" | cut -f2)
+  Fragmented=$(cat $File | grep "(F)" | cut -f2)
+  Missing=$(cat $File | grep "(M)" | cut -f2)
+  Total=$(cat $File | grep "Total" | cut -f2)
+  echo -e "$Organism\t$Strain\t$Prefix\t$Complete\t$Fragmented\t$Missing\t$Total"
+  done
+```
 
 This merged assembly was polished using Pilon
 
 ```bash
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta | grep '650'); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta | grep -v -e '_100kb' -e 'hybrid_first'); do
 Organism=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -649,6 +671,8 @@ TrimF1_Read=$(ls $IlluminaDir/F/*_trim.fq.gz | head -n1)
 TrimR1_Read=$(ls $IlluminaDir/R/*_trim.fq.gz | head -n1)
 OutDir=$(dirname $Assembly)/pilon
 Iterations=5
+# OutDir=$(dirname $Assembly)/pilon2
+# Iterations=10
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/pilon
 qsub $ProgDir/sub_pilon.sh $Assembly $TrimF1_Read $TrimR1_Read $OutDir $Iterations
 done
@@ -657,6 +681,7 @@ done
 Contigs were renamed
 ```bash
 for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta | grep 'pilon_5'); do
+# for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/*.fasta | grep 'pilon_10'); do
 echo $Assembly
 echo "" > tmp.txt
 OutDir=$(dirname $Assembly)
@@ -665,12 +690,122 @@ $ProgDir/remove_contaminants.py --keep_mitochondria --inp $Assembly --out $OutDi
 done
 ```
 
-# Repeat Masking
 
-Repeat masking was performed on the non-hybrid assembly.
+BUSCO
 
 ```bash
-  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/pilon_min_500bp_renamed.fasta | grep '1166'); do
+
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta); do
+# for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/*.fasta); do
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+echo "$Organism - $Strain"
+Jobs=$(qstat | grep 'sub_busco' | grep 'qw'| wc -l)
+while [ $Jobs -gt 1 ]; do
+sleep 1m
+printf "."
+Jobs=$(qstat | grep 'sub_busco' | grep 'qw'| wc -l)
+done
+printf "\n"
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
+OutDir=$(dirname $Assembly)
+qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
+done
+```
+
+```bash
+  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/*/short_summary_*.txt ); do
+  Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
+  Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
+  Prefix=$(basename $File)
+  Complete=$(cat $File | grep "(C)" | cut -f2)
+  Fragmented=$(cat $File | grep "(F)" | cut -f2)
+  Missing=$(cat $File | grep "(M)" | cut -f2)
+  Total=$(cat $File | grep "Total" | cut -f2)
+  echo -e "$Organism\t$Strain\t$Prefix\t$Complete\t$Fragmented\t$Missing\t$Total"
+  done
+```
+
+
+The results of merging showed worse results than when the assembly was performed
+using MinION only data.
+
+
+
+## Identifying Mitochondrial genes in assemblies
+
+Using a blast based approach of Mt genes:
+
+```bash
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/pilon_min_500bp_renamed.fasta); do
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+echo $Assembly
+Query=$(ls ../../../../home/groups/harrisonlab/project_files/alternaria/analysis/blast_homology/Mt_dna/Mt_genes_A.alternata_Liao_2017.fasta)
+OutDir=analysis/Mt_genes/$Organism/$Strain
+mkdir -p $OutDir
+ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+qsub $ProgDir/run_blast2csv.sh $Query protein $Assembly $OutDir
+done
+```
+
+Using an exclusion database with deconseq:
+
+
+```bash
+  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/pilon_min_500bp_renamed.fasta); do
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+    echo "$Organism - $Strain"
+    for Exclude_db in "Aalt_mtDNA"; do
+      AssemblyDir=$(dirname $Assembly)
+      OutDir=$AssemblyDir/../deconseq_$Exclude_db
+      ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/remove_contaminants
+      qsub $ProgDir/sub_deconseq_no_retain.sh $Assembly $Exclude_db $OutDir
+    done
+  done
+```
+
+Results were summarised using the commands:
+
+```bash
+for Exclude_db in "Aalt_mtDNA"; do
+echo $Exclude_db
+for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/log.txt | grep "$Exclude_db"); do
+Name=$(echo $File | rev | cut -f3 -d '/' | rev);
+Good=$(cat $File |cut -f2 | head -n1 | tail -n1);
+Bad=$(cat $File |cut -f2 | head -n3 | tail -n1);
+printf "$Name\t$Good\t$Bad\n";
+done
+done
+```
+
+```
+Aalt_mtDNA
+1166	22	1
+650	23	1
+```
+
+Quast was run on the removed mtDNA:
+
+```bash
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/A*/*/deconseq_Aalt_mtDNA/*_cont.fa); do
+Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+OutDir=$(dirname $Assembly)
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/quast
+qsub $ProgDir/sub_quast.sh $Assembly $OutDir
+done
+```
+
+# Repeat Masking
+
+Repeat masking was performed on the hybrid assembly.
+
+```bash
+  # for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/pilon_min_500bp_renamed.fasta); do
+  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/contigs_min_500bp_filtered_renamed.fasta); do
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
@@ -686,7 +821,7 @@ repeatmasker / repeatmodeller softmasked and hardmasked files.
 
 ```bash
 
-for File in $(ls repeat_masked/*/*/*/*_contigs_softmasked.fa); do
+for File in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_softmasked.fa/_contigs_softmasked_repeatmasker_TPSI_appended.fa/g')
@@ -696,7 +831,8 @@ echo "Number of masked bases:"
 cat $OutFile | grep -v '>' | tr -d '\n' | awk '{print $0, gsub("[a-z]", ".")}' | cut -f2 -d ' '
 done
 # The number of N's in hardmasked sequence are not counted as some may be present within the assembly and were therefore not repeatmasked.
-for File in $(ls repeat_masked/*/*/*/*_contigs_hardmasked.fa | grep ''); do
+for File in $(ls repeat_masked/*/*/for File in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked.fa); do
+/*_contigs_hardmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_hardmasked.fa/_contigs_hardmasked_repeatmasker_TPSI_appended.fa/g')
@@ -707,10 +843,10 @@ done
 ```
 repeat_masked/A.alternata_ssp_tenuissima/1166/filtered_contigs/1166_contigs_softmasked_repeatmasker_TPSI_appended.fa
 Number of masked bases:
-1200890
+1268326
 repeat_masked/A.gaisen/650/filtered_contigs/650_contigs_softmasked_repeatmasker_TPSI_appended.fa
 Number of masked bases:
-572244
+650552
 ```
 
 Quast and BUSCO
@@ -729,13 +865,37 @@ qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
 done
 ```
 
+
+# Identify Telomere repeats:
+
+Maria wrote a script to identify presence of Telomeric repeats in assemblies
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+echo "$Organism - $Strain"
+OutDir=analysis/telomere/$Organism/$Strain
+mkdir -p $OutDir
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/telomeres
+$ProgDir/annotate_telomeres.py --fasta $Assembly > $OutDir/telomere_hits.txt
+# Motif="TTAGGG"
+# for Strand in '+' '-'; do
+# ProgDir=/home/armita/git_repos/emr_repos/scripts/popgen/codon
+# python $ProgDir/identify_telomere_repeats.py $Assembly $Motif $Strand $OutDir/${Strain}_telomere_${Motif}_${Strand}.bed
+# $ProgDir/how_many_repeats_regions.py $OutDir/${Strain}_telomere_${Motif}_${Strand}.bed
+# done
+done
+cat $OutDir/telomere_hits.txt | sort -nr -k5 | less
+```
+
 # Gene Prediction
 
 #### Aligning
 
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -813,7 +973,7 @@ Note - cufflinks doesn't always predict direction of a transcript and
 therefore features can not be restricted by strand when they are intersected.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -828,7 +988,7 @@ done
 Secondly, genes were predicted using CodingQuary:
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -916,9 +1076,22 @@ The final number of genes per isolate was observed using:
 The number of genes predicted by Braker, supplimented by CodingQuary and in the
 final combined dataset was shown:
 
+```
+A.alternata_ssp_tenuissima - 1166
+12761
+904
+13665
+
+A.gaisen - 650
+12023
+851
+12874
+```
+
 
 In preperation for submission to ncbi, gene models were renamed and duplicate gene features were identified and removed.
  * no duplicate genes were identified
+
 
 
 ```bash
@@ -935,12 +1108,70 @@ LogFile=$FinalDir/final_genes_appended_renamed.log
 ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
 $ProgDir/gff_rename_genes.py --inp_gff $GffFiltered --conversion_log $LogFile > $GffRenamed
 rm $GffFiltered
-Assembly=$(ls repeat_masked/$Organism/$Strain/*/*_softmasked_repeatmasker_TPSI_appended.fa)
+Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_softmasked_repeatmasker_TPSI_appended.fa)
 $ProgDir/gff2fasta.pl $Assembly $GffRenamed gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed
 # The proteins fasta file contains * instead of Xs for stop codons, these should
 # be changed
 sed -i 's/\*/X/g' gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.pep.fasta
 done
+```
+
+```
+A.alternata_ssp_tenuissima - 1166
+Identifiied the following duplicated transcripts:
+CUFF_8299_1_996.t2
+CUFF_10096_1_77.t2
+A.gaisen - 650
+Identifiied the following duplicated transcripts:
+CUFF_2980_1_77.t2
+CUFF_1001_1_1582.t2
+CUFF_2980_1_80.t2
+CUFF_3334_1_60.t2
+CUFF_720_1_86.t2
+CUFF_7702_1_36.t2
+CUFF_7380_1_535.t2
+CUFF_9418_1_13.t2
+```
+
+```bash
+for File in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta); do
+  echo $File | rev | cut -f3 -d '/' |  rev
+  cat $File | grep '>' | wc -l
+done
+```
+
+```
+1166
+13663
+650
+12866
+```
+
+## Checking gene prediction accruacy using BUSCO
+
+```bash
+ for Assembly in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gene.fasta); do
+   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+   echo "$Organism - $Strain"
+   ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/busco
+   BuscoDB=$(ls -d /home/groups/harrisonlab/dbBusco/ascomycota_odb9)
+   OutDir=gene_pred/busco/$Organism/$Strain/transcript
+   qsub $ProgDir/sub_busco3.sh $Assembly $BuscoDB $OutDir
+ done
+```
+
+```bash
+ for File in $(ls gene_pred/busco/*/*/transcript/*/short_summary_*.txt); do
+ Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
+ Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
+ Complete=$(cat $File | grep "(C)" | cut -f2)
+ Single=$(cat $File | grep "(S)" | cut -f2)
+ Fragmented=$(cat $File | grep "(F)" | cut -f2)
+ Missing=$(cat $File | grep "(M)" | cut -f2)
+ Total=$(cat $File | grep "Total" | cut -f2)
+ echo -e "$Organism\t$Strain\t$Complete\t$Single\t$Fragmented\t$Missing\t$Total"
+ done
 ```
 
 
@@ -1116,8 +1347,8 @@ done
 ```
 
 ```
-A.alternata_ssp_tenuissima	1166	1510	1259	1257
-A.gaisen	650	1443	1194	1191
+A.alternata_ssp_tenuissima	1166	1511	1253	1251
+A.gaisen	650	1429	1186	1184
 ```
 
 ### C) From Augustus gene models - Effector identification using EffectorP
@@ -1167,11 +1398,11 @@ Note - this doesnt exclude proteins with TM domains or GPI anchors
 
 ```
 A.alternata_ssp_tenuissima - 1166
-EffectorP headers:	3996
-Secreted effectorP headers:	253
+EffectorP headers:	1970
+Secreted effectorP headers:	248
 A.gaisen - 650
-EffectorP headers:	3796
-Secreted effectorP headers:	246
+EffectorP headers:	1921
+Secreted effectorP headers:	247
 ```
 
 ## SSCP
@@ -1199,13 +1430,13 @@ done
 A.alternata_ssp_tenuissima - 1166
 % cysteine content threshold set to:	3
 maximum length set to:	300
-No. short-cysteine rich proteins in input fasta:	201
-number of SSC-rich genes:	201
+No. short-cysteine rich proteins in input fasta:	202
+number of SSC-rich genes:	202
 A.gaisen - 650
 % cysteine content threshold set to:	3
 maximum length set to:	300
-No. short-cysteine rich proteins in input fasta:	196
-number of SSC-rich genes:	195
+No. short-cysteine rich proteins in input fasta:	197
+number of SSC-rich genes:	196
 ```
 
 ## CAZY proteins
@@ -1267,8 +1498,8 @@ done
 ```
 
 ```
-A.alternata_ssp_tenuissima	1166	779	779	391	391
-A.gaisen	650	762	762	377	377
+A.alternata_ssp_tenuissima	1166	777	777	389	389
+A.gaisen	650	764	764	374	374
 ```
 
 Note - the CAZY genes identified may need further filtering based on e value and
@@ -1307,6 +1538,34 @@ $ProgDir/summarise_CAZY.py --cazy $CAZY --inp_secreted $Secreted --inp_gff $Gff 
 done
 ```
 
+```
+A.alternata_ssp_tenuissima - 1166
+B-Galactosidases - 4
+A-Galactosidases - 3
+Polygalacturonase - 8
+A-Arabinosidases - 14
+Xylanases - 14
+Polygalacturonate lyases - 21
+B-Glucuronidases - 2
+B-Glycosidases - 12
+Cellulases - 30
+Xyloglucanases - 1
+other - 279
+
+
+A.gaisen - 650
+B-Galactosidases - 3
+A-Galactosidases - 2
+Polygalacturonase - 11
+A-Arabinosidases - 14
+Xylanases - 14
+Polygalacturonate lyases - 20
+B-Glucuronidases - 4
+B-Glycosidases - 11
+Cellulases - 29
+Xyloglucanases - 1
+other - 265
+```
 
 ## D) Secondary metabolites (Antismash and SMURF)
 
@@ -1451,8 +1710,8 @@ done
 ```
 
 ```
-A.alternata_ssp_tenuissima	1166	705
-A.gaisen	650	639
+A.alternata_ssp_tenuissima	1166	690
+A.gaisen	650	633
 ```
 
 
@@ -1464,7 +1723,7 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 Predicted gene models were searched against the PHIbase database using tBLASTx.
 
 ```bash
-qlogin -l h=blacklace01.blacklace
+qlogin -pe smp 12
 cd /data/scratch/armita/alternaria
 dbFasta=$(ls /home/groups/harrisonlab/phibase/v4.4/phi_accessions.fa)
 dbType="prot"
@@ -1477,7 +1736,7 @@ Eval="1e-30"
 OutDir=analysis/blast_homology/$Organism/$Strain
 mkdir -p $OutDir
 makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
-blastx -num_threads 16 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+blastx -num_threads 12 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
 cat $OutDir/${Prefix}_hits.txt | grep 'effector' | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 done
 ```
@@ -1488,7 +1747,7 @@ The first analysis was based upon BLAST searches for genes known to be involved 
 
 
 ```bash
-qlogin -l h=blacklace01.blacklace
+qlogin -pe smp 4
 cd /data/scratch/armita/alternaria
 dbFasta=$(ls /home/groups/harrisonlab/project_files/alternaria/analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa)
 dbType="nucl"
@@ -1501,7 +1760,7 @@ Eval="1e-100"
 OutDir=analysis/blast_homology/$Organism/$Strain
 mkdir -p $OutDir
 makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
-tblastx -num_threads 8 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+tblastx -num_threads 4 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
 cat $OutDir/${Prefix}_hits.txt | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 # cat $OutDir/${Prefix}_hits.txt | grep 'effector' | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 done
@@ -1721,12 +1980,18 @@ Identify read coverage over each bp
 
 ```R
 library(readr)
-setwd("~/Downloads/Aalt/coverage")
+setwd("~/Downloads/Aalt/coverage2")
 
-appended_df <- read_delim("~/Downloads/Aalt/coverage/vs_1166_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
+appended_df <- read_delim("~/Downloads/Aalt/coverage2/vs_1166_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
 
 
 colnames(appended_df) <- c("contig","position", "depth", "strain")
+
+appended_df$treatment <- paste(appended_df$strain , appended_df$contig)
+tapply(appended_df$depth, appended_df$treatment, myFun)
+
+df2 <- cbind(do.call(rbind, tapply(appended_df$depth, appended_df$treatment, myFun)))
+write.csv(df2, '1166_contig_coverage.csv')
 
 appended_df$depth <- ifelse(appended_df$depth > 100, 100, appended_df$depth)
 
@@ -1734,7 +1999,7 @@ appended_df$depth <- ifelse(appended_df$depth > 100, 100, appended_df$depth)
 library(ggplot2)
 require(scales)
 
-for (i in 1:23){
+for (i in 1:22){
 contig = paste("contig", i, sep = "_")
 p0 <- ggplot(data=appended_df[appended_df$contig == contig, ], aes(x=`position`, y=`depth`, group=1)) +
 geom_line() +
@@ -1746,17 +2011,30 @@ ggsave(outfile , plot = p0, device = 'jpg', path = NULL,
 scale = 1, width = 500, height = 500, units = 'mm',
 dpi = 150, limitsize = TRUE)
 }
+
+myFun <- function(x) {
+  c(min = min(x), max = max(x),
+    mean = mean(x), median = median(x),
+    std = sd(x))
+}
+
+
 ```
 
 
 ```R
 library(readr)
-setwd("~/Downloads/Aalt/coverage")
+setwd("~/Downloads/Aalt/coverage2")
 
-df_650 <- read_delim("~/Downloads/Aalt/coverage/vs_650_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
-
+df_650 <- read_delim("~/Downloads/Aalt/coverage2/vs_650_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
 
 colnames(df_650) <- c("contig","position", "depth", "strain")
+
+df_650$treatment <- paste(df_650$strain , df_650$contig)
+tapply(df_650$depth, df_650$treatment, myFun)
+
+df2 <- cbind(do.call(rbind, tapply(df_650$depth, df_650$treatment, myFun)))
+write.csv(df2, '650_contig_coverage.csv')
 
 df_650$depth <- ifelse(df_650$depth > 100, 100, df_650$depth)
 
@@ -1764,7 +2042,7 @@ df_650$depth <- ifelse(df_650$depth > 100, 100, df_650$depth)
 library(ggplot2)
 require(scales)
 
-for (i in 1:24){
+for (i in 1:23){
 contig = paste("contig", i, sep = "_")
 p0 <- ggplot(data=df_650[df_650$contig == contig, ], aes(x=`position`, y=`depth`, group=1)) +
 geom_line() +
@@ -1776,4 +2054,6 @@ ggsave(outfile , plot = p0, device = 'jpg', path = NULL,
 scale = 1, width = 500, height = 500, units = 'mm',
 dpi = 150, limitsize = TRUE)
 }
+
+
 ```
