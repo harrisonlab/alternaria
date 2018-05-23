@@ -71,7 +71,7 @@ cd ~/Aalt_21-12-17/$Date
   chmod +rw $OutDir/Alt_albacore_v2.10_demultiplexed.tar.gz
 ```
 
-Building a director structure:
+Building a directory structure:
 
 ```bash
 ProjDir=/home/groups/harrisonlab/project_files/alternaria
@@ -182,7 +182,9 @@ done
     done | grep -v '.txt' | awk '{ SUM += $1} END { print SUM }'
   done
 ```
+
 MinION coverage
+
 ```
 650	39.48
 1166	44.07
@@ -617,8 +619,11 @@ done
 
 ## Merging pacbio and hybrid assemblies
 
+
+Merging was noted to improve the 1166 apple pathotype assembly but not the 650 pear pathotype assembly
+
 ```bash
-for MinionAssembly in $(ls assembly/SMARTdenovo/*/*/pilon/pilon_min_500bp_renamed.fasta); do
+for MinionAssembly in $(ls assembly/SMARTdenovo/*/*/pilon/pilon_min_500bp_renamed.fasta | grep '1166'); do
 Organism=$(echo $MinionAssembly | rev | cut -f4 -d '/' | rev)
 Strain=$(echo $MinionAssembly | rev | cut -f3 -d '/' | rev)
 HybridAssembly=$(ls assembly/spades_*/${Organism}/${Strain}*/filtered_contigs/contigs_min_500bp.fasta)
@@ -632,8 +637,7 @@ done
 Quast and BUSCO
 
 ```bash
-
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta | grep '1166'); do
 Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 OutDir=$(dirname $Assembly)
@@ -647,7 +651,7 @@ done
 ```
 
 ```bash
-  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/short_summary_*.txt ); do
+  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/short_summary_*.txt | grep '1166'); do
   Strain=$(echo $File| rev | cut -d '/' -f3 | rev)
   Organism=$(echo $File | rev | cut -d '/' -f4 | rev)
   Prefix=$(basename $File)
@@ -662,7 +666,7 @@ done
 This merged assembly was polished using Pilon
 
 ```bash
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta | grep -v -e '_100kb' -e 'hybrid_first'); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/merged.fasta | grep '1166' | grep -v -e '_100kb' -e 'hybrid_first'); do
 Organism=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -680,7 +684,7 @@ done
 
 Contigs were renamed
 ```bash
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta | grep 'pilon_5'); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta | grep 'pilon_5' | grep '1166'); do
 # for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/*.fasta | grep 'pilon_10'); do
 echo $Assembly
 echo "" > tmp.txt
@@ -695,7 +699,7 @@ BUSCO
 
 ```bash
 
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*.fasta | grep '1166'); do
 # for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/*.fasta); do
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
@@ -715,7 +719,7 @@ done
 ```
 
 ```bash
-  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/*/short_summary_*.txt ); do
+  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*/short_summary_*.txt | grep '1166'); do
   Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
   Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
   Prefix=$(basename $File)
@@ -738,7 +742,7 @@ using MinION only data.
 Using a blast based approach of Mt genes:
 
 ```bash
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/pilon_min_500bp_renamed.fasta); do
+for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/1166/pilon/pilon_min_500bp_renamed.fasta assembly/SMARTdenovo/A.gaisen/650/pilon/pilon_min_500bp_renamed.fasta); do
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 echo $Assembly
@@ -754,7 +758,7 @@ Using an exclusion database with deconseq:
 
 
 ```bash
-  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/pilon_min_500bp_renamed.fasta); do
+  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/1166/pilon/pilon_min_500bp_renamed.fasta assembly/SMARTdenovo/A.gaisen/650/pilon/pilon_min_500bp_renamed.fasta); do
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
     echo "$Organism - $Strain"
@@ -772,7 +776,7 @@ Results were summarised using the commands:
 ```bash
 for Exclude_db in "Aalt_mtDNA"; do
 echo $Exclude_db
-for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/log.txt | grep "$Exclude_db"); do
+for File in $(ls assembly/*/*/*/*/log.txt | grep "$Exclude_db"); do
 Name=$(echo $File | rev | cut -f3 -d '/' | rev);
 Good=$(cat $File |cut -f2 | head -n1 | tail -n1);
 Bad=$(cat $File |cut -f2 | head -n3 | tail -n1);
@@ -785,12 +789,13 @@ done
 Aalt_mtDNA
 1166	22	1
 650	23	1
+650	27	1
 ```
 
 Quast was run on the removed mtDNA:
 
 ```bash
-for Assembly in $(ls assembly/merged_SMARTdenovo_spades/A*/*/deconseq_Aalt_mtDNA/*_cont.fa); do
+for Assembly in $(ls assembly/*/A*/*/deconseq_Aalt_mtDNA/*_cont.fa); do
 Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 OutDir=$(dirname $Assembly)
@@ -805,7 +810,7 @@ Repeat masking was performed on the hybrid assembly.
 
 ```bash
   # for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon2/pilon_min_500bp_renamed.fasta); do
-  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/contigs_min_500bp_filtered_renamed.fasta); do
+  for Assembly in $(ls assembly/merged_SMARTdenovo_spades/A.alternata_ssp_tenuissima/1166/deconseq_Aalt_mtDNA/contigs_min_500bp_filtered_renamed.fasta  assembly/SMARTdenovo/A.gaisen/650/deconseq_Aalt_mtDNA/contigs_min_500bp_filtered_renamed.fasta | grep '650'); do
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
@@ -831,8 +836,7 @@ echo "Number of masked bases:"
 cat $OutFile | grep -v '>' | tr -d '\n' | awk '{print $0, gsub("[a-z]", ".")}' | cut -f2 -d ' '
 done
 # The number of N's in hardmasked sequence are not counted as some may be present within the assembly and were therefore not repeatmasked.
-for File in $(ls repeat_masked/*/*/for File in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked.fa); do
-/*_contigs_hardmasked.fa); do
+for File in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_hardmasked.fa); do
 OutDir=$(dirname $File)
 TPSI=$(ls $OutDir/*_contigs_unmasked.fa.TPSI.allHits.chains.gff3)
 OutFile=$(echo $File | sed 's/_contigs_hardmasked.fa/_contigs_hardmasked_repeatmasker_TPSI_appended.fa/g')
@@ -846,7 +850,7 @@ Number of masked bases:
 1268326
 repeat_masked/A.gaisen/650/filtered_contigs/650_contigs_softmasked_repeatmasker_TPSI_appended.fa
 Number of masked bases:
-650552
+749954
 ```
 
 Quast and BUSCO
@@ -866,12 +870,46 @@ done
 ```
 
 
+```bash
+  for File in $(ls repeat_masked/*/*/filtered_contigs/run_*_contigs_unmasked/short_summary_*.txt); do
+  Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
+  Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
+  Complete=$(cat $File | grep "(C)" | cut -f2)
+  Fragmented=$(cat $File | grep "(F)" | cut -f2)
+  Missing=$(cat $File | grep "(M)" | cut -f2)
+  Total=$(cat $File | grep "Total" | cut -f2)
+  echo -e "$Organism\t$Strain\t$Complete\t$Fragmented\t$Missing\t$Total"
+  done
+```
+
+```
+A.alternata_ssp_tenuissima	1166	1302	3	10	1315
+A.gaisen	650	1298	5	12	1315
+```
+
+```bash
+  for File in $(ls repeat_masked/*/*/filtered_contigs/report.tsv); do
+  Strain=$(echo $File| rev | cut -d '/' -f3 | rev)
+  Organism=$(echo $File | rev | cut -d '/' -f4 | rev)
+  Contigs=$(cat $File | grep "contigs (>= 0 bp)" | cut -f2)
+  Length=$(cat $File | grep "Total length (>= 0 bp)" | cut -f2)
+  Largest=$(cat $File | grep "Largest contig" | cut -f2)
+  N50=$(cat $File | grep "N50" | cut -f2)
+  echo -e "$Organism\t$Strain\t$Contigs\t$Length\t$Largest\t$N50"
+  done
+```
+
+```
+A.alternata_ssp_tenuissima	1166	22	35704180	3902980	2583941
+A.gaisen	650	27	34346950	6257968	2110033
+```
+
 # Identify Telomere repeats:
 
 Maria wrote a script to identify presence of Telomeric repeats in assemblies
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -895,7 +933,7 @@ cat $OutDir/telomere_hits.txt | sort -nr -k5 | less
 
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -924,7 +962,7 @@ done
 Accepted hits .bam file were concatenated and indexed for use for gene model training:
 
 ```bash
-  for OutDir in $(ls -d alignment/star/*/*); do
+  for OutDir in $(ls -d alignment/star/*/* | grep '650'); do
     Strain=$(echo $OutDir | rev | cut -d '/' -f1 | rev)
     Organism=$(echo $OutDir | rev | cut -d '/' -f2 | rev)
     echo "$Organism - $Strain"
@@ -948,7 +986,7 @@ directory:
 ```
 
 ```bash
-  for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
     Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
     Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
     echo "$Organism - $Strain"
@@ -973,7 +1011,7 @@ Note - cufflinks doesn't always predict direction of a transcript and
 therefore features can not be restricted by strand when they are intersected.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -988,7 +1026,7 @@ done
 Secondly, genes were predicted using CodingQuary:
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -1015,7 +1053,7 @@ genes were predicted in regions of the genome, not containing Braker gene
 models:
 
 ```bash
-for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3); do
+for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep '650'); do
 Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker_new//g' | sed 's/_braker_pacbio//g' | sed 's/_braker//g')
 Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -1637,18 +1675,18 @@ function
 ```
 A.alternata_ssp_tenuissima - 1166
 Number of secondary metabolite detected:	34
-Number of predicted proteins in secondary metabolite clusters:	911
-Number of predicted genes in secondary metabolite clusters:	856
-Number of cluster finder non-SecMet clusters detected:	103
-Number of predicted proteins in cluster finder non-SecMet clusters:	2325
-Number of predicted genes in cluster finder non-SecMet clusters:	2310
+Number of predicted proteins in secondary metabolite clusters:	946
+Number of predicted genes in secondary metabolite clusters:	888
+Number of cluster finder non-SecMet clusters detected:	102
+Number of predicted proteins in cluster finder non-SecMet clusters:	2280
+Number of predicted genes in cluster finder non-SecMet clusters:	2266
 A.gaisen - 650
-Number of secondary metabolite detected:	30
-Number of predicted proteins in secondary metabolite clusters:	770
-Number of predicted genes in secondary metabolite clusters:	766
+Number of secondary metabolite detected:	29
+Number of predicted proteins in secondary metabolite clusters:	765
+Number of predicted genes in secondary metabolite clusters:	763
 Number of cluster finder non-SecMet clusters detected:	96
-Number of predicted proteins in cluster finder non-SecMet clusters:	2201
-Number of predicted genes in cluster finder non-SecMet clusters:	2195
+Number of predicted proteins in cluster finder non-SecMet clusters:	2145
+Number of predicted genes in cluster finder non-SecMet clusters:	2136
 ```
 
 SMURF was also run to identify secondary metabolite gene clusters.
@@ -1681,7 +1719,7 @@ Output files were parsed into gff format:
     SmurfBackbone=$(ls $OutDir/Backbone-genes.txt)
     ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/secondary_metabolites
     $ProgDir/smurf2gff.py --smurf_clusters $SmurfClusters --smurf_backbone $SmurfBackbone > $OutDir/Smurf_clusters.gff
-   bedtools intersect -wo -a $GeneGff -b $OutDir/Smurf_clusters.gff | grep 'mRNA' | cut -f9,10,12,18 | sed "s/ID=//g" | perl -p -i -e "s/;Parent=g\w+//g" | perl -p -i -e "s/;Notes=.*//g" > $OutDir/"$Prefix"_smurf_secmet_genes.tsv
+   bedtools intersect -wo -a $GeneGff -b $OutDir/Smurf_clusters.gff | grep 'mRNA' | cut -f9,10,12,18 | sed "s/ID=//g" | perl -p -i -e "s/;Parent=g\w+//g" | perl -p -i -e "s/;Notes=.*//g" > $OutDir/"$Strain"_smurf_secmet_genes.tsv
   done
 ```
 
@@ -1765,7 +1803,10 @@ cat $OutDir/${Prefix}_hits.txt | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hit
 # cat $OutDir/${Prefix}_hits.txt | grep 'effector' | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 done
 ```
-<!--
+
+
+Blast searches were also performed in comparison to the genome sequence
+
 ```bash
   for Subject in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
@@ -1788,19 +1829,64 @@ done
   done
 ```
 
+```
+Query ID's	1166	650
+AB015351_-_AKT1_gene	0	2
+AB015352_-_AKT2_gene	0	1
+AB034586_-_ACTT1_gene	0	1
+AB035491_-_AKTR_gene	0	2
+AB035492_-_AKT3_gene	0	2
+AB070711_-_AFT1-1_gene	0	2
+AB070712_-_AFTR-1_gene	0	2
+AB070713_-_AFT3-1_gene	0	2
+AB119280_-_AFTS1_gene	1	0
+AB176941_ACTT3_gene	0	2
+AB176941_ACTTR_gene	0	2
+AB179766_-_AFT3-2_gene	0	2
+AB179766_-_AFT9-1_gene	0	2
+AB179766_-_AFT10-1_gene	0	2
+AB179766_-_AFT11-1_gene	0	2
+AB179766_-_AFT12-1_gene	0	2
+AB179766_-_AFTR-2_gene	0	2
+AB432914_ACTT2_gene	0	1
+AB444613_ACTT5_gene	0	1
+AB444614_ACTT6_gene	0	2
+AB465676_-_ALT1_gene	0	0
+AB525198_-_AMT1_gene	2	0
+AB525198_-_AMT2_gene	3	1
+AB525198_-_AMT3_gene	2	0
+AB525198_-_AMT4_gene	2	0
+AB525198_-_AMT5_gene	2	0
+AB525198_-_AMT6_gene	2	0
+AB525198_-_AMT7_gene	2	0
+AB525198_-_AMT8_gene	2	0
+AB525198_-_AMT9_gene	2	0
+AB525198_-_AMT10_gene	1	0
+AB525198_-_AMT11_gene	0	0
+AB525198_-_AMT12_gene	2	0
+AB525198_-_AMT13_gene	1	0
+AB525198_-_AMT14_gene	1	1
+AB525198_-_AMT15_gene	0	0
+AB525198_-_AMT16_gene	3	2
+AB525198_-_AMTR1_gene	2	2
+AB688098_-_ACRTS1_gene	0	0
+AB725683_-_ACRTS2_gene	0	0
+```
 
 Once blast searches had completed, the BLAST hits were converted to GFF
 annotations:
 
 ```bash
-  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv | grep '650'); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
     Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
     Organism=$(echo $BlastHits | rev | cut -f3 -d '/' | rev)
     HitsGff=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs.gff
     Column2=toxin_homolog
-    NumHits=2
+    NumHits=1
     $ProgDir/blast2gff.pl $Column2 $NumHits $BlastHits > $HitsGff
+    cat $HitsGff | grep 'AKT' > analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs_AKT.gff
+    cat $HitsGff | grep 'AMT' > analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs_AMT.gff
   done
 ```
 
@@ -1833,19 +1919,19 @@ done
 ```
 A.alternata_ssp_tenuissima - 1166
 The number of BLAST hits in the gff file were:
-63
+34
 The number of blast hits intersected were:
-57
+32
 The number of blast hits not intersecting gene models were:
-17
+8
 A.gaisen - 650
 The number of BLAST hits in the gff file were:
-70
+37
 The number of blast hits intersected were:
-62
+33
 The number of blast hits not intersecting gene models were:
-17
-``` -->
+10
+```
 
 
 
@@ -1853,12 +1939,12 @@ The number of blast hits not intersecting gene models were:
 
 
 ```bash
-for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650' | grep '650'); do
+for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650'); do
   Strain=$(echo $GeneGff | rev | cut -f3 -d '/' | rev)
   Organism=$(echo $GeneGff | rev | cut -f4 -d '/' | rev)
   Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked.fa)
   Antismash=$(ls gene_pred/secondary_metabolites/antismash/$Organism/$Strain/*_antismash_secmet_genes.tsv)
-  Smurf=$(ls analysis/secondary_metabolites/smurf/$Organism/$Strain/*_smurf_secmet_genes.tsv)
+  # Smurf=$(ls analysis/secondary_metabolites/smurf/$Organism/$Strain/*_smurf_secmet_genes.tsv)
   TFs=$(ls analysis/transcription_factors/$Organism/$Strain/"$Strain"_TF_domains.tsv)
   SigP=$(ls gene_pred/braker_signalp-4.1/$Organism/$Strain/"$Strain"_aug_sp.aa)
   TM_out=$(ls gene_pred/trans_mem/$Organism/$Strain/"$Strain"_TM_genes_pos.txt)
@@ -1869,7 +1955,8 @@ for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 
   ToxinHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_CDC_genes_hits_headers.txt)
   InterPro=$(ls gene_pred/interproscan/$Organism/$Strain/*_interproscan.tsv)
   SwissProt=$(ls gene_pred/swissprot/$Organism/$Strain/swissprot_vMar2018_tophit_parsed.tbl)
-  Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_Apr10/Orthogroups.txt)
+  # Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_Apr10/Orthogroups.txt)
+  Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_May04/Orthogroups.txt)
   if [[ $Strain == '648' ]]; then
     OrthoStrainID='At_1'
     echo $OrthoStrainID
@@ -1911,8 +1998,45 @@ for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 
   OutDir=gene_pred/annotation/$Organism/$Strain
   mkdir -p $OutDir
   ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/annotation
-  $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --Smurf $Smurf --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
+  # $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --Smurf $Smurf --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
+  # SMURF results were exluceded due to them being considered untrustworthy
+  $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
 done
+```
+
+
+LS regions of the apple and pear pathotype were investigated:
+
+
+```bash
+# 1166
+Isolate='1166'
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
+GenesCDC=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_CDC_genes.tsv/g')
+cat $AnnotTab | grep -e 'contig_14' -e 'contig_15' -e 'contig_18' -e 'contig_19' -e 'contig_20' -e 'contig_21' > $GenesCDC
+TotalGenes=$(cat $GenesCDC | wc -l)
+Secreted=$(cat $GenesCDC | cut -f1,8 | grep 'Yes' | wc -l)
+EffectorP=$(cat $GenesCDC | cut -f1,8,9 | grep "Yes.Yes" | wc -l)
+CAZyme=$(cat $GenesCDC | cut -f1,8,10 | grep 'CAZY' | grep 'Yes' | wc -l)
+SecMet=$(cat $GenesCDC | grep 'AS_' | wc -l)
+printf "$Isolate\t$TotalGenes\t$Secreted\t$EffectorP\t$CAZyme\t$SecMet\n"
+
+# 650
+Isolate='650'
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
+GenesCDC=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_CDC_genes.tsv/g')
+cat $AnnotTab | grep -e 'contig_12' -e 'contig_14' -e 'contig_19' -e 'contig_20' -e 'contig_21' -e 'contig_22' -e 'contig_23' > $GenesCDC
+TotalGenes=$(cat $GenesCDC | wc -l)
+Secreted=$(cat $GenesCDC | cut -f1,8 | grep 'Yes' | wc -l)
+EffectorP=$(cat $GenesCDC | cut -f1,8,9 | grep "Yes.Yes" | wc -l)
+CAZyme=$(cat $GenesCDC | cut -f1,8,10 | grep 'CAZY' | grep 'Yes' | wc -l)
+SecMet=$(cat $GenesCDC | grep 'AS_' | wc -l)
+printf "$Isolate\t$TotalGenes\t$Secreted\t$EffectorP\t$CAZyme\t$SecMet\n"
+```
+
+```
+1166	624	32	12	6	153
+650	504	38	12	7	140
 ```
 
 # Genomic analysis
@@ -2054,6 +2178,87 @@ ggsave(outfile , plot = p0, device = 'jpg', path = NULL,
 scale = 1, width = 500, height = 500, units = 'mm',
 dpi = 150, limitsize = TRUE)
 }
-
-
 ```
+
+## 4.0 Characterising CDCs
+
+### 4.1.b Repetative content
+
+The % repeatmasking was identified for each contig:
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+  Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+  Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+  OutDir=analysis/CDC_contigs/$Organism/$Strain
+  mkdir -p $OutDir
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/repeat_masking
+  $ProgDir/count_Ns.py --inp_fasta $Assembly --out_txt $OutDir/N_content.txt
+done
+```
+
+### 4.1.c Gene density and % content
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+  Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+  Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+  OutDir=analysis/CDC_contigs/$Organism/$Strain
+  mkdir -p $OutDir
+  Genes=$(ls gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.gff3)
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation
+  $ProgDir/feature_density.py --inp_fasta $Assembly --inp_gff $Genes --features gene
+done
+```
+```
+# 1166
+contig, contig_lgth, feat_count, feat_density, feat_lgth, perc_feat
+contig_1	3902980	1563	400.46	2412918	61.82
+contig_2	3781932	1413	373.62	2203815	58.27
+contig_3	3000390	1154	384.62	1733294	57.77
+contig_4	2851745	1098	385.03	1685701	59.11
+contig_5	2693844	1055	391.63	1663091	61.74
+contig_6	2583941	986	381.59	1540588	59.62
+contig_7	2502671	954	381.19	1498182	59.86
+contig_8	2455819	960	390.91	1481084	60.31
+contig_9	2451092	930	379.42	1359530	55.47
+contig_10	2402550	872	362.95	1436796	59.8
+contig_11	2194253	818	372.79	1268004	57.79
+contig_12	1303685	504	386.6	753202	57.77
+contig_13	767820	282	367.27	408936	53.26
+contig_14	549494	184	334.85	237154	43.16
+contig_15	435297	166	381.35	162962	37.44
+contig_16	433285	165	380.81	236067	54.48
+contig_17	391795	169	431.35	227914	58.17
+contig_18	368761	109	295.58	154186	41.81
+contig_19	225742	69	305.66	81190	35.97
+contig_20	154051	35	227.2	57127	37.08
+contig_21	143777	48	333.85	62379	43.39
+contig_22	109256	42	384.42	63072	57.73
+# 650
+contig_1	6257968	2443	390.38	3763556	60.14
+contig_2	4971742	1914	384.98	2952852	59.39
+contig_3	2925786	1160	396.47	1682886	57.52
+contig_4	2776593	1084	390.41	1684148	60.66
+contig_5	2407617	910	377.97	1333497	55.39
+contig_6	2321443	890	383.38	1354817	58.36
+contig_7	2110033	790	374.4	1226331	58.12
+contig_8	1975041	733	371.13	1184196	59.96
+contig_9	1696734	660	388.98	937666	55.26
+contig_10	1416541	541	381.92	845372	59.68
+contig_11	1110254	434	390.9	650661	58.6
+contig_12	629970	201	319.06	242443	38.48
+contig_13	621992	220	353.7	329368	52.95
+contig_14	547262	203	370.94	267573	48.89
+contig_15	463030	168	362.83	253364	54.72
+contig_16	353559	132	373.35	177450	50.19
+contig_17	350965	129	367.56	183181	52.19
+contig_18	288921	104	359.96	143279	49.59
+contig_19	206182	63	305.56	84853	41.15
+contig_20	89891	26	289.24	36102	40.16
+contig_21	25203	3	119.03	3216	12.76
+contig_23	19593	1	51.04	389	1.99
+```
+
+### 4.1.c
+The number of putative effectors was identified in Core, lineage specific and species specific contigs:
