@@ -33,7 +33,7 @@ ap.add_argument('--ToxinHits',required=True,type=str,help='BLAST results of CDC 
 ap.add_argument('--InterPro',required=True,type=str,help='The Interproscan functional annotation .tsv file')
 ap.add_argument('--Swissprot',required=True,type=str,help='A parsed table of BLAST results against the Swissprot database. Note - must have been parsed with swissprot_parser.py')
 ap.add_argument('--Antismash',required=True,type=str,help='Output of Antismash parsed into a tsv file of gene names, contig, secmet function and cluster ID')
-ap.add_argument('--Smurf',required=True,type=str,help='Output of Smurf parsed into a tsv file of gene names, contig, secmet function and cluster ID')
+# ap.add_argument('--Smurf',required=True,type=str,help='Output of Smurf parsed into a tsv file of gene names, contig, secmet function and cluster ID')
 ap.add_argument('--TFs',required=True,type=str,help='Tab seperated of putative transcription factors and their domains as identified by interpro2TFs.py')
 ap.add_argument('--orthogroups', required=True,type=str,help='A file containing results of orthology analysis')
 ap.add_argument('--strain_id',required=True,type=str,help='The identifier of this strain as used in the orthology analysis')
@@ -183,8 +183,8 @@ with open(conf.CAZY_list) as f:
     cazy_lines = f.readlines()
 with open(conf.Antismash) as f:
     antismash_lines = f.readlines()
-with open(conf.Smurf) as f:
-    smurf_lines = f.readlines()
+# with open(conf.Smurf) as f:
+#     smurf_lines = f.readlines()
 with open(conf.PhiHits) as f:
     phibase_lines = f.readlines()
 with open(conf.ToxinHits) as f:
@@ -278,11 +278,11 @@ for line in antismash_lines:
     cluster_num = len(cluster_id_set)
     gene_dict[gene_id].add_antismash(line, cluster_num)
 
-for line in smurf_lines:
-    line = line.rstrip("\n")
-    split_line = line.split("\t")
-    gene_id = split_line[0]
-    gene_dict[gene_id].add_smurf(line)
+# for line in smurf_lines:
+#     line = line.rstrip("\n")
+#     split_line = line.split("\t")
+#     gene_id = split_line[0]
+#     gene_dict[gene_id].add_smurf(line)
 
 
 for line in swissprot_lines:
@@ -336,6 +336,29 @@ for gene_id in gene_list:
         prev_gene = True
     else:
         prev_gene = False
+
+
+print "\t".join([
+    'gene_name',
+    'contig',
+    'start',
+    'stop',
+    'strand',
+    'sigp',
+    'transmem',
+    'secreted',
+    'effp',
+    'cazy',
+    'transcriptionfactor',
+    'cluster_id',
+    'orthogroup_id',
+    'content_counts',
+    'content_str',
+    'phi',
+    'toxin',
+    'swissprot',
+    'interpro'
+    ])
 
 for gene_id in gene_list:
     gene_obj = gene_dict[gene_id]
