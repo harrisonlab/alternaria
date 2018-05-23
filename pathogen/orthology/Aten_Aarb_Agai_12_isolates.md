@@ -196,22 +196,22 @@ done
 Also try using orthofinder
 
 ```bash
-qlogin -pe smp 8
+qlogin -pe smp 16
 
 #16 threads used
 ProjDir=/data/scratch/armita/alternaria
 cd $ProjDir
 IsolateAbrv=At_Aa_Ag_all_isolates
 WorkDir=analysis/orthology/orthomcl/$IsolateAbrv
-orthofinder -f $WorkDir/formatted -t 8 -a 8
+orthofinder -f $WorkDir/formatted -t 16 -a 16
 ```
 
 orthofinder results:
 
 ```
-OrthoFinder assigned 157080 genes (99.2% of total) to 14190 orthogroups. Fifty percent of all genes were in orthogroups
-with 12 or more genes (G50 was 12) and were contained in the largest 6161 orthogroups (O50 was 6161). There were 10661
-orthogroups with all species present and 10011 of these consisted entirely of single-copy genes.
+OrthoFinder assigned 157038 genes (99.2% of total) to 14187 orthogroups. Fifty percent of all genes were in orthogroups
+with 12 or more genes (G50 was 12) and were contained in the largest 6160 orthogroups (O50 was 6160). There were 10669
+orthogroups with all species present and 10016 of these consisted entirely of single-copy genes.
 ```
 
 output files are in:
@@ -282,7 +282,7 @@ The genes unique to A. tenuissima apple pathotypes were identified within the or
 First variables were set:
 ```bash
   WorkDir=analysis/orthology/orthomcl/At_Aa_Ag_all_isolates
-  Orthogroups=$(ls $WorkDir/formatted/Results_Apr10/Orthogroups.txt)
+  Orthogroups=$(ls $WorkDir/formatted/Results_May04/Orthogroups.txt)
   GoodProts=$WorkDir/goodProteins/goodProteins.fasta
   # Braker_genes=
 ```
@@ -319,23 +319,23 @@ done
 
 ```
 The number of orthogroups unique to A.tenuissima apple pathotype are:
-52
+51
 The following number genes from isolate 648 are contained in these orthogorups:
-52
+51
 The following number genes from isolate 1082 are contained in these orthogorups:
-52
+51
 The following number genes from isolate 1164 are contained in these orthogorups:
-52
+51
 The following number genes from isolate 24350 are contained in these orthogorups:
-53
+52
 The following number genes from isolate 648 are contained in these orthogorups:
-52
+51
 The following number genes from isolate 743 are contained in these orthogorups:
-52
+51
 The following number genes from isolate 1166 are contained in these orthogorups:
-52
+51
 The following number genes from isolate 1177 are contained in these orthogorups:
-52
+51
 ```
 
 #### 6.1.b ) Orthologroups only containing A. arborescens genes were extracted:
@@ -364,7 +364,7 @@ The number of orthogroups unique to A.arborescens are:
 The following number genes from isolate 675 are contained in these orthogorups:
 155
 The following number genes from isolate 97.0013 are contained in these orthogorups:
-155
+154
 The following number genes from isolate 97.0016 are contained in these orthogorups:
 156
 ```
@@ -389,7 +389,7 @@ done
 The number of orthogroups unique to A.gaisen pear pathotype pathotype are:
 327
 The following number genes from isolate 650 are contained in these orthogorups:
-327
+329
 ```
 
 #### 6.1.d ) Orthologroups only containing A. tenuissima non pathotype genes were extracted:
@@ -451,15 +451,25 @@ done
 
 ```
 The number of orthogroups unique to A.tenuissima apple pathotype are:
-46
+49
 The following number genes from isolate 635 are contained in these orthogorups:
-55
-The following number genes from isolate 743 are contained in these orthogorups:
 56
+The following number genes from isolate 743 are contained in these orthogorups:
+57
 The following number genes from isolate 1166 are contained in these orthogorups:
-69
+72
 The following number genes from isolate 1177 are contained in these orthogorups:
-54
+55
+```
+
+```bash
+cat $Uniq_AtenPath_groups | grep -o -P "At_7\|\S+" | cut -f2 -d '|' > tmp.txt
+Isolate='1166'
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
+OutFile=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_apple_pathotype_unique_orthogroups.tsv/g')
+for Gene in $(cat tmp.txt); do
+  cat $AnnotTab | grep -w "^$Gene"
+done > $OutFile
 ```
 
 
@@ -489,15 +499,15 @@ done
 
 ```
 The number of orthogroups unique to apple and pear pathotypes are:
-53
+48
 The following number genes from isolate 650 are contained in these orthogorups:
-65
-The following number genes from isolate 648 are contained in these orthogorups:
-61
-The following number genes from isolate 743 are contained in these orthogorups:
-61
-The following number genes from isolate 1166 are contained in these orthogorups:
 62
+The following number genes from isolate 648 are contained in these orthogorups:
+58
+The following number genes from isolate 743 are contained in these orthogorups:
+58
+The following number genes from isolate 1166 are contained in these orthogorups:
+54
 The following number genes from isolate 1177 are contained in these orthogorups:
-64
+60
 ```
