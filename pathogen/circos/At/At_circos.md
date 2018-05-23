@@ -69,7 +69,7 @@ done
   ProgDir=~/git_repos/emr_repos/scripts/fusarium/pathogen/identify_LS_chromosomes/circos
   $ProgDir/gff2circos_scatterplot.py --gff $GffAntiSmash --feature indole indole-nrps nrps nrps-t1pks other t1pks t1pks-nrps t3pks terpene --value 1 > $OutDir/antismash_plot.txt
 
-  BlastHits=$(ls analysis/blast_homology/*/1166/*_CDC_genes.fa_homologs.gff)
+  BlastHits=$(ls analysis/blast_homology/*/1166/*_CDC_genes.fa_homologs_AMT.gff)
   # GffSIX=$OutDir/CDC_genes.gff
   # cat $BlastHits | grep -v -e 'MIMP' -e 'C5' -e 'CRX' > $GffSix
   ProgDir=~/git_repos/emr_repos/scripts/fusarium/pathogen/identify_LS_chromosomes/circos
