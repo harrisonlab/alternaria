@@ -203,7 +203,7 @@ ProjDir=/data/scratch/armita/alternaria
 cd $ProjDir
 IsolateAbrv=At_Aa_Ag_all_isolates
 WorkDir=analysis/orthology/orthomcl/$IsolateAbrv
-orthofinder -f $WorkDir/formatted -t 16 -a 16
+orthofinder -f $WorkDir/formatted -t 3 -a 3
 ```
 
 orthofinder results:
