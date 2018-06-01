@@ -36,7 +36,7 @@ for Busco in $(cat analysis/popgen/busco_phylogeny/all_buscos_*.txt); do
 echo $Busco
 OutDir=analysis/popgen/busco_phylogeny/$Busco
 mkdir -p $OutDir
-for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'Alternaria_destruens' -e 'Alternaria_porri'); do
+for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'Alternaria_destruens' -e 'Alternaria_porri' -e 'ssp._gaisen'); do
 Strain=$(echo $Fasta | rev | cut -f5 -d '/' | rev)
 Organism=$(echo $Fasta | rev | cut -f6 -d '/' | rev)
 FileName=$(basename $Fasta)
@@ -59,7 +59,14 @@ a new folder
   echo $Busco
   HitNum=$(cat analysis/popgen/busco_phylogeny/single_hits.txt | grep "$Busco" | cut -f2)
   if [ $HitNum == $OrganismNum ]; then
-    cp analysis/popgen/busco_phylogeny/$Busco/"$Busco"_appended.fasta $OutDir/.
+    # cp analysis/popgen/busco_phylogeny/$Busco/"$Busco"_appended.fasta $OutDir/.
+    cat analysis/popgen/busco_phylogeny/$Busco/"$Busco"_appended.fasta \
+    | sed "s/$Busco://g" \
+    | sed "s/genome.ctg.fa://g" \
+    | sed "s/_contigs_unmasked.fa//g" \
+    | sed -E "s/:.*//g" \
+    | tr '.,:' '_' \
+    > $OutDir/"$Busco"_appended.fasta
   fi
   done
 ```
@@ -75,6 +82,153 @@ Submit alignment for single copy busco genes with a hit in each organism
   qsub $ProgDir/sub_mafft_alignment.sh
   cd $CurDir
 ```
+
+Trimming sequence alignments using Trim-Al
+* Note - automated1 mode is optimised for ML tree reconstruction
+
+```bash
+  OutDir=analysis/popgen/busco_phylogeny/trimmed_alignments
+  mkdir -p $OutDir
+  for Alignment in $(ls analysis/popgen/busco_phylogeny/alignments/*_appended_aligned.fasta); do
+    TrimmedName=$(basename $Alignment .fasta)"_trimmed.fasta"
+    echo $Alignment
+    trimal -in $Alignment -out $OutDir/$TrimmedName -automated1
+  done
+```
+
+```bash
+for Alignment in $(ls analysis/popgen/busco_phylogeny/trimmed_alignments/*aligned_trimmed.fasta); do
+Jobs=$(qstat | grep 'sub_RAxML' | grep 'qw' | wc -l)
+while [ $Jobs -gt 2 ]; do
+sleep 2s
+# printf "."
+Jobs=$(qstat | grep 'sub_RAxML' | grep 'qw' | wc -l)
+done		
+printf "\n"
+echo $Prefix
+Prefix=$(basename $Alignment | cut -f1 -d '_')
+OutDir=analysis/popgen/busco_phylogeny/RAxML/$Prefix
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/phylogenetics
+qsub $ProgDir/sub_RAxML.sh $Alignment $Prefix $OutDir
+done
+```
+
+
+Run Astral to build a consensus phylogeny from a collective set of
+"best phylogenies" from each BUSCO locus
+
+* Note - "Recent versions of ASTRAL output a branch support value even without bootstrapping. Our analyses have revealed that this form of support is more reliable than bootstrapping (under the conditions we explored). Nevertheless, you may want to run bootstrapping as well."
+
+Tutorial tips:
+https://github.com/smirarab/ASTRAL/blob/master/astral-tutorial.md#running-with-unresolved-gene-trees
+
+
+```bash
+OutDir=analysis/popgen/busco_phylogeny/ASTRAL
+mkdir -p $OutDir
+# cat analysis/popgen/busco_phylogeny/RAxML/*/RAxML_bestTree.* > $OutDir/Pcac_phylogeny.appended.tre
+# Taxa names were noted to be incorrect at this point and were corrected
+cat analysis/popgen/busco_phylogeny/RAxML/*/RAxML_bestTree.*  | sed -r "s/CTG.\w+:/:/g" > $OutDir/Alt_phylogeny.appended.tre
+# InTree=$(ls /home/armita/prog/Astral/Astral/test_data/song_primates.424.gene.tre)
+# -
+# Trimm back branches that have less than 10% bootstrap support for each tree
+# in the given file
+# -
+/home/armita/prog/newick_utilities/newick_utils/src/nw_ed $OutDir/Alt_phylogeny.appended.tre 'i & b<=10' o > $OutDir/Alt_phylogeny.appended.trimmed.tre
+# -
+# Calculate combined tree
+# -
+ProgDir=/home/armita/prog/Astral/Astral
+# java -Xmx1000M -jar $ProgDir/astral.5.6.1.jar -i $OutDir/Pcac_phylogeny.appended.trimmed.tre -o $OutDir/Pcac_phylogeny.consensus.tre | tee 2> $OutDir/Pcac_phylogeny.consensus.log
+java -Xmx1000M -jar $ProgDir/astral.5.6.1.jar -i $OutDir/Alt_phylogeny.appended.tre -o $OutDir/Alt_phylogeny.consensus.tre | tee 2> $OutDir/Alt_phylogeny.consensus.log
+java -Xmx1000M -jar $ProgDir/astral.5.6.1.jar -q $OutDir/Alt_phylogeny.consensus.tre -i $OutDir/Alt_phylogeny.appended.tre -o $OutDir/Alt_phylogeny.consensus.scored.tre 2> $OutDir/Alt_phylogeny.consensus.scored.log
+```
+
+
+GGtree was used to make a plot.
+
+* Note- Tips can be found here: https://bioconnector.org/r-ggtree.html
+
+The consensus tree was downloaded to my local machine
+
+* Note - I had to import into geneious and export again in newick format to get around polytomy branches having no branch length.
+
+```r
+setwd("/Users/armita/Downloads/Aalt/ASTRAL")
+#===============================================================================
+#       Load libraries
+#===============================================================================
+
+library(ape)
+library(ggplot2)
+
+library(ggtree)
+library(phangorn)
+library(treeio)
+
+tree <- read.tree("/Users/armita/Downloads/Aalt/ASTRAL/Alt_phylogeny.consensus.scored.geneious2.tre")
+
+
+mydata <- read.csv("/Users/armita/Downloads/Aalt/ASTRAL/traits.csv", stringsAsFactors=FALSE)
+rownames(mydata) <- mydata$Isolate
+mydata <- mydata[match(tree$tip.label,rownames(mydata)),]
+
+
+
+t <- ggtree(tree, aes(linetype=nodes$support)) # Core tree
+# Adjust terminal branch lengths:
+branches <- t$data
+tree$edge.length[branches$isTip] <- 1.0
+#Tree <- branches$branch.length
+#rescale_tree(t, branches$branch.length)
+
+
+
+t <- t + geom_treescale(offset=-1.0, fontsize = 3) # Add scalebar
+# t <- t + xlim(0, 0.025) # Add more space for labels
+
+
+
+# Colouring labels by values in another df
+t <- t %<+% mydata # Allow colouring of nodes by another df
+#t <- t + geom_tiplab(aes(color=Source), size=3, hjust=0) +
+scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
+
+tips <- data.frame(t$data)
+tips$label <- tips$ID
+t <- t + geom_tiplab(data=tips, aes(color=Source), size=3, hjust=0) +
+scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
+
+# Format nodes by values
+nodes <- data.frame(t$data)
+#nodes <- nodes[!nodes$isTip,]
+nodes$label <- as.numeric(nodes[nodes$label,])
+as.numeric(nodes$label)
+#nodes$label[nodes$label < 0.80] <- ''
+nodes$support[nodes$isTip] <- 'supported'
+nodes$support[(!nodes$isTip) & (nodes$label > 0.80)] <- 'supported'
+nodes$support[(!nodes$isTip) & (nodes$label < 0.80)] <- 'unsupported'
+nodes$support[(!nodes$isTip) & (nodes$label == '')] <- 'supported'
+t <- t + aes(linetype=nodes$support)
+nodes$label[nodes$label > 0.80] <- ''
+t <- t + geom_nodelab(data=nodes, size=2, hjust=-0.05) # colours as defined by col2rgb
+
+# Add in a further set of labels
+# tree_mod <- tree
+# tree_mod$tip.label <- mydata$Source
+# t <- t + geom_tiplab(data=tree_mod, aes(label=label), size=2, offset = +1)
+
+# Annotate a clade with a bar line
+t <- t + geom_cladelabel(node=45, label='sect. Alternaria', align=T, colour='black', offset=-1.5)
+t <- t + geom_cladelabel(node=68, label='gaisen clade', align=T, colour='black', offset=-4.5)
+t <- t + geom_cladelabel(node=53, label='tenuissima clade', align=T, colour='black', offset=-4.5)
+t <- t + geom_cladelabel(node=47, label='arborescens clade', align=T, colour='black', offset=-4.5)
+
+# Save as PDF and force a 'huge' size plot
+ggsave("tree4.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
+
+````
+
 
 
 
