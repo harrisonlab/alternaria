@@ -1057,8 +1057,8 @@ for BrakerGff in $(ls gene_pred/braker/*/*_braker/*/augustus.gff3 | grep '650');
 Strain=$(echo $BrakerGff| rev | cut -d '/' -f3 | rev | sed 's/_braker_new//g' | sed 's/_braker_pacbio//g' | sed 's/_braker//g')
 Organism=$(echo $BrakerGff | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
-Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa)
-# Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked_wrapped.fa)
+# Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa)
+Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked_wrapped.fa)
 CodingQuaryGff=$(ls gene_pred/codingquary/$Organism/$Strain/out/PredictedPass.gff3)
 PGNGff=$(ls gene_pred/codingquary/$Organism/$Strain/out/PGN_predictedPass.gff3)
 AddDir=gene_pred/codingquary/$Organism/$Strain/additional
@@ -1121,9 +1121,9 @@ A.alternata_ssp_tenuissima - 1166
 13665
 
 A.gaisen - 650
-12023
-851
-12874
+12351
+875
+13226
 ```
 
 
@@ -1133,7 +1133,7 @@ In preperation for submission to ncbi, gene models were renamed and duplicate ge
 
 
 ```bash
-for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3); do
+for GffAppended in $(ls gene_pred/final/*/*/final/final_genes_appended.gff3 | grep '650'); do
 Strain=$(echo $GffAppended | rev | cut -d '/' -f3 | rev)
 Organism=$(echo $GffAppended | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -1146,7 +1146,8 @@ LogFile=$FinalDir/final_genes_appended_renamed.log
 ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
 $ProgDir/gff_rename_genes.py --inp_gff $GffFiltered --conversion_log $LogFile > $GffRenamed
 rm $GffFiltered
-Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_softmasked_repeatmasker_TPSI_appended.fa)
+# Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_softmasked_repeatmasker_TPSI_appended.fa)
+Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked_wrapped.fa)
 $ProgDir/gff2fasta.pl $Assembly $GffRenamed gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed
 # The proteins fasta file contains * instead of Xs for stop codons, these should
 # be changed
@@ -1161,14 +1162,12 @@ CUFF_8299_1_996.t2
 CUFF_10096_1_77.t2
 A.gaisen - 650
 Identifiied the following duplicated transcripts:
-CUFF_2980_1_77.t2
-CUFF_1001_1_1582.t2
-CUFF_2980_1_80.t2
-CUFF_3334_1_60.t2
-CUFF_720_1_86.t2
-CUFF_7702_1_36.t2
-CUFF_7380_1_535.t2
-CUFF_9418_1_13.t2
+CUFF_7300_1_36.t2
+CUFF_739_1_82.t2
+CUFF_5702_1_539.t2
+CUFF_1632_1_77.t2
+CUFF_9393_1_13.t2
+CUFF_989_1_1564.t2
 ```
 
 ```bash
@@ -1182,7 +1181,7 @@ done
 1166
 13663
 650
-12866
+13220
 ```
 
 ## Checking gene prediction accruacy using BUSCO
@@ -1230,7 +1229,7 @@ was redirected to a temporary output file named interproscan_submission.log .
 ```bash
 	screen -a
 	ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
-	for Genes in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+	for Genes in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
 	echo $Genes
 	$ProgDir/sub_interproscan.sh $Genes
 	done 2>&1 | tee -a interproscan_submisison.log
@@ -1256,7 +1255,7 @@ done
 
 
 ```bash
-for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
 Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
 OutDir=gene_pred/swissprot/$Organism/$Strain
@@ -1293,7 +1292,7 @@ Proteins that were predicted to contain signal peptides were identified using
 the following commands:
 
 ```bash
-for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
 SplitfileDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/signal_peptides
 Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
@@ -1319,7 +1318,7 @@ done
 The batch files of predicted secreted proteins needed to be combined into a
 single file for each strain. This was done with the following commands:
 ```bash
-  for SplitDir in $(ls -d gene_pred/braker_split/*/*); do
+  for SplitDir in $(ls -d gene_pred/braker_split/*/* | grep '650'); do
     Strain=$(echo $SplitDir | cut -d '/' -f4)
     Organism=$(echo $SplitDir | cut -d '/' -f3)
     InStringAA=''
@@ -1348,7 +1347,7 @@ cytoplasmic or apoplastic effectors.
 Proteins containing a transmembrane domain were identified:
 
 ```bash
-  for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+  for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
     Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
     ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/transmembrane_helices
@@ -1386,7 +1385,7 @@ done
 
 ```
 A.alternata_ssp_tenuissima	1166	1511	1253	1251
-A.gaisen	650	1429	1186	1184
+A.gaisen	650	1461	1210	1208
 ```
 
 ### C) From Augustus gene models - Effector identification using EffectorP
@@ -1395,7 +1394,7 @@ Required programs:
  * EffectorP.py
 
 ```bash
-  for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+  for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
     Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
     BaseName="$Organism"_"$Strain"_EffectorP
@@ -1439,8 +1438,8 @@ A.alternata_ssp_tenuissima - 1166
 EffectorP headers:	1970
 Secreted effectorP headers:	248
 A.gaisen - 650
-EffectorP headers:	1921
-Secreted effectorP headers:	247
+EffectorP headers:	1941
+Secreted effectorP headers:	246
 ```
 
 ## SSCP
@@ -1450,7 +1449,7 @@ proteins may be identified by EffectorP, but this approach allows direct control
 over what constitutes a SSCP.
 
 ```bash
-for Secretome in $(ls gene_pred/braker_signalp-4.1/*/*/*_final_sp_no_trans_mem.aa); do
+for Secretome in $(ls gene_pred/braker_signalp-4.1/*/*/*_final_sp_no_trans_mem.aa | grep '650'); do
 Strain=$(echo $Secretome| rev | cut -f2 -d '/' | rev)
 Organism=$(echo $Secretome | rev | cut -f3 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -1473,8 +1472,8 @@ number of SSC-rich genes:	202
 A.gaisen - 650
 % cysteine content threshold set to:	3
 maximum length set to:	300
-No. short-cysteine rich proteins in input fasta:	197
-number of SSC-rich genes:	196
+No. short-cysteine rich proteins in input fasta:	192
+number of SSC-rich genes:	192
 ```
 
 ## CAZY proteins
@@ -1483,7 +1482,7 @@ Carbohydrte active enzymes were idnetified using CAZYfollowing recomendations
 at http://csbl.bmb.uga.edu/dbCAN/download/readme.txt :
 
 ```bash
-for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+for Proteome in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
 Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
 OutDir=gene_pred/CAZY/$Organism/$Strain
@@ -1537,7 +1536,7 @@ done
 
 ```
 A.alternata_ssp_tenuissima	1166	777	777	389	389
-A.gaisen	650	764	764	374	374
+A.gaisen	650	781	781	383	383
 ```
 
 Note - the CAZY genes identified may need further filtering based on e value and
@@ -1592,17 +1591,17 @@ other - 279
 
 
 A.gaisen - 650
-B-Galactosidases - 3
+B-Galactosidases - 4
 A-Galactosidases - 2
-Polygalacturonase - 11
+Polygalacturonase - 12
 A-Arabinosidases - 14
 Xylanases - 14
-Polygalacturonate lyases - 20
+Polygalacturonate lyases - 21
 B-Glucuronidases - 4
 B-Glycosidases - 11
-Cellulases - 29
+Cellulases - 30
 Xyloglucanases - 1
-other - 265
+other - 269
 ```
 
 ## D) Secondary metabolites (Antismash and SMURF)
@@ -1616,7 +1615,7 @@ Results of web-annotation of gene clusters within the assembly were downloaded t
 the following directories:
 
 ```bash
-  for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
     Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
     Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
     OutDir=gene_pred/secondary_metabolites/antismash/$Organism/$Strain
@@ -1625,14 +1624,14 @@ the following directories:
 ```
 
 ```bash
-  for Zip in $(ls gene_pred/secondary_metabolites/antismash/*/*/*.zip); do
+  for Zip in $(ls gene_pred/secondary_metabolites/antismash/*/*/*.zip | grep '650'); do
     OutDir=$(dirname $Zip)
     unzip -d $OutDir $Zip
   done
 ```
 
 ```bash
-for AntiSmash in $(ls gene_pred/secondary_metabolites/antismash/*/*/*/*.final.gbk); do
+for AntiSmash in $(ls gene_pred/secondary_metabolites/antismash/*/*/*/*.final.gbk | grep '650'); do
     Organism=$(echo $AntiSmash | rev | cut -f4 -d '/' | rev)
     Strain=$(echo $AntiSmash | rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
@@ -1681,16 +1680,16 @@ Number of cluster finder non-SecMet clusters detected:	102
 Number of predicted proteins in cluster finder non-SecMet clusters:	2280
 Number of predicted genes in cluster finder non-SecMet clusters:	2266
 A.gaisen - 650
-Number of secondary metabolite detected:	29
-Number of predicted proteins in secondary metabolite clusters:	765
-Number of predicted genes in secondary metabolite clusters:	763
-Number of cluster finder non-SecMet clusters detected:	96
-Number of predicted proteins in cluster finder non-SecMet clusters:	2145
-Number of predicted genes in cluster finder non-SecMet clusters:	2136
+Number of secondary metabolite detected:	30
+Number of predicted proteins in secondary metabolite clusters:	743
+Number of predicted genes in secondary metabolite clusters:	741
+Number of cluster finder non-SecMet clusters detected:	97
+Number of predicted proteins in cluster finder non-SecMet clusters:	2250
+Number of predicted genes in cluster finder non-SecMet clusters:	2243
 ```
 
 SMURF was also run to identify secondary metabolite gene clusters.
-
+<!--
 Genes needed to be parsed into a specific tsv format prior to submission on the
 SMURF webserver.
 
@@ -1721,7 +1720,7 @@ Output files were parsed into gff format:
     $ProgDir/smurf2gff.py --smurf_clusters $SmurfClusters --smurf_backbone $SmurfBackbone > $OutDir/Smurf_clusters.gff
    bedtools intersect -wo -a $GeneGff -b $OutDir/Smurf_clusters.gff | grep 'mRNA' | cut -f9,10,12,18 | sed "s/ID=//g" | perl -p -i -e "s/;Parent=g\w+//g" | perl -p -i -e "s/;Notes=.*//g" > $OutDir/"$Strain"_smurf_secmet_genes.tsv
   done
-```
+``` -->
 
 # Genes with transcription factor annotations:
 
@@ -1748,8 +1747,8 @@ done
 ```
 
 ```
-A.alternata_ssp_tenuissima	1166	690
-A.gaisen	650	633
+A.alternata_ssp_tenuissima      1166    690
+A.gaisen        650     651
 ```
 
 
@@ -1765,7 +1764,7 @@ qlogin -pe smp 12
 cd /data/scratch/armita/alternaria
 dbFasta=$(ls /home/groups/harrisonlab/phibase/v4.4/phi_accessions.fa)
 dbType="prot"
-for QueryFasta in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.cds.fasta); do
+for QueryFasta in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.cds.fasta | grep '650'); do
 Organism=$(echo $QueryFasta | rev | cut -f4 -d '/' | rev)
 Strain=$(echo $QueryFasta | rev | cut -f3 -d '/' | rev)
 echo "$Organism - $Strain"
@@ -1774,7 +1773,7 @@ Eval="1e-30"
 OutDir=analysis/blast_homology/$Organism/$Strain
 mkdir -p $OutDir
 makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
-blastx -num_threads 12 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+blastx -num_threads 6 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
 cat $OutDir/${Prefix}_hits.txt | grep 'effector' | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 done
 ```
@@ -2044,16 +2043,16 @@ printf "$Isolate\t$TotalGenes\t$Secreted\t$EffectorP\t$CAZyme\t$SecMet\n"
 
 ## Alignment vs minion genomes
 
-Illumina sequence data from each of the isoaltes was aligned against the minion
+Illumina sequence data from each of the isolates was aligned against the minion
 assemblies.
 
 
-### Read alignemnt
+### Read alignment
 
 ```bash
-for Reference in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Reference in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
 RefStrain=$(echo $Reference | rev | cut -f3 -d '/' | rev)
-for StrainPath in $(ls -d ../../../../home/groups/harrisonlab/project_files/alternaria/qc_dna/paired/*/* | grep 'arborescens'); do
+for StrainPath in $(ls -d ../../../../home/groups/harrisonlab/project_files/alternaria/qc_dna/paired/*/* | grep -v 'arborescens'); do
 Jobs=$(qstat | grep 'sub_bowtie' | grep 'qw'| wc -l)
 while [ $Jobs -gt 1 ]; do
 sleep 1m
@@ -2081,7 +2080,7 @@ done
 Identify read coverage over each bp
 
 ```bash
-  for Bam in $(ls analysis/genome_alignment/bowtie/*/*/vs_*/*_aligned_sorted.bam); do
+  for Bam in $(ls analysis/genome_alignment/bowtie/*/*/vs_*/*_aligned_sorted.bam | grep 'vs_650'); do
     Target=$(echo $Bam | rev | cut -f2 -d '/' | rev)
     Strain=$(echo $Bam | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Bam | rev | cut -f4 -d '/' | rev)
@@ -2108,6 +2107,11 @@ setwd("~/Downloads/Aalt/coverage2")
 
 appended_df <- read_delim("~/Downloads/Aalt/coverage2/vs_1166_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
 
+myFun <- function(x) {
+  c(min = min(x), max = max(x),
+    mean = mean(x), median = median(x),
+    std = sd(x))
+}
 
 colnames(appended_df) <- c("contig","position", "depth", "strain")
 
@@ -2136,21 +2140,20 @@ scale = 1, width = 500, height = 500, units = 'mm',
 dpi = 150, limitsize = TRUE)
 }
 
-myFun <- function(x) {
-  c(min = min(x), max = max(x),
-    mean = mean(x), median = median(x),
-    std = sd(x))
-}
-
-
 ```
 
 
 ```R
 library(readr)
-setwd("~/Downloads/Aalt/coverage2")
+setwd("~/Downloads/Aalt/coverage")
 
-df_650 <- read_delim("~/Downloads/Aalt/coverage2/vs_650_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
+df_650 <- read_delim("~/Downloads/Aalt/coverage/vs_650_grouped_depth.tsv", "\t", escape_double = FALSE, col_names = FALSE, col_types = cols(X4 = col_factor(levels = c("675", "97.0013", "97.0016", "650", "648", "24350", "1082", "1164", "635", "743", "1166", "1177"))), trim_ws = TRUE)
+
+myFun <- function(x) {
+  c(min = min(x), max = max(x),
+    mean = mean(x), median = median(x),
+    std = sd(x))
+}
 
 colnames(df_650) <- c("contig","position", "depth", "strain")
 
@@ -2166,7 +2169,7 @@ df_650$depth <- ifelse(df_650$depth > 100, 100, df_650$depth)
 library(ggplot2)
 require(scales)
 
-for (i in 1:23){
+for (i in 1:27){
 contig = paste("contig", i, sep = "_")
 p0 <- ggplot(data=df_650[df_650$contig == contig, ], aes(x=`position`, y=`depth`, group=1)) +
 geom_line() +
@@ -2187,7 +2190,7 @@ dpi = 150, limitsize = TRUE)
 The % repeatmasking was identified for each contig:
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
   Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
   Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
   OutDir=analysis/CDC_contigs/$Organism/$Strain
@@ -2197,10 +2200,65 @@ for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_rep
 done
 ```
 
+```
+# 1166
+contig_1	3902980	0	0.00
+contig_2	3781932	0	0.00
+contig_3	3000390	0	0.00
+contig_4	2851745	0	0.00
+contig_5	2693844	0	0.00
+contig_6	2583941	0	0.00
+contig_7	2502671	0	0.00
+contig_8	2455819	0	0.00
+contig_9	2451092	0	0.00
+contig_10	2402550	0	0.00
+contig_11	2194253	0	0.00
+contig_12	1303685	0	0.00
+contig_13	767820	0	0.00
+contig_14	549494	0	0.00
+contig_15	435297	0	0.00
+contig_16	433285	0	0.00
+contig_17	391795	0	0.00
+contig_18	368761	0	0.00
+contig_19	225742	0	0.00
+contig_20	154051	0	0.00
+contig_21	143777	0	0.00
+contig_22	109256	0	0.00
+
+# 650
+contig_1	6257968	0	0.00
+contig_2	2925786	0	0.00
+contig_3	2776589	0	0.00
+contig_4	2321443	0	0.00
+contig_5	2116911	0	0.00
+contig_6	2110033	0	0.00
+contig_7	1975041	0	0.00
+contig_8	1822907	0	0.00
+contig_9	1811374	0	0.00
+contig_10	1696734	0	0.00
+contig_11	1617057	0	0.00
+contig_12	1416541	0	0.00
+contig_13	1110254	0	0.00
+contig_14	629968	0	0.00
+contig_15	554254	0	0.00
+contig_16	547262	0	0.00
+contig_17	522351	0	0.00
+contig_18	463030	0	0.00
+contig_19	353531	0	0.00
+contig_20	350965	0	0.00
+contig_21	313768	0	0.00
+contig_22	288922	0	0.00
+contig_23	206183	0	0.00
+contig_24	89891	0	0.00
+contig_25	25201	0	0.00
+contig_26	23394	0	0.00
+contig_27	19592	0	0.00
+```
+
 ### 4.1.c Gene density and % content
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '650'); do
   Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
   Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
   OutDir=analysis/CDC_contigs/$Organism/$Strain
@@ -2236,28 +2294,32 @@ contig_20	154051	35	227.2	57127	37.08
 contig_21	143777	48	333.85	62379	43.39
 contig_22	109256	42	384.42	63072	57.73
 # 650
-contig_1	6257968	2443	390.38	3763556	60.14
-contig_2	4971742	1914	384.98	2952852	59.39
-contig_3	2925786	1160	396.47	1682886	57.52
-contig_4	2776593	1084	390.41	1684148	60.66
-contig_5	2407617	910	377.97	1333497	55.39
-contig_6	2321443	890	383.38	1354817	58.36
-contig_7	2110033	790	374.4	1226331	58.12
-contig_8	1975041	733	371.13	1184196	59.96
-contig_9	1696734	660	388.98	937666	55.26
-contig_10	1416541	541	381.92	845372	59.68
-contig_11	1110254	434	390.9	650661	58.6
-contig_12	629970	201	319.06	242443	38.48
-contig_13	621992	220	353.7	329368	52.95
-contig_14	547262	203	370.94	267573	48.89
-contig_15	463030	168	362.83	253364	54.72
-contig_16	353559	132	373.35	177450	50.19
-contig_17	350965	129	367.56	183181	52.19
-contig_18	288921	104	359.96	143279	49.59
-contig_19	206182	63	305.56	84853	41.15
-contig_20	89891	26	289.24	36102	40.16
-contig_21	25203	3	119.03	3216	12.76
-contig_23	19593	1	51.04	389	1.99
+contig_1	6257968	2460	393.1	3775821	60.34
+contig_2	2925786	1147	392.03	1689167	57.73
+contig_3	2776589	1088	391.85	1682151	60.58
+contig_4	2321443	890	383.38	1356784	58.45
+contig_5	2116911	836	394.92	1311434	61.95
+contig_6	2110033	795	376.77	1229056	58.25
+contig_7	1975041	732	370.63	1184613	59.98
+contig_8	1822907	722	396.07	1017676	55.83
+contig_9	1811374	723	399.14	1076845	59.45
+contig_10	1696734	655	386.04	941644	55.5
+contig_11	1617057	601	371.66	919168	56.84
+contig_12	1416541	544	384.03	845267	59.67
+contig_13	1110254	435	391.8	654108	58.92
+contig_14	629968	203	322.24	241021	38.26
+contig_15	554254	201	362.65	306701	55.34
+contig_16	547262	201	367.28	268674	49.09
+contig_17	522351	189	361.83	286435	54.84
+contig_18	463030	169	364.99	252899	54.62
+contig_19	353531	136	384.69	175247	49.57
+contig_20	350965	130	370.41	183371	52.25
+contig_21	313768	114	363.33	164127	52.31
+contig_22	288922	105	363.42	143655	49.72
+contig_23	206183	64	310.4	88464	42.91
+contig_24	89891	25	278.11	36680	40.8
+contig_25	25201	3	119.04	3216	12.76
+contig_27	19592	1	51.04	389	1.99
 ```
 
 ### 4.1.c
