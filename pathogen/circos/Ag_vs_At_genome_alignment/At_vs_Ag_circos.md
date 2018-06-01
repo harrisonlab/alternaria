@@ -45,8 +45,9 @@ taking the reversed order of FoL contigs using the command:
 
 ```bash
 cat $OutDir/At_vs_Ag_contig_orientation.txt | grep -A1 'Order of all seen contigs' | tail -n1 | sed "s/, /\n/g" > tmp.txt
+cat $OutDir/At_vs_Ag_contig_orientation.txt | grep -A1 'Order of all seen contigs' | tail -n1
 cat $OutDir/At_Ag_genome.txt | grep 'At' | grep -w -v -f tmp.txt | cut -f3 -d ' '| tr -d '\n' | sed 's/At/, At/g'
-cat $OutDir/At_Ag_genome.txt | grep 'At' | cut -f3 -d ' ' | tr -d '\n' | sed 's/At/, At/g' >> tmp.txt
+cat $OutDir/At_Ag_genome.txt | grep 'Ag' | cut -f3 -d ' ' | tr -d '\n' | sed 's/Ag/, Ag/g'
 ```
 
 ```bash
