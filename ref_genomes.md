@@ -49,6 +49,7 @@ A.alternata_ssp._tenuissima	635	1303	1299	3	9	1315
 A.alternata_ssp._tenuissima	648	1304	1302	3	8	1315
 A.alternata_ssp._tenuissima	743	1303	1300	4	8	1315
 A.gaisen	650	1260	1257	5	50	1315
+
 Alternaria_alternata	ATCC11680	1300	1298	5	10	1315
 Alternaria_alternata	ATCC66891	1299	1297	7	9	1315
 Alternaria_alternata	BMP0270	1302	1300	4	9	1315
@@ -74,4 +75,42 @@ Alternaria_tangelonis	BMP2327	1221	1219	48	46	1315
 Alternaria_tenuissima	BMP0304	1302	1300	4	9	1315
 Alternaria_tomatophila	BMP2032	1217	1215	68	30	1315
 Alternaria_turkisafria	BMP3436	1211	1209	50	54	1315
+```
+
+Summarise contig IDs by isolate
+```bash
+for File in $(ls assembly/Alt_database/*/genome.ctg.fa); do
+  Species=$(echo $File | cut -f3 -d '/' | cut -f1,2 -d '_' | sed 's/lternaria_/. /g')
+  Strain=$(echo $File | cut -f3 -d '/' | cut -f3 -d '_' )
+  Abv=$(cat $File | grep '>' | head -n1 | tr -d '>' | sed "s/CTG.*//g")
+  printf "$Species\t$Strain\t$Abv\t$Species $Strain\n"
+done
+```
+
+```
+A. alternata	ATCC11680	ATN	A. alternata ATCC11680
+A. alternata	ATCC66891	AAT	A. alternata ATCC66891
+A. alternata	BMP0270	AA2	A. alternata BMP0270
+A. arborescens	BMP0308	AAB	A. arborescens BMP0308
+A. brassicicola	ATCC96836	ABR	A. brassicicola ATCC96836
+A. capsici	BMP0180	ACS	A. capsici BMP0180
+A. carthami	BMP1963	ACM	A. carthami BMP1963
+A. citriarbusti	BMP2343	ACT	A. citriarbusti BMP2343
+A. crassa	BMP0172	ACR	A. crassa BMP0172
+A. dauci	BMP0167	ADC	A. dauci BMP0167
+A. destruens	BMP0317	ADT	A. destruens BMP0317
+A. fragariae	BMP3062	AFG	A. fragariae BMP3062
+A. gaisen	BMP2338	AGS	A. gaisen BMP2338
+A. limoniasperae	BMP2335	ATK	A. limoniasperae BMP2335
+A. longipes	BMP0313	ALG	A. longipes BMP0313
+A. macrospora	BMP1949	AMR	A. macrospora BMP1949
+A. mali	BMP3063	AML	A. mali BMP3063
+A. mali	BMP3064	AM2	A. mali BMP3064
+A. porri	BMP0178	APR	A. porri BMP0178
+A. solani	BMP0185	ASL	A. solani BMP0185
+A. tagetica	BMP0179	ATT	A. tagetica BMP0179
+A. tangelonis	BMP2327	ALM	A. tangelonis BMP2327
+A. tenuissima	BMP0304	AT2	A. tenuissima BMP0304
+A. tomatophila	BMP2032	ATM	A. tomatophila BMP2032
+A. turkisafria	BMP3436	ATG	A. turkisafria BMP3436
 ```
