@@ -230,7 +230,7 @@ ggsave("tree4.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
 ````
 
 
-
+<!--
 
 ```bash
 # For closely related organisms (same species etc.): identify genes with high nucleotide diversity (Pi) and average number of pairwise differences, medium number of segregating sites
@@ -435,4 +435,4 @@ done
 FigTree=/home/sobczm/bin/FigTree_v1.4.2/bin/figtree
 $FigTree
 
-```
+``` -->
