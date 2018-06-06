@@ -1240,7 +1240,7 @@ commands:
 
 ```bash
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/interproscan
-for Proteins in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650'); do
+for Proteins in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep -e '1166' -e '650' | grep '650'); do
 Strain=$(echo $Proteins | rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Proteins | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
@@ -1563,7 +1563,7 @@ Cols in yourfile.out.dm.ps:
 
 
 ```bash
-for CAZY in $(ls gene_pred/CAZY/*/*/*_CAZY.out.dm.ps); do
+for CAZY in $(ls gene_pred/CAZY/*/*/*_CAZY.out.dm.ps | grep '650'); do
 Strain=$(echo $CAZY | rev | cut -f2 -d '/' | rev)
 Organism=$(echo $CAZY | rev | cut -f3 -d '/' | rev)
 OutDir=$(dirname $CAZY)
@@ -1636,7 +1636,7 @@ for AntiSmash in $(ls gene_pred/secondary_metabolites/antismash/*/*/*/*.final.gb
     Strain=$(echo $AntiSmash | rev | cut -f3 -d '/' | rev)
     echo "$Organism - $Strain"
     OutDir=gene_pred/secondary_metabolites/antismash/$Organism/$Strain
-    Prefix=$OutDir/WT_antismash
+    Prefix=$OutDir/${Strain}_antismash
     ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/secondary_metabolites
     $ProgDir/antismash2gff.py --inp_antismash $AntiSmash --out_prefix $Prefix
 
@@ -1731,7 +1731,7 @@ http://www.transcriptionfactor.org/index.cgi?Domain+domain:all
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5415576/
 
 ```bash
-for Interpro in $(ls gene_pred/interproscan/*/*/*_interproscan.tsv); do
+for Interpro in $(ls gene_pred/interproscan/*/*/*_interproscan.tsv | grep '650'); do
 Organism=$(echo $Interpro | rev | cut -f3 -d '/' | rev)
 Strain=$(echo $Interpro | rev | cut -f2 -d '/' | rev)
 # echo "$Organism - $Strain"
@@ -1938,7 +1938,7 @@ The number of blast hits not intersecting gene models were:
 
 
 ```bash
-for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650'); do
+for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650' | grep '650'); do
   Strain=$(echo $GeneGff | rev | cut -f3 -d '/' | rev)
   Organism=$(echo $GeneGff | rev | cut -f4 -d '/' | rev)
   Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked.fa)
