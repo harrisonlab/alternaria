@@ -168,12 +168,9 @@ library(treeio)
 
 tree <- read.tree("/Users/armita/Downloads/Aalt/ASTRAL/Alt_phylogeny.consensus.scored.geneious2.tre")
 
-
 mydata <- read.csv("/Users/armita/Downloads/Aalt/ASTRAL/traits.csv", stringsAsFactors=FALSE)
 rownames(mydata) <- mydata$Isolate
 mydata <- mydata[match(tree$tip.label,rownames(mydata)),]
-
-
 
 t <- ggtree(tree, aes(linetype=nodes$support)) # Core tree
 # Adjust terminal branch lengths:
@@ -181,8 +178,6 @@ branches <- t$data
 tree$edge.length[branches$isTip] <- 1.0
 #Tree <- branches$branch.length
 #rescale_tree(t, branches$branch.length)
-
-
 
 t <- t + geom_treescale(offset=-1.0, fontsize = 3) # Add scalebar
 # t <- t + xlim(0, 0.025) # Add more space for labels
