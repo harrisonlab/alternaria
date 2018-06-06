@@ -615,9 +615,85 @@ cat gene_pred/annotation/A.alternata_ssp_tenuissima/1166/A.arborescens_non-syn_S
  ```
 
  ```bash
-
 cat gene_pred/annotation/A.alternata_ssp_tenuissima/1166/A.arborescens_non-syn_SNP_genes.tsv | grep 'contig_6'
  ```
+
+Calculate Fst stats (not applicable to haploid organisms):
+
+```bash
+Pop1=analysis/popgen/SNP_calling/Aten_isolates.txt
+printf "675\n1082\n1164\n24350" > $Pop1
+Pop2=analysis/popgen/SNP_calling/Aarb_isolates.txt
+printf "648\n97.0013\n97.0016" > $Pop2
+Pop3=analysis/popgen/SNP_calling/Aten_path_isolates.txt
+printf "1166\n635\n743\n1177" > $Pop3
+Vcf=$(ls analysis/popgen/SNP_calling/1166_contigs_unmasked_filtered_no_errors_syn.vcf)
+VcfTools=/home/sobczm/bin/vcftools/bin
+$VcfTools/vcftools --vcf $Vcf --weir-fst-pop $Pop1 --weir-fst-pop $Pop2 --out $OutDir/Aten_vs_Aarb_Fst
+```
+
+Linkage disequilibrium:
+--hap-r2
+--geno-r2
+--geno-chisq
+
+```bash
+
+  Vcf=$(ls analysis/popgen/SNP_calling/1166_contigs_unmasked_filtered_no_errors_syn.vcf)
+  ExcludeList="650 648 97.0013 97.0016"
+  Prefix=tenuissima_vs_1166
+  OutDir=analysis/popgen/SNP_calling/$Prefix
+  mkdir -p $OutDir
+  VcfLib=/home/sobczm/bin/vcflib/bin
+  $VcfLib/vcfremovesamples $Vcf $ExcludeList > $OutDir/$Prefix.vcf
+  VcfTools=/home/sobczm/bin/vcftools/bin
+  $VcfTools/vcftools --vcf $OutDir/$Prefix.vcf --max-missing 0.95 --remove-indels --mac 1 --recode --out $OutDir/"$Prefix"_filtered
+  VcfTools=/home/sobczm/bin/vcftools/bin
+  $VcfTools/vcftools --vcf $OutDir/"$Prefix"_filtered.recode.vcf --hap-r2 --ld-window-bp 50000 --out $OutDir/${Prefix}_ld_window_50kb
+```
+
+```bash
+# cat tenuissima_vs_1166_ld_window_50kb.hap.ld | grep -w 'contig_1' | cut -f2,3,5 > tenuissima_vs_1166_ld_window_50k_contigs_1.txt
+
+cat tenuissima_vs_1166_ld_window_50kb.hap.ld | grep -v -e 'contig_14' -e 'contig_15' -e 'contig_18' -e 'contig_19' -e 'contig_20' -e 'contig_21' -e 'contig_22' | cut -f2,3,5 > tenuissima_vs_1166_ld_window_50k_core_contigs.txt
+```
+
+```R
+tenuissima_vs_1166_ld_window_50k_contigs_1 <- read.delim("~/Downloads/popstats/Alt_LD/tenuissima_vs_1166_ld_window_50k_contigs_1.txt", header=FALSE)
+#tenuissima_vs_1166_ld_window_50k_contigs_1 <- read.delim("~/Downloads/popstats/Alt_LD/tenuissima_vs_1166_ld_window_50k_core_contigs.txt", header=FALSE)
+colnames(tenuissima_vs_1166_ld_window_50k_contigs_1) <- c("PointA","PointB","R2")
+tenuissima_vs_1166_ld_window_50k_contigs_1$PointA <- as.numeric(tenuissima_vs_1166_ld_window_50k_contigs_1$PointA)
+tenuissima_vs_1166_ld_window_50k_contigs_1$PointB <- as.numeric(tenuissima_vs_1166_ld_window_50k_contigs_1$PointB)
+
+tenuissima_vs_1166_ld_window_50k_contigs_1$dist <- tenuissima_vs_1166_ld_window_50k_contigs_1$PointB - tenuissima_vs_1166_ld_window_50k_contigs_1$PointA
+
+# Make Linkage ddecay model
+distance<-tenuissima_vs_1166_ld_window_50k_contigs_1$dist
+LD.data<-tenuissima_vs_1166_ld_window_50k_contigs_1$R2
+n<-16
+HW.st<-c(C=0.1)
+HW.nonlinear<-nls(LD.data~((10+C*distance)/((2+C*distance)*(11+C*distance)))*(1+((3+C*distance)*(12+12*C*distance+(C*distance)^2))/(n*(2+C*distance)*(11+C*distance))),start=HW.st,control=nls.control(maxiter=100))
+tt<-summary(HW.nonlinear)
+new.rho<-tt$parameters[1]
+fpoints<-((10+new.rho*distance)/((2+new.rho*distance)*(11+new.rho*distance)))*(1+((3+new.rho*distance)*(12+12*new.rho*distance+(new.rho*distance)^2))/(n*(2+new.rho*distance)*(11+new.rho*distance)))
+
+# Calculating LD50 values (half maximum value)
+df<-data.frame(distance,fpoints)
+maxld<-max(LD.data)
+
+#You could elucubrate if it's better to use the maximum ESTIMATED value of LD
+#In that case you just set: maxld<-max(fpoints)
+maxld<-max(fpoints)
+h.decay<-maxld/2
+half.decay.distance<-df$distance[which.min(abs(df$fpoints-h.decay))]
+
+# Make plot
+p <- ggplot(tenuissima_vs_1166_ld_window_50k_contigs_1, aes(dist, R2))
+p <- p + geom_line(stat = "summary_bin", binwidth = 1000)
+p + geom_segment(aes(x = half.decay.distance, y = 0.1, xend = half.decay.distance, yend = 0), arrow = arrow(length = unit(0.5, "cm")), color = "red")
+```
+
+
 
 ### Number of secreted genes
 
