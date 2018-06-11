@@ -2322,5 +2322,49 @@ contig_25	25201	3	119.04	3216	12.76
 contig_27	19592	1	51.04	389	1.99
 ```
 
-### 4.1.c
-The number of putative effectors was identified in Core, lineage specific and species specific contigs:
+## Meiotic Machinery
+
+The predicted proteome for Saccharomyces cerevisiae strain S288C was downloaded from the Saccharomyces Genome Database (www.yeastgenome.org; Cherry et al. (1998)) and from this, 86 genes with a known meiotic function, as identified in the supplementary material of Halary et al. (2011), were extracted. This list included 29 genes identified as core meiotic genes within the eukaryotes (Malik et al., 2008),  and fifteen genes that have functional descriptions as meiosis-specific proteins on the Saccharomyces Genome Database (Cherry et al., 2012).
+
+
+```bash
+qlogin -pe smp 16
+cd /data/scratch/armita/alternaria
+# QueeryGenes=$(ls analysis/meiotic_machinery/86_meiotic_proteins.fasta)
+Prots=$(ls analysis/meiotic_machinery/S288C_reference_genome_R64-2-1_20150113/orf_trans_all_R64-2-1_20150113.fasta)
+SaccharomycesProts=analysis/meiotic_machinery/S288C_reference_genome_R64-2-1_20150113/orf_trans_all_R64-2-1_20150113_parsed.fasta
+cat $Prots | tr -d '*' | cut -f1,2 -d ' ' | sed 's/ /_/g' > $SaccharomycesProts
+
+QueeryFasta=$(ls analysis/meiotic_machinery/86_meiotic_proteins.fasta)
+QueeryHeaders=analysis/meiotic_machinery/86_meiotic_proteins.txt
+cat $QueeryFasta | grep '>' | tr -d '>' > $QueeryHeaders
+
+Proteome_1166=$(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep '1166')
+Proteome_650=$(ls gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep '650')
+Proteome_675=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/*/*/final/final_genes_appended_renamed.pep.fasta | grep '675')
+for Proteome in $(ls $Proteome_1166 $Proteome_650 $Proteome_675); do
+  Organism=$(echo $Proteome | rev | cut -f4 -d '/' | rev)
+  Strain=$(echo $Proteome | rev | cut -f3 -d '/' | rev)
+  OutDir=analysis/meiotic_machinery/blast/$Organism/$Strain
+  mkdir -p $OutDir
+  echo "$Organism - $Strain"
+  mkdir -p $OutDir
+  Eval="1e-30"
+  Prefix="saccharomyces_vs_${Strain}"
+  # makeblastdb -in $Proteome -input_type fasta -dbtype "prot" -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+  # blastp -num_threads 16 -db $OutDir/$Prefix.db -query $SaccharomycesProts -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+  # cat $OutDir/${Prefix}_hits.txt | grep -w -f $QueeryHeaders | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_meiotic_hits_headers.txt
+  Eval="1e-30"
+  Prefix="${Strain}_vs_saccharomyces"
+  # makeblastdb -in $SaccharomycesProts -input_type fasta -dbtype "prot" -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+  # blastp -num_threads 16 -db $OutDir/$Prefix.db -query $Proteome -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+  # cat $OutDir/${Prefix}_hits.txt | grep -w -f $QueeryHeaders | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_meiotic_hits_headers.txt
+  $ProgDir/analyse_recipricol_blast.py --subset $QueeryHeaders --hits_a_vs_b $OutDir/saccharomyces_vs_${Strain}_hits.txt --hits_b_vs_a $OutDir/${Strain}_vs_saccharomyces_hits.txt > $OutDir/${Strain}_reciprical_hits.tsv
+done
+```
+
+```bash
+ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/blast
+$ProgDir/analyse_recipricol_blast.py --subset analysis/meiotic_machinery/86_meiotic_proteins.txt --hits_a_vs_b analysis/meiotic_machinery/blast/A.gaisen/650/saccharomyces_vs_650_hits.txt --hits_b_vs_a analysis/meiotic_machinery/blast/A.gaisen/650/650_vs_saccharomyces_hits.txt | less -S
+
+```
