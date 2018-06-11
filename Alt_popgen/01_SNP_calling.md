@@ -649,7 +649,7 @@ Linkage disequilibrium:
   VcfTools=/home/sobczm/bin/vcftools/bin
   $VcfTools/vcftools --vcf $OutDir/$Prefix.vcf --max-missing 0.95 --remove-indels --mac 1 --recode --out $OutDir/"$Prefix"_filtered
   VcfTools=/home/sobczm/bin/vcftools/bin
-  $VcfTools/vcftools --vcf $OutDir/"$Prefix"_filtered.recode.vcf --hap-r2 --ld-window-bp 50000 --out $OutDir/${Prefix}_ld_window_50kb
+  $VcfTools/vcftools --vcf $OutDir/"$Prefix"_filtered.recode.vcf --hap-r2 --ld-window-bp 1000000 --out $OutDir/${Prefix}_ld_window_1mb
 ```
 
 ```bash
@@ -657,7 +657,7 @@ Linkage disequilibrium:
 
 cat tenuissima_vs_1166_ld_window_50kb.hap.ld | grep -v -e 'contig_14' -e 'contig_15' -e 'contig_18' -e 'contig_19' -e 'contig_20' -e 'contig_21' -e 'contig_22' | cut -f2,3,5 > tenuissima_vs_1166_ld_window_50k_core_contigs.txt
 ```
-
+<!--
 ```R
 tenuissima_vs_1166_ld_window_50k_contigs_1 <- read.delim("~/Downloads/popstats/Alt_LD/tenuissima_vs_1166_ld_window_50k_contigs_1.txt", header=FALSE)
 #tenuissima_vs_1166_ld_window_50k_contigs_1 <- read.delim("~/Downloads/popstats/Alt_LD/tenuissima_vs_1166_ld_window_50k_core_contigs.txt", header=FALSE)
@@ -690,9 +690,246 @@ half.decay.distance<-df$distance[which.min(abs(df$fpoints-h.decay))]
 # Make plot
 p <- ggplot(tenuissima_vs_1166_ld_window_50k_contigs_1, aes(dist, R2))
 p <- p + geom_line(stat = "summary_bin", binwidth = 1000)
-p + geom_segment(aes(x = half.decay.distance, y = 0.1, xend = half.decay.distance, yend = 0), arrow = arrow(length = unit(0.5, "cm")), color = "red")
+p <- p + geom_segment(aes(x = half.decay.distance, y = 0.1, xend = half.decay.distance, yend = 0), arrow = arrow(length = unit(0.5, "cm")), color = "red")
+
+``` -->
+
+```bash
+#Tom's commands:
+# Size is chromosome number x sample size
+# Tom has multiple here because he is unsure over the number of chromsomes
+for Size in 88; do
+   LD_file=$(ls analysis/popgen/SNP_calling/tenuissima_vs_1166/tenuissima_vs_1166_ld_window_1mb.hap.ld)
+   Out_file=$(dirname $LD_file)/r^2_decay_"$Size".pdf
+   units=bp
+   window_size=1000000
+   bin_size=1000
+   Cstart=0.1
+   ProgDir=/home/adamst/git_repos/scripts/phytophthora_fragariae/popgen_analysis
+   echo "Sample size of $Size:"
+   Rscript --vanilla $ProgDir/plot_LD_decay.R --out_file $Out_file --Chromosome_number $Size --LD_statistics $LD_file --units $units --window_size $window_size --bin_size $bin_size --Cstart $Cstart
+   printf "\n"
+done
 ```
 
+```
+Sample size of 88:
+Half decay distance of LD r^2: 999500 bp
+Distance where r^2 = 0.2: 999500 bp
+```
+
+## Four Gamete test
+
+Make a slimmed down vcf file of just A. tenuissima isolates
+(Also done as part of LD test)
+```bash
+Vcf=$(ls analysis/popgen/SNP_calling/1166_contigs_unmasked_filtered_no_errors_syn.vcf)
+ExcludeList="650 648 97.0013 97.0016"
+Prefix=tenuissima_vs_1166
+OutDir=analysis/popgen/SNP_calling/$Prefix
+mkdir -p $OutDir
+VcfLib=/home/sobczm/bin/vcflib/bin
+$VcfLib/vcfremovesamples $Vcf $ExcludeList > $OutDir/$Prefix.vcf
+VcfTools=/home/sobczm/bin/vcftools/bin
+$VcfTools/vcftools --vcf $OutDir/$Prefix.vcf --max-missing 0.95 --remove-indels --mac 1 --recode --out $OutDir/"$Prefix"_filtered
+```
+
+
+##Set inital variables
+
+```bash
+WorkDir=analysis/popgen/SNP_calling/summary_stats
+ProgDir=/home/armita/git_repos/emr_repos/scripts/phytophthora/Pcac_popgen/popgenome_scripts
+```
+
+```
+In order to calculate different statistics in Popgenome, the WorkDir has to be arranged in a particular way.
+The WorkDir directory should contain two folders.
+Folder No. 1: named "gff", contains GFF files for all the contigs output from the split_gff_contig.sh script
+Folder No. 2: named "contigs", contains subfolders, each subfolder named with exact contig name and containing one individual contig FASTA file, also named with exact contig name, as output from vcf_to_fasta.py
+```
+
+##An example on how to create this directory structure
+
+```bash
+CurDir=/data/scratch/armita/alternaria
+WorkDir=$CurDir/analysis/popgen/SNP_calling/summary_stats
+mkdir -p $WorkDir/all
+mkdir -p $WorkDir/gff
+mkdir -p $WorkDir/contigs
+```
+
+###copy the "gff" folder containing gff files
+
+```bash
+CurDir=/data/scratch/armita/alternaria
+WorkDir=$CurDir/analysis/popgen/SNP_calling/summary_stats
+Gff=$(ls gene_pred/final/A.alternata_ssp_tenuissima/1166/final/final_genes_appended_renamed.gff3)
+
+cd $WorkDir/gff
+ProgDir=/home/adamst/git_repos/scripts/popgen
+$ProgDir/summary_stats/split_gff_contig.sh $CurDir/$Gff
+cd $CurDir
+```
+
+### Convert vcf files into fasta alignments
+
+The vcf file needs to be converted into fasta alignment files. One file is
+produced per reference contig
+
+For the ploidy set <1|2|3>:
+* 1 - haploid input
+* 2 - diploid input, output as two separate phased haplotypes for each ind.
+* 3 - diploid input, output as one sequence with ambiguity codes for each ind.
+
+```bash
+CurDir=/data/scratch/armita/alternaria
+WorkDir=$CurDir/analysis/popgen/SNP_calling/summary_stats
+
+Reference=$(ls repeat_masked/A.alternata_ssp_tenuissima/1166/filtered_contigs/1166_contigs_unmasked.fa)
+Vcf=$(ls analysis/popgen/SNP_calling/tenuissima_vs_1166/tenuissima_vs_1166_filtered.recode.vcf)
+Ploidy=1
+
+cd $WorkDir/contigs
+ProgDir=/home/adamst/git_repos/scripts/popgen
+python $ProgDir/summary_stats/vcf_to_fasta.py $CurDir/$Vcf $CurDir/$Reference $Ploidy
+cd $CurDir
+```
+
+
+###This folder contains only contig FASTA files
+###So create a new "contigs" directory to hold those files:
+
+```bash
+CurDir=/data/scratch/armita/alternaria
+WorkDir=$CurDir/analysis/popgen/SNP_calling/summary_stats
+Reference=$(ls repeat_masked/A.alternata_ssp_tenuissima/1166/filtered_contigs/1166_contigs_unmasked.fa)
+cp $Reference $WorkDir/.
+```
+
+###Next step: in the folder "contigs" create subfolders, each to hold one contig FASTA file
+
+```bash
+CurDir=/data/scratch/armita/alternaria
+WorkDir=$CurDir/analysis/popgen/SNP_calling/summary_stats
+cd $WorkDir/contigs
+for File in $(ls *.fasta); do
+    Prefix=${File%.fasta}
+    mkdir $Prefix
+    mv $File $Prefix/.
+done
+cd $CurDir
+```
+
+### Test if all contigs have a matching gff and remove any which do not
+
+```bash
+CurDir=/data/scratch/armita/alternaria
+WorkDir=$CurDir/analysis/popgen/SNP_calling/summary_stats
+cd $WorkDir
+for File in $(ls $PWD/contigs/*/*.fasta); do
+    Prefix=$(basename "$File" .fasta)
+    expected_gff="$PWD/gff/${Prefix}.gff"
+    if [ ! -f "$expected_gff" ]; then
+       rm -rf $(dirname $File)
+    fi
+done
+cd $CurDir
+```
+
+```R
+cd /data/scratch/armita/alternaria/analysis/popgen/SNP_calling/summary_stats
+setwd('/data/scratch/armita/alternaria/analysis/popgen/SNP_calling/summary_stats')
+library("PopGenome")
+library(ggplot2)
+
+Pcac <- c("1082", "1164", "1166", "1177", "24350", "635", "648", "743")
+populations <- list(Pcac)
+population_names <- c("Pcac")
+population_no <- length(populations)
+
+interval <-  10000
+jump_size <-  interval / 10
+
+gff <- "gff"
+all_folders <- list.dirs("contigs", full.names = FALSE)
+#Remove the gff folder from PopGenome contig analysis
+contig_folders <- all_folders[all_folders != "gff"]
+
+###Loop through each contig-containing folder to calculate stats on each contig separately.
+for (dir in contig_folders[contig_folders != ""])
+{
+  contig_folder <- paste("contigs/", dir, sep="")
+  GENOME.class <- readData(contig_folder, gffpath=gff, include.unknown = TRUE)
+  GENOME.class <- set.populations(GENOME.class, populations)
+
+  GENOME.class.split <- splitting.data(GENOME.class, subsites="gene")
+  GENOME.class.slide <- sliding.window.transform(GENOME.class,width=interval,jump=jump_size,type=2, whole.data=TRUE)
+  #per gene
+  GENOME.class.split <- recomb.stats(GENOME.class.split)
+  fourgamete_split <- get.recomb(GENOME.class.split)
+  #per interval
+  GENOME.class.slide <- recomb.stats(GENOME.class.slide)
+  fourgamete_slide <- get.recomb(GENOME.class.slide)
+  ids <- length(GENOME.class.slide@region.names)
+  xaxis <- seq(from = 1, to = ids, by = 1)
+
+  #Loop over each population: print figure and table with raw data to file
+  for (i in seq_along(population_names))
+  {
+    fgt <- unlist(fourgamete_split[i])
+    file_table = paste(dir, "_", population_names[i], "_4GT_per_gene.txt", sep="")
+    file_table2 = paste("genome_", population_names[i], "_4GT_per_gene.txt", sep="")
+    current_gff <- paste(gff, "/", dir, ".gff", sep="")
+    gene_ids <- get_gff_info(GENOME.class.split, current_gff, chr=dir, feature=FALSE, extract.gene.names=TRUE)
+    fgt_table <- as.data.frame(fourgamete_split[i])
+    write.table(fgt_table, file=file_table, sep="\t",quote=FALSE, col.names=FALSE)
+    write.table(fgt_table, file=file_table2, sep="\t",quote=FALSE, col.names=FALSE, append=TRUE)
+  }
+
+  for (i in seq_along(population_names))
+  {
+    fgt <- unlist(fourgamete_slide[i])
+    #write table with raw data
+    slide_table <- paste(dir, "_", population_names[i], "_4GT_per_sliding_window.txt", sep="")
+    slide_table2 <- paste("genome_", population_names[i], "_4GT_per_sliding_window.txt", sep="")
+    write.table(as.data.frame(fourgamete_slide[i]), file=slide_table, sep="\t",quote=FALSE, col.names=FALSE)
+    write.table(as.data.frame(fourgamete_slide[i]), file=slide_table2, sep="\t",quote=FALSE, col.names=FALSE, append=TRUE)
+  }
+
+}
+
+##Print files with combined results across the entire genome
+for (i in seq_along(population_names))
+{
+  #Four gamete test
+  file_table2 = paste("genome_", population_names[i], "_4GT_per_gene.txt", sep="")
+  x <- as.data.frame(read.delim(file_table2))
+  file_hist <- paste("genome_", population_names[i], "_4GT_per_gene.pdf", sep="")
+  fgt_plot <- ggplot(x, aes(x=x[,2])) + geom_histogram(colour="black", fill="cornsilk") + xlab("Four gamete test") + ylab("Number of genes") + scale_x_continuous(breaks = pretty(x[,2], n = 10))
+  ggsave(file_hist, fgt_plot)
+
+  file_table2 = paste("genome_", population_names[i], "_4GT_per_sliding_window.txt", sep="")
+  x <- as.data.frame(read.delim(file_table2))
+  file_hist <- paste("genome_", population_names[i], "_4GT_per_sliding_window.pdf", sep="")
+  fgt_plot <- ggplot(x, aes(x=x[,2])) + geom_histogram(colour="black", fill="cornsilk") + xlab("Four gamete test") + ylab("Number of intervals") + scale_x_continuous(breaks = pretty(x[,2], n = 10))
+  ggsave(file_hist, fgt_plot)
+}
+```
+
+
+```bash
+cat genome_Pcac_4GT_per_gene.txt | grep 'NA' | wc -l
+cat genome_Pcac_4GT_per_gene.txt | grep -v 'NA' | grep "0$" | wc -l
+cat genome_Pcac_4GT_per_gene.txt | grep -v 'NA' | grep "1$" | wc -l
+cat genome_Pcac_4GT_per_gene.txt | grep -v 'NA' | grep "2$" | wc -l
+```
+```
+8255
+4614
+  89
+   5
+```
 
 
 ### Number of secreted genes
