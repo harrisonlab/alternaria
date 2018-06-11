@@ -209,9 +209,9 @@ orthofinder -f $WorkDir/formatted -t 3 -a 3
 orthofinder results:
 
 ```
-OrthoFinder assigned 157038 genes (99.2% of total) to 14187 orthogroups. Fifty percent of all genes were in orthogroups
-with 12 or more genes (G50 was 12) and were contained in the largest 6160 orthogroups (O50 was 6160). There were 10669
-orthogroups with all species present and 10016 of these consisted entirely of single-copy genes.
+OrthoFinder assigned 157358 genes (99.2% of total) to 14200 orthogroups. Fifty percent of all genes were in orthogroups
+with 12 or more genes (G50 was 12) and were contained in the largest 6182 orthogroups (O50 was 6182). There were 10919
+orthogroups with all species present and 10285 of these consisted entirely of single-copy genes.
 ```
 
 output files are in:
