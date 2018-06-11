@@ -3,7 +3,7 @@
 qlogin
 cd /data/scratch/armita/alternaria
 OutDir=analysis/circos/Ag_circos
-for ReadsBam in $(ls analysis/genome_alignment/bowtie/*/*/vs_650/650_contigs_unmasked.fa_aligned_sorted.bam | grep -w -e '1166' -e '648' -e '650' -e '97.0016' | grep -e '648' -e '1166'); do
+for ReadsBam in $(ls analysis/genome_alignment/bowtie/*/*/vs_650/650_contigs_unmasked.fa_aligned_sorted.bam | grep -w -e '1166' -e '648' -e '650' -e '97.0016' | grep '1166'); do
  Strain=$(echo $ReadsBam | rev | cut -f3 -d '/' | rev)
  Organism=$(echo $ReadsBam | rev | cut -f4 -d '/' | rev)
  echo "$Organism - $Strain"
