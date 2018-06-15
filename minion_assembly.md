@@ -2349,16 +2349,15 @@ for Proteome in $(ls $Proteome_1166 $Proteome_650 $Proteome_675); do
   mkdir -p $OutDir
   echo "$Organism - $Strain"
   mkdir -p $OutDir
-  Eval="1e-30"
+  Eval="1e-1"
   Prefix="saccharomyces_vs_${Strain}"
   # makeblastdb -in $Proteome -input_type fasta -dbtype "prot" -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
   # blastp -num_threads 16 -db $OutDir/$Prefix.db -query $SaccharomycesProts -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
-  # cat $OutDir/${Prefix}_hits.txt | grep -w -f $QueeryHeaders | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_meiotic_hits_headers.txt
-  Eval="1e-30"
+  Eval="1e-1"
   Prefix="${Strain}_vs_saccharomyces"
   # makeblastdb -in $SaccharomycesProts -input_type fasta -dbtype "prot" -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
   # blastp -num_threads 16 -db $OutDir/$Prefix.db -query $Proteome -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
-  # cat $OutDir/${Prefix}_hits.txt | grep -w -f $QueeryHeaders | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_meiotic_hits_headers.txt
+  ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/blast
   $ProgDir/analyse_recipricol_blast.py --subset $QueeryHeaders --hits_a_vs_b $OutDir/saccharomyces_vs_${Strain}_hits.txt --hits_b_vs_a $OutDir/${Strain}_vs_saccharomyces_hits.txt > $OutDir/${Strain}_reciprical_hits.tsv
 done
 ```
@@ -2367,4 +2366,63 @@ done
 ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/blast
 $ProgDir/analyse_recipricol_blast.py --subset analysis/meiotic_machinery/86_meiotic_proteins.txt --hits_a_vs_b analysis/meiotic_machinery/blast/A.gaisen/650/saccharomyces_vs_650_hits.txt --hits_b_vs_a analysis/meiotic_machinery/blast/A.gaisen/650/650_vs_saccharomyces_hits.txt | less -S
 
+```
+
+## Mating type genes:
+
+```bash
+  mkdir -p analysis/blast/MAT_genes
+  for Subject in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    Query=analysis/blast/MAT_genes/MAT_genes.fasta
+    qsub $ProgDir/blast_pipe.sh $Query dna $Subject
+  done
+```
+
+```bash
+  HitsList=""
+  StrainList=""
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
+    sed -i "s/\t\t/\t/g" $BlastHits
+    sed -i "s/Grp1\t//g" $BlastHits
+    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
+    HitsList="$HitsList $BlastHits"
+    StrainList="$StrainList $Strain"
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    $ProgDir/blast_parse.py --blast_csv $HitsList --headers $StrainList --identity 0.7 --evalue 1e-30
+  done
+```
+
+
+```bash
+qlogin -pe smp 12
+cd /data/scratch/armita/alternaria
+QueryFasta=$(ls /data/scratch/armita/alternaria/analysis/blast/MAT_genes/MAT_genes.fasta)
+dbType="nucl"
+for dbFasta in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+Organism=$(echo $dbFasta | rev | cut -f4 -d '/' | rev)
+Strain=$(echo $dbFasta | rev | cut -f3 -d '/' | rev)
+echo "$Organism - $Strain"
+Prefix="${Strain}_MAT"
+Eval="1e-30"
+OutDir=analysis/blast_homology/$Organism/$Strain
+mkdir -p $OutDir
+makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+blastn -num_threads 12 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+done
+```
+
+```bash
+for File in $(ls analysis/blast_homology/*/*/*_MAT_hits.txt); do
+  Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+  Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+  for Hit in $(cat $File | cut -f1 | cut -f1 -d '_'); do
+    printf "$Organism\t$Strain\t$Hit\n"
+  done
+done
+```
+
+```
+A.alternata_ssp_tenuissima  1166	MAT1-2-1
+A.gaisen	650	MAT1-1-1
 ```
