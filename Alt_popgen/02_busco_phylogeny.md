@@ -194,6 +194,8 @@ tips$label <- tips$ID
 t <- t + geom_tiplab(data=tips, aes(color=Source), size=3, hjust=0) +
 scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
 
+t <- t + geom_tippoint(data=tips, aes(shape=MAT), size=2)
+
 # Format nodes by values
 nodes <- data.frame(t$data)
 #nodes <- nodes[!nodes$isTip,]
