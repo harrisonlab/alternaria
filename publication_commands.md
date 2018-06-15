@@ -1826,3 +1826,76 @@ cat $AnnotTab | cut -f1,7,8,9,10,19,20,21 | grep 'CAZY' | grep 'SigP' | cut -f5 
 # cat $OutDir/10300_gene_table_CAZY_hmm_models.txt | sed 's/.hmm//g' | sed 's/CAZY://g' | grep 'PL'
 done
 ```
+
+
+
+## Mating type genes:
+
+```bash
+qlogin -pe smp 12
+cd /home/groups/harrisonlab/project_files/alternaria
+QueryFasta=$(ls /data/scratch/armita/alternaria/analysis/blast/MAT_genes/MAT_genes.fasta)
+dbType="nucl"
+for dbFasta in $(ls repeat_masked/*/*/ncbi_edits_repmask//*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+Organism=$(echo $dbFasta | rev | cut -f4 -d '/' | rev)
+Strain=$(echo $dbFasta | rev | cut -f3 -d '/' | rev)
+echo "$Organism - $Strain"
+Prefix="${Strain}_MAT"
+Eval="1e-30"
+OutDir=analysis/blast_homology/$Organism/$Strain
+mkdir -p $OutDir
+makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+blastn -num_threads 12 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+done
+```
+
+```bash
+for File in $(ls analysis/blast_homology/*/*/*_MAT_hits.txt); do
+  Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+  Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+  for Hit in $(cat $File | cut -f1 | cut -f1 -d '_'); do
+    printf "$Organism\t$Strain\t$Hit\n"
+  done
+done
+```
+
+```
+A.alternata_ssp._arborescens	675	MAT1-2-1
+A.alternata_ssp._arborescens	97.0013	MAT1-1-1
+A.alternata_ssp._arborescens	97.0016	MAT1-2-1
+A.alternata_ssp._gaisen	650	MAT1-1-1
+A.alternata_ssp._tenuissima	1082	MAT1-2-1
+A.alternata_ssp._tenuissima	1164	MAT1-2-1
+A.alternata_ssp._tenuissima	1166	MAT1-2-1
+A.alternata_ssp._tenuissima	1177	MAT1-1-1
+A.alternata_ssp._tenuissima	24350	MAT1-1-1
+A.alternata_ssp._tenuissima	635	MAT1-2-1
+A.alternata_ssp._tenuissima	648	MAT1-1-1
+A.alternata_ssp._tenuissima	743	MAT1-2-1
+Alternaria_alternata	ATCC11680	MAT1-1-1
+Alternaria_alternata	ATCC66891	MAT1-1-1
+Alternaria_alternata	BMP0270	MAT1-1-1
+Alternaria_arborescens	BMP0308	MAT1-2-1
+Alternaria_brassicicola	ATCC96836	MAT1-2-1
+Alternaria_capsici	BMP0180	MAT1-2-1
+Alternaria_carthami	BMP1963	MAT1-1-1
+Alternaria_citriarbusti	BMP2343	MAT1-1-1
+Alternaria_crassa	BMP0172	MAT1-1-1
+Alternaria_dauci	BMP0167	MAT1-2-1
+Alternaria_destruens	BMP0317	MAT1-1-1
+Alternaria_destruens	BMP0317	MAT1-1-1
+Alternaria_fragariae	BMP3062	MAT1-1-1
+Alternaria_gaisen	BMP2338	MAT1-1-1
+Alternaria_limoniasperae	BMP2335	MAT1-2-1
+Alternaria_longipes	BMP0313	MAT1-1-1
+Alternaria_macrospora	BMP1949	MAT1-1-1
+Alternaria_mali	BMP3063	MAT1-1-1
+Alternaria_mali	BMP3064	MAT1-1-1
+Alternaria_porri	BMP0178	MAT1-1-1
+Alternaria_solani	BMP0185	MAT1-1-1
+Alternaria_tagetica	BMP0179	MAT1-1-1
+Alternaria_tangelonis	BMP2327	MAT1-2-1
+Alternaria_tenuissima	BMP0304	MAT1-2-1
+Alternaria_tomatophila	BMP2032	MAT1-2-1
+Alternaria_turkisafria	BMP3436	MAT1-1-1
+```
