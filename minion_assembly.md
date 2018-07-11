@@ -2426,3 +2426,33 @@ done
 A.alternata_ssp_tenuissima  1166	MAT1-2-1
 A.gaisen	650	MAT1-1-1
 ```
+
+# Toxin genes
+
+```bash
+qlogin -pe smp 4
+cd /home/groups/harrisonlab/project_files/alternaria
+QueryFasta=$(ls analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa)
+dbType="nucl"
+for dbFasta in $(ls /data/scratch/armita/alternaria/repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+Strain=$(echo $dbFasta | rev | cut -f3 -d '/' | rev)
+Organism=$(echo $dbFasta | rev | cut -f4 -d '/' | rev)
+echo "$Organism - $Strain"
+Prefix="${Strain}_toxgenes"
+Eval="1e-30"
+OutDir=analysis/blast_homology/$Organism/$Strain
+mkdir -p $OutDir
+makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
+blastn -num_threads 4 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+done
+```
+
+```bash
+for File in $(ls analysis/blast_homology/*/*/*_toxgenes_hits.txt); do
+  Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+  Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+  for Hit in $(cat $File | cut -f1 | cut -f1 -d ' '); do
+    printf "$Organism\t$Strain\t$Hit\n"
+  done
+done > analysis/blast_homology/CDC_genes/ref_genome_summarised_hits.tsv
+```
