@@ -5,7 +5,7 @@ was copied into the idris project folder
 
 ```bash
 cd /home/groups/harrisonlab/project_files/alternaria
-for MinionDir in $(ls -d /data/scratch/armita/alternaria/repeat_masked/*/*/filtered_contigs/run*); do
+for MinionDir in $(ls -d /data/scratch/armita/alternaria/repeat_masked/*/*/filtered_contigs/run* | grep '1166'); do
   OrgStrain=$(echo $MinionDir | cut -f7,8 -d '/')
   echo $OrgStrain
   mkdir -p gene_pred/busco/$OrgStrain/assembly
@@ -36,14 +36,15 @@ for Busco in $(cat analysis/popgen/busco_phylogeny/all_buscos_*.txt); do
 echo $Busco
 OutDir=analysis/popgen/busco_phylogeny/$Busco
 mkdir -p $OutDir
-for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'Alternaria_destruens' -e 'Alternaria_porri' -e 'ssp._gaisen'); do
+for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'Alternaria_destruens' -e 'Alternaria_porri'); do
+# for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'A.gaisen' -e 'dauci' -e 'Alternaria_destruens' -e 'Alternaria_porri' -e 'BMP0308' -e 'BMP2338'); do
 Strain=$(echo $Fasta | rev | cut -f5 -d '/' | rev)
 Organism=$(echo $Fasta | rev | cut -f6 -d '/' | rev)
 FileName=$(basename $Fasta)
-cat $Fasta | sed "s/:.*.fasta:/:"$Organism"_"$Strain":/g" > $OutDir/"$Organism"_"$Strain"_"$Busco".fasta
+cat $Fasta | sed "s/:.*.fasta:/:"$Organism"_"$Strain":/g" | sed "s/:.*.fa:/:"$Organism"_"$Strain":/g" > $OutDir/"$Organism"_"$Strain"_"$Busco".fasta
 done
 cat $OutDir/*_*_"$Busco".fasta > $OutDir/"$Busco"_appended.fasta
-SingleBuscoNum=$(cat $OutDir/"$Busco"_appended.fasta | grep '>' | wc -l)
+SingleBuscoNum=$(cat $OutDir/"$Busco"_appended.fasta | grep '>' | cut -f2 -d ':' | sort | uniq | wc -l)
 printf "$Busco\t$SingleBuscoNum\n" >> analysis/popgen/busco_phylogeny/single_hits.txt
 done
 ```
