@@ -36,7 +36,7 @@ for Busco in $(cat analysis/popgen/busco_phylogeny/all_buscos_*.txt); do
 echo $Busco
 OutDir=analysis/popgen/busco_phylogeny/$Busco
 mkdir -p $OutDir
-for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'Alternaria_destruens' -e 'Alternaria_porri'); do
+for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'Alternaria_destruens' -e 'Alternaria_porri' -e 'A.gaisen'); do
 # for Fasta in $(ls gene_pred/busco/*/*/assembly/*/single_copy_busco_sequences/$Busco*.fna | grep -v -e 'A.gaisen' -e 'dauci' -e 'Alternaria_destruens' -e 'Alternaria_porri' -e 'BMP0308' -e 'BMP2338'); do
 Strain=$(echo $Fasta | rev | cut -f5 -d '/' | rev)
 Organism=$(echo $Fasta | rev | cut -f6 -d '/' | rev)
@@ -129,7 +129,7 @@ OutDir=analysis/popgen/busco_phylogeny/ASTRAL
 mkdir -p $OutDir
 # cat analysis/popgen/busco_phylogeny/RAxML/*/RAxML_bestTree.* > $OutDir/Pcac_phylogeny.appended.tre
 # Taxa names were noted to be incorrect at this point and were corrected
-cat analysis/popgen/busco_phylogeny/RAxML/*/RAxML_bestTree.*  | sed -r "s/CTG.\w+:/:/g" > $OutDir/Alt_phylogeny.appended.tre
+cat analysis/popgen/busco_phylogeny/RAxML/*/RAxML_bestTree.*  | sed -r "s/CTG.\w+:/:/g" | sed 's/__/_/g' > $OutDir/Alt_phylogeny.appended.tre
 # InTree=$(ls /home/armita/prog/Astral/Astral/test_data/song_primates.424.gene.tre)
 # -
 # Trimm back branches that have less than 10% bootstrap support for each tree
@@ -150,9 +150,17 @@ GGtree was used to make a plot.
 
 * Note- Tips can be found here: https://bioconnector.org/r-ggtree.html
 
+* Note- Tips can be found here: https://bioconnector.org/r-ggtree.html
+
 The consensus tree was downloaded to my local machine
 
 * Note - I had to import into geneious and export again in newick format to get around polytomy branches having no branch length.
+* Terminal branch lengths are meanlingless from ASTRAL and should all be set to an arbitrary value. This will be done by geneious (set to 1), but it also introduces a branch length of 2 for one isolate that needs to be corrected with sed
+
+```bash
+cat Alt_phylogeny.consensus.scored.geneious.tre | sed 's/:2/:1/g' > Alt_phylogeny.consensus.scored.geneious2.tre
+```
+
 
 ```r
 setwd("/Users/armita/Downloads/Aalt/ASTRAL")
@@ -167,7 +175,7 @@ library(ggtree)
 library(phangorn)
 library(treeio)
 
-tree <- read.tree("/Users/armita/Downloads/Aalt/ASTRAL/Alt_phylogeny.consensus.scored.geneious2.tre")
+tree <- read.tree("/Users/armita/Downloads/Aalt/ASTRAL/expanded/Alt_phylogeny.consensus.scored.geneious2.tre")
 
 mydata <- read.csv("/Users/armita/Downloads/Aalt/ASTRAL/traits.csv", stringsAsFactors=FALSE)
 rownames(mydata) <- mydata$Isolate
@@ -192,8 +200,14 @@ scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
 
 tips <- data.frame(t$data)
 tips$label <- tips$ID
-t <- t + geom_tiplab(data=tips, aes(color=Source), size=3, hjust=0) +
+t <- t + geom_tiplab(data=tips, aes(color=Source), size=3, hjust=0, offset = +0.1) +
 scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
+
+# Add in a further set of labels
+tree_mod <- data.frame(t$data)
+tree_mod$label <- tips$pathotype
+t <- t + geom_tiplab(data=tree_mod, aes(label=label, color=Source), size=3, hjust=0, offset = +2.5) +
+scale_color_manual(values=c("gray39","black"))
 
 t <- t + geom_tippoint(data=tips, aes(shape=MAT), size=2)
 
@@ -211,19 +225,19 @@ t <- t + aes(linetype=nodes$support)
 nodes$label[nodes$label > 0.80] <- ''
 t <- t + geom_nodelab(data=nodes, size=2, hjust=-0.05) # colours as defined by col2rgb
 
-# Add in a further set of labels
-# tree_mod <- tree
-# tree_mod$tip.label <- mydata$Source
-# t <- t + geom_tiplab(data=tree_mod, aes(label=label), size=2, offset = +1)
 
 # Annotate a clade with a bar line
-t <- t + geom_cladelabel(node=45, label='sect. Alternaria', align=T, colour='black', offset=-1.5)
-t <- t + geom_cladelabel(node=68, label='gaisen clade', align=T, colour='black', offset=-4.5)
-t <- t + geom_cladelabel(node=53, label='tenuissima clade', align=T, colour='black', offset=-4.5)
-t <- t + geom_cladelabel(node=47, label='arborescens clade', align=T, colour='black', offset=-4.5)
+# t <- t + geom_cladelabel(node=42, label='sect. Alternaria', align=T, colour='black', offset=-1.5)
+# t <- t + geom_cladelabel(node=70, label='gaisen clade', align=T, colour='black', offset=-4.5)
+# t <- t + geom_cladelabel(node=51, label='tenuissima clade', align=T, colour='black', offset=-4.5)
+# t <- t + geom_cladelabel(node=45, label='arborescens clade', align=T, colour='black', offset=-4.5)
+t <- t + geom_cladelabel(node=43, label='sect. Alternaria', align=T, colour='black', offset=-0.0)
+t <- t + geom_cladelabel(node=70, label='gaisen clade', align=T, colour='black', offset=-2.0)
+t <- t + geom_cladelabel(node=46, label='tenuissima clade', align=T, colour='black', offset=-2.0)
+t <- t + geom_cladelabel(node=65, label='arborescens clade', align=T, colour='black', offset=-2.0)
 
 # Save as PDF and force a 'huge' size plot
-ggsave("tree4.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
+t <- ggsave("expanded/tree5.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
 
 ````
 
