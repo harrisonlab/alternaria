@@ -62,7 +62,7 @@ OutDir=assembly/misc_publications/${Species}_${Strain}
 mkdir -p $OutDir
 wget -P $OutDir ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/952/155/GCA_002952155.1_ASM295215v1/GCA_002952155.1_ASM295215v1_genomic.fna.gz
 gunzip $OutDir/*.gz
-cp -s $PWD/$OutDir/*.fsa_nt $OutDir/genome.ctg.fa
+cp -s $PWD/$OutDir/*.fna $OutDir/genome.ctg.fa
 
 # Species='Ulocladium_consortalis'
 # Strain='JCM1940'
@@ -78,7 +78,7 @@ cp -s $PWD/$OutDir/*.fsa_nt $OutDir/genome.ctg.fa
 Quast and BUSCO
 
 ```bash
-for Assembly in $(ls assembly/*/*/genome.ctg.fa | grep -e 'Alt_database' -e 'misc_publications' | grep 'misc_publications'); do
+for Assembly in $(ls assembly/*/*/genome.ctg.fa | grep -e 'Alt_database' -e 'misc_publications' | grep 'misc_publications' | grep 'solani'); do
 Strain=$(echo $Assembly | rev | cut -f2 -d '/' | rev | cut -f3 -d '_')
 Organism=$(echo $Assembly | rev | cut -f2 -d '/' | rev | cut -f1,2 -d '_')
 OutDir=$(dirname $Assembly)
