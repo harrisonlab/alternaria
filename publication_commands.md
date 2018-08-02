@@ -314,6 +314,31 @@ A.alternata_ssp._tenuissima	648	538913	159935	657864
 A.alternata_ssp._tenuissima	743	703937	329935	868641
 ```
 
+The breakdown of repeats were shown using the following commands
+
+```bash
+printf "Organism\tStrain\tDDE_1\tGypsy\tHAT\tTY1_Copia\tMariner\tCacta\tLINE\tMuDR_A_B\tHelitronORF\tMariner_ant1\tISC1316\tCrypton\n"
+for File in $(ls /home/groups/harrisonlab/project_files/alternaria/repeat_masked/A.*/*/ncbi_edits_repmask/*_contigs_unmasked.fa.TPSI.allHits.chains.chains.gff3); do
+Strain=$(echo $File| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $File | rev | cut -d '/' -f4 | rev)
+# echo "$Organism - $Strain"
+DDE_1=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'DDE_1' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Gypsy=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'gypsy' | sed "s/^\s*//g" | cut -f1 -d ' ')
+HAT=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'hAT' | sed "s/^\s*//g" | cut -f1 -d ' ')
+TY1_Copia=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'TY1_Copia' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Mariner=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep -w 'mariner' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Cacta=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'cacta' | sed "s/^\s*//g" | cut -f1 -d ' ')
+LINE=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'LINE' | sed "s/^\s*//g" | cut -f1 -d ' ')
+MuDR_A_B=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'MuDR_A_B' | sed "s/^\s*//g" | cut -f1 -d ' ')
+HelitronORF=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'helitronORF' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Mariner_ant1=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'mariner_ant1' | sed "s/^\s*//g" | cut -f1 -d ' ')
+ISC1316=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'ISC1316' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Crypton=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'Crypton' | sed "s/^\s*//g" | cut -f1 -d ' ')
+printf "$Organism\t$Strain\t$DDE_1\t$Gypsy\t$HAT\t$TY1_Copia\t$Mariner\t$Cacta\t$LINE\t$MuDR_A_B\t$HelitronORF\t$Mariner_ant1\t$ISC1316\t$Crypton\n"
+done
+```
+
+This table was summaried in an excel spreadsheet and imported into R for further analysis.
 
 # Gene Prediction
 Gene prediction followed two steps:
@@ -1706,7 +1731,8 @@ PhiHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_phi_accessions_
 ToxinHits=$(ls analysis/blast_homology/$Organism/$Strain/"$Strain"_CDC_genes_hits_headers.txt)
 InterPro=$(ls gene_pred/interproscan/$Organism/$Strain/*_interproscan.tsv)
 SwissProt=$(ls gene_pred/swissprot/$Organism/$Strain/swissprot_vJul2016_tophit_parsed.tbl)
-Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt)
+# Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/At_Aa_Ag_all_isolates_orthogroups.txt)
+Orthology=$(ls /data/scratch/armita/alternaria/analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_May31/Orthogroups.txt)
 if [[ $Strain == '648' ]]; then
   OrthoStrainID='At_1'
   echo $OrthoStrainID

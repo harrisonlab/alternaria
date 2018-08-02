@@ -443,7 +443,6 @@ done
 Quast and busco were run to assess the effects of nanopolish on assembly quality:
 
 ```bash
-
 for Assembly in $(ls assembly/SMARTdenovo/*/*/nanopolish/*_nanoplish_min_500bp_renamed.fasta); do
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)  
@@ -851,6 +850,27 @@ Number of masked bases:
 repeat_masked/A.gaisen/650/filtered_contigs/650_contigs_softmasked_repeatmasker_TPSI_appended.fa
 Number of masked bases:
 749954
+```
+
+```bash
+for File in $(ls repeat_masked/A.*/*/filtered_contigs/*_contigs_unmasked.fa.TPSI.allHits.chains.bestPerLocus.gff3); do
+Strain=$(echo $File| rev | cut -d '/' -f3 | rev)
+Organism=$(echo $File | rev | cut -d '/' -f4 | rev)
+# echo "$Organism - $Strain"
+DDE_1=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'DDE_1' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Gypsy=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'gypsy' | sed "s/^\s*//g" | cut -f1 -d ' ')
+HAT=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'hAT' | sed "s/^\s*//g" | cut -f1 -d ' ')
+TY1_Copia=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'TY1_Copia' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Mariner=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep -w 'mariner' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Cacta=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'cacta' | sed "s/^\s*//g" | cut -f1 -d ' ')
+LINE=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'LINE' | sed "s/^\s*//g" | cut -f1 -d ' ')
+MuDR_A_B=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'MuDR_A_B' | sed "s/^\s*//g" | cut -f1 -d ' ')
+HelitronORF=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'helitronORF' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Mariner_ant1=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'mariner_ant1' | sed "s/^\s*//g" | cut -f1 -d ' ')
+ISC1316=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'ISC1316' | sed "s/^\s*//g" | cut -f1 -d ' ')
+Crypton=$(cat $File | cut -f9 | cut -f2 -d';' | sort| uniq -c | grep 'Crypton' | sed "s/^\s*//g" | cut -f1 -d ' ')
+printf "$Organism\t$Strain\t$DDE_1\t$Gypsy\t$HAT\t$TY1_Copia\t$Mariner\t$Cacta\t$LINE\t$MuDR_A_B\t$HelitronORF\t$Mariner_ant1\t$ISC1316\t$Crypton\n"
+done
 ```
 
 Quast and BUSCO
@@ -1938,7 +1958,7 @@ The number of blast hits not intersecting gene models were:
 
 
 ```bash
-for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650' | grep '650'); do
+for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650' | grep -v '650'); do
   Strain=$(echo $GeneGff | rev | cut -f3 -d '/' | rev)
   Organism=$(echo $GeneGff | rev | cut -f4 -d '/' | rev)
   Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked.fa)
@@ -1955,7 +1975,7 @@ for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 
   InterPro=$(ls gene_pred/interproscan/$Organism/$Strain/*_interproscan.tsv)
   SwissProt=$(ls gene_pred/swissprot/$Organism/$Strain/swissprot_vMar2018_tophit_parsed.tbl)
   # Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_Apr10/Orthogroups.txt)
-  Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_May04/Orthogroups.txt)
+  Orthology=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_May31/Orthogroups.txt)
   if [[ $Strain == '648' ]]; then
     OrthoStrainID='At_1'
     echo $OrthoStrainID
@@ -1999,7 +2019,7 @@ for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 
   ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/annotation
   # $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --Smurf $Smurf --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
   # SMURF results were exluceded due to them being considered untrustworthy
-  $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
+  $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi2.tsv
 done
 ```
 
@@ -2455,4 +2475,288 @@ for File in $(ls analysis/blast_homology/*/*/*_toxgenes_hits.txt); do
     printf "$Organism\t$Strain\t$Hit\n"
   done
 done > analysis/blast_homology/CDC_genes/ref_genome_summarised_hits.tsv
+```
+
+# Investigate GC content and compartmentalisation
+
+```bash
+  for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+    Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+    Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+    GeneGff=$(ls gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.gff3)
+    ProjDir=$PWD
+    OutDir=analysis/GC-content/$Organism/$Strain
+    mkdir -p $OutDir
+    cd $OutDir
+    OcculterCut -f $ProjDir/$Assembly -a $ProjDir/$GeneGff
+    PlotProg=$(ls /home/armita/prog/occultercut/OcculterCut_v1.1/plot.plt)
+    gnuplot $PlotProg
+    mv plot.eps ${Strain}_GC-plot.eps
+    cd $ProjDir
+  done
+```
+
+<!--
+On my local computer:
+
+```r
+compositionGC <- read.table("~/Downloads/Aalt/GC-content/tmp/compositionGC.txt", quote="\"", comment.char="")
+library(ggplot2)
+ggplot(data=compositionGC, aes(compositionGC$V2)) + geom_histogram()
+
+``` -->
+
+
+# Detecting RIP
+
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+  Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+  Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+  echo "$Organism - $Strain"
+  RepeatGff=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_transposonmasked.gff)
+  ProjDir=$PWD
+  OutDir=analysis/RIP_index/$Organism/$Strain
+  mkdir -p $OutDir
+  cd $OutDir
+  cat $ProjDir/$RepeatGff | sed 's/similarity/repeat_region/g' | sed 's/Target "/Target=/g' | sed 's/" / /g' | sed "s/$/;/g" > tmp.gff
+  # ripcal -c -seq $ProjDir/$Assembly -gff tmp.gff
+  ripcal -c -index -seq $ProjDir/$Assembly
+  cd $ProjDir
+done
+```
+
+Alignments and output files were copied to my local machine. Alignments were
+imported into geneious where four were selected for reanalysis based upon them
+having more than 50 sequences that with regions common to all sequences.
+
+The 50 longest sequences were selected for these four loci and realigned using
+clustalw
+
+Sequences were then uploaded back onto the cluster
+
+```bash
+scp -r /Users/armita/Downloads/Aalt/RIP/A.alternata_ssp_tenuissima/selected_loci cluster:/data/scratch/armita/alternaria/analysis/RIP/A.alternata_ssp_tenuissima/1166/.
+```
+
+```bash
+for Alignment in $(ls analysis/RIP/*/*/selected_loci/*.fasta | grep '1166' | grep '105_top50'); do
+  Organism=$(echo $Alignment | rev | cut -f3 -d '/' | rev)
+  Strain=$(echo $Alignment | rev | cut -f2 -d '/' | rev)
+  Prefix=$(basename ${Alignment%.fasta})
+  echo "$Organism - $Strain"
+  OutDir=$(dirname $Alignment)/${Prefix}
+  mkdir -p $OutDir
+  ProjDir=$PWD
+  cd $OutDir
+  ripcal -c -seq $ProjDir/$Alignment
+  cd $ProjDir
+done
+```
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '1166'); do
+Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
+Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
+RepeatGff=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_transposonmasked.gff | grep '1166')
+for Alignment in $(ls analysis/RIP/$Organism/$Strain/selected_loci/*.fasta | grep 'rnd-3_family-105'); do
+Prefix=$(basename ${Alignment%.fasta})
+Prefix=$(echo $Prefix | sed 's/_alignment//g' | sed 's/_top50//g')
+OutDir=$(dirname $Alignment)
+echo $Prefix
+ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/fungal_RIP/ripcurl
+$ProgDir/get_random.py --genome $Assembly --gff $RepeatGff --alignment $Alignment > $OutDir/${Prefix}_RIP_index.tsv
+done
+done
+```
+
+```bash
+scp cluster:/data/scratch/armita/alternaria/analysis/RIP/A.alternata_ssp_tenuissima/1166/selected_loci/*_RIP_index.tsv A.alternata_ssp_tenuissima/selected_loci/.
+```
+
+
+```r
+library('ggplot2')
+install.packages('ggsignif')
+library('ggsignif')
+setwd('~/Downloads/Aalt/RIP/A.alternata_ssp_tenuissima/selected_loci/')
+
+filename <- "rnd-2_family-2_RIP_index.tsv"
+# filename <- "rnd-3_family-105_RIP_index.tsv"
+# filename <- "rnd-3_family-313_RIP_index.tsv"
+# filename <- "rnd-4_family-739_RIP_index.tsv"
+
+prefix <- tools::file_path_sans_ext(filename)
+df1 <- read.delim(filename, header=FALSE)
+colnames(df1) <- c('sample', 'TA', 'AT', 'ratio')
+
+outfile = paste(prefix, 'txt', sep='.')
+sink(outfile)
+t.test(data = df1, ratio~sample)
+sink()
+
+#write(t, file = outfile)
+p1 <- ggplot(df1, aes(x=sample, y=ratio)) +
+  geom_boxplot(outlier.colour=NA)
+p1 <- p1 + ylim(0, 2)
+p1 <- p1 + xlab('')
+p1 <- p1 + ylab('TpA/ApT Ratio')
+p1 <- p1 + ggtitle('rnd-2 family-2')
+p1 <- p1 + scale_x_discrete(labels = c('',''))
+# p <- p + geom_signif(comparisons = list(c('control', 'sample')),
+              # map_signif_level=TRUE)
+
+
+filename <- "rnd-3_family-105_RIP_index.tsv"
+
+prefix <- tools::file_path_sans_ext(filename)
+df1 <- read.delim(filename, header=FALSE)
+colnames(df1) <- c('sample', 'TA', 'AT', 'ratio')
+
+outfile = paste(prefix, 'txt', sep='.')
+sink(outfile)
+t.test(data = df1, ratio~sample)
+sink()
+
+p2 <- ggplot(df1, aes(x=sample, y=ratio)) +
+  geom_boxplot(outlier.colour=NA)
+p2 <- p2 + ylim(0, 2)
+p2 <- p2 + xlab('')
+p2 <- p2 + ylab('TpA/ApT Ratio')
+p2 <- p2 + ggtitle('rnd-3 family-105')
+p2 <- p2 + scale_x_discrete(labels = c('control','transposon sequence'))
+
+
+filename <- "rnd-3_family-313_RIP_index.tsv"
+
+prefix <- tools::file_path_sans_ext(filename)
+df1 <- read.delim(filename, header=FALSE)
+colnames(df1) <- c('sample', 'TA', 'AT', 'ratio')
+
+outfile = paste(prefix, 'txt', sep='.')
+sink(outfile)
+t.test(data = df1, ratio~sample)
+sink()
+
+p3 <- ggplot(df1, aes(x=sample, y=ratio)) +
+  geom_boxplot(outlier.colour=NA)
+p3 <- p3 + ylim(0, 2)
+p3 <- p3 + xlab('')
+p3 <- p3 + ylab('')
+p3 <- p3 + ggtitle('rnd-3 family-313')
+p3 <- p3 + scale_x_discrete(labels = c('',''))
+
+
+filename <- "rnd-4_family-739_RIP_index.tsv"
+
+prefix <- tools::file_path_sans_ext(filename)
+df1 <- read.delim(filename, header=FALSE)
+colnames(df1) <- c('sample', 'TA', 'AT', 'ratio')
+
+outfile = paste(prefix, 'txt', sep='.')
+sink(outfile)
+t.test(data = df1, ratio~sample)
+sink()
+
+p4 <- ggplot(df1, aes(x=sample, y=ratio)) +
+  geom_boxplot(outlier.colour=NA)
+p4 <- p4 + ylim(0, 2)
+p4 <- p4 + xlab('')
+p4 <- p4 + ylab('')
+p4 <- p4 + ggtitle('rnd-4 family-739')
+p4 <- p4 + scale_x_discrete(labels = c('control','transposon sequence'))
+
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+p <- multiplot(p1, p2, p3, p4, cols=2)
+
+outfile = paste("multiplot", 'pdf', sep='.')
+ggsave(outfile, p, width = 10, height = 10)
+
+
+```
+
+```
+	Welch Two Sample t-test
+
+data:  ratio by sample
+t = -1.5357, df = 72.403, p-value = 0.129
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -0.39525503  0.05125503
+sample estimates:
+mean in group control  mean in group sample
+               0.7788                0.9508
+```
+
+
+```r
+setwd('~/Downloads/Aalt/RIP/A.alternata_ssp_tenuissima/selected_loci/')
+df1 <- read.delim("rnd-4_family-739_RIP_index.tsv", header=FALSE)
+colnames(df1) <- c('sample', 'TA', 'AT', 'ratio')
+
+t.test(ratio~sample)
+
+library('ggplot2')
+p <- ggplot(df1, aes(x=sample, y=ratio)) +
+  geom_boxplot()
+```
+
+```
+	Welch Two Sample t-test
+
+data:  ratio by sample
+t = -1.5357, df = 72.403, p-value = 0.129
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -0.39525503  0.05125503
+sample estimates:
+mean in group control  mean in group sample
+               0.7788                0.9508
 ```
