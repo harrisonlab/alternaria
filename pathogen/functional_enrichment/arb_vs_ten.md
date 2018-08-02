@@ -16,10 +16,10 @@ For each IPR annotation in all provided A.ten and A.arb genome count the number
 
 ```bash
 
-AtenIsolates='675 1082 1164 24350'
-AtenIPR=$(ls gene_pred/interproscan/A.*/*/*_interproscan.tsv | grep -e '675' -e '1082' -e '1164' -e '24350')
-AarbIsolates='648 97.0013 97.0016'
-AarbIPR=$(ls gene_pred/interproscan/A.*/*/*_interproscan.tsv | grep -e '648' -e '97.0013' -e '97.0016')
+AtenIsolates='648 1082 1164 24350'
+AtenIPR=$(ls gene_pred/interproscan/A.*/*/*_interproscan.tsv | grep -e '648' -e '1082' -e '1164' -e '24350')
+AarbIsolates='675 97.0013 97.0016'
+AarbIPR=$(ls gene_pred/interproscan/A.*/*/*_interproscan.tsv | grep -e '675' -e '97.0013' -e '97.0016')
 OutDir=analysis/enrichment/arb_vs_ten
 mkdir -p $OutDir
 ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/functional_enrichment
@@ -32,21 +32,29 @@ Output was downloaded to my local machine. It was then analysed using Rstudio. T
 library(readr)
 IPR_copies_by_isolate <- read_delim("~/Downloads/Aalt/enrichment/IPR_copies_by_isolate.txt",
      "\t", escape_double = FALSE, trim_ws = TRUE)
-samp.with.rownames <- data.frame(samp[,-1], row.names=samp[,1])
+# samp.with.rownames <- data.frame(samp[,-1], row.names=samp[,1])
 df1 <- data.frame(IPR_copies_by_isolate)
 rownames(df1) <- df1[,1]
 df1$IPR_ID <- NULL
-$IPR_description <- NULL
-source("https://bioconductor.org/biocLite.R")
-biocLite("HybridMTest")
+df1$IPR_description <- NULL
+# source("https://bioconductor.org/biocLite.R")
+# biocLite("HybridMTest")
 library(HybridMTest)
+library(genefilter)
 grplbl <- c('Aten', 'Aten', 'Aten', 'Aten', 'Aarb', 'Aarb', 'Aarb')
-df_test_results <- data.frame(row.oneway.anova(df1, grplbl))
+
+# t.result <- apply(df1[,2:7], 1, function (x) t.test(x[1:4],x[4:7],paired=FALSE))
+# counts$p_value <- unlist(lapply(t.result, function(x) x$p.value))
+
+# df_test_results <- data.frame(row.oneway.anova(df1, grplbl))
+df_test_results <- data.frame(rowttests(as.matrix(df1), factor(grplbl)))
 df2 <- data.frame(IPR_copies_by_isolate)
 rownames(df2) <- df2[,1]
 df2$IPR_ID <- NULL
-df_sigIPR <- subset(df_test_results, pval < 0.05)
+# df_sigIPR <- subset(df_test_results, pval < 0.05)
+df_sigIPR <- subset(df_test_results, p.value < 0.05)
 df_merged_sigIPR <- merge(df_sigIPR, df2, by.x = 0, by.y = 0, by.all = x)
+df_merged_sigIPR$padj <- round(p.adjust(df_merged_sigIPR$p.value, method = "hochberg"), 3)
 ```
 
 
@@ -85,4 +93,177 @@ cat $OutDir/enriched_domains_annot.tsv | grep ''
 ls $PWD/$OutDir/enriched_domains_annot.tsv
 cat $OutDir/enriched_domains_annot.tsv | cut -f20,21 | sort | uniq > $OutDir/enriched_domains_orthogroups.tsv
 ls $PWD/$OutDir/enriched_domains_orthogroups.tsv
+```
+
+
+# Enrichment of transposon families
+
+```r
+TPSI_summary <- read.delim("~/Downloads/Aalt/enrichment/transposons/TPSI_summary.txt")
+df1 <- subset(TPSI_summary, Organism == 'A.alternata_ssp._arborescens' | Organism == 'A.alternata_ssp._tenuissima')
+df1$Strain <- NULL
+df1$ISC1316 <- NULL
+df1$Crypton <- NULL
+t <- data.frame(t(sapply(df1[-1], function(x)
+      unlist(t.test(x~df1$Organism)[c("estimate","p.value","statistic","conf.int")]))))
+round(p.adjust(t$p.value, method = "hochberg"), 3)
+round(t$statistic, 2)
+
+
+library(reshape2)
+library(ggplot2)
+library(scales)
+df2 <- melt(df1, id.vars=1)
+p <- ggplot(df2, aes(x=Organism, y=value)) +
+  scale_y_continuous(name = "", breaks= pretty_breaks()) +
+  geom_boxplot()
+p <- p + theme(axis.text.x=element_text(angle = 0, hjust = 0))
+p <- p + scale_x_discrete(name ="", labels=c("arb", "ten"))
+p <- p + facet_wrap(~df2$variable, nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
+outfile='transposon_enrichment.pdf'
+ggsave(outfile , plot = p, device = 'pdf', width =10, height = 10, units = "cm", limitsize = FALSE)
+```
+
+This showed that gypsy elements and DDE elements were expanded in the arborescens
+genomes.
+
+
+Genes in 2kb of these elements were identified:
+
+```bash
+for TpsiGff in $(ls repeat_masked/A.alternata_ssp._arborescens/675/ncbi_edits_repmask/675_contigs_unmasked.fa.TPSI.allHits.chains.bestPerLocus.gff3); do
+  Strain=$(echo $TpsiGff | rev | cut -f3 -d '/' | rev)
+  Organism=$(echo $TpsiGff | rev | cut -f4 -d '/' | rev)
+  echo "$Organism - $Strain"
+OutDir=analysis/enrichment/arb_vs_ten/transposon/$Organism/$Strain
+mkdir -p $OutDir
+GeneGff=$(ls gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.gff3)
+AnnotTab=$(ls gene_pred/annotation/$Organism/$Strain/${Strain}_annotation_ncbi.tsv)
+for Element in gypsy DDE_1; do
+echo "$Element"
+cat $TpsiGff | grep "${Element}" > $OutDir/${Element}_tpsi.gff
+cat $OutDir/${Element}_tpsi.gff | wc -l
+ProgDir="/home/armita/git_repos/emr_repos/tools/pathogen/mimp_finder"
+$ProgDir/gffexpander.pl +- 2000 $OutDir/${Element}_tpsi.gff > $OutDir/"$Strain"_TPSI_${Element}_exp.gff
+
+bedtools intersect -u -a $GeneGff -b $OutDir/"$Strain"_TPSI_${Element}_exp.gff > $OutDir/${Strain}_genes_in_2kb_${Element}_incl_transposons.gff
+
+bedtools intersect -v -a $OutDir/${Strain}_genes_in_2kb_${Element}_incl_transposons.gff -b $OutDir/${Element}_tpsi.gff > $OutDir/${Strain}_genes_in_2kb_${Element}.gff
+
+cat $OutDir/${Strain}_genes_in_2kb_${Element}.gff | grep -w 'gene' | cut -f9 | cut -f2 -d '=' | tr -d ';' > $OutDir/${Strain}_genes_in_2kb_${Element}_headers.txt
+cat $OutDir/${Strain}_genes_in_2kb_${Element}_headers.txt | wc -l
+# cat $AnnotTab | grep -w -f $OutDir/${Strain}_genes_in_2kb_${Element}_headers.txt > $OutDir/${Strain}_genes_in_2kb_${Element}_table.tsv
+ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/annotation
+$ProgDir/annot_tab_extract_genes.py --annot $AnnotTab --genes $OutDir/${Strain}_genes_in_2kb_${Element}_headers.txt > $OutDir/${Strain}_genes_in_2kb_${Element}_table.tsv
+cat $OutDir/${Strain}_genes_in_2kb_${Element}_table.tsv | wc -l
+done
+done
+```
+
+# Testing for enrichment by orthogroups
+
+```bash
+OutDir=analysis/enrichment/arb_vs_ten/orthogroups
+mkdir -p $OutDir
+Orthogroups=$(ls analysis/orthology/orthomcl/At_Aa_Ag_all_isolates/formatted/Results_May31/Orthogroups.txt)
+All="Aa_1 Aa_2 Aa_3 Ag_1 At_1 At_2 At_3 At_4 At_5 At_6 At_7 At_8"
+Species="A.alternata_ssp._arborescens A.alternata_ssp._arborescens A.alternata_ssp._arborescens A.gaisen_pear_pathotype A.alternata_ssp._tenuissima A.alternata_ssp._tenuissima A.alternata_ssp._tenuissima A.alternata_ssp._tenuissima A.alternata_ssp._tenuissima_apple_pathotype A.alternata_ssp._tenuissima_apple_pathotype A.alternata_ssp._tenuissima_apple_pathotype A.alternata_ssp._tenuissima_apple_pathotype"
+# Set1="Aa_1 Aa_2 Aa_3"
+# Set2="At_1 At_2 At_3 At_4"
+ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/functional_enrichment
+$ProgDir/summarise_orthogroups_alt.py --orthogroups $Orthogroups --orthomclIDs $All --species $Species --prefix $OutDir/summarised_orthogroups
+# ProgDir=/home/armita/git_repos/emr_repos/scripts/verticillium_pathogenomics
+# $ProgDir/summarise_orthogroups.py --orthogroups $Orthogroups --set1 $Grp1 --set2 $Grp2 --all $All --effectors $Effectors
+# > $OutDir/effector_orthogroups_summary.txt
+
+ls $PWD/$OutDir/summarised_orthogroups.tsv
+
+cat $OutDir/summarised_orthogroups_expansion_status.tsv | grep 'arborescens' | cut -f1 > $OutDir/arborescens_expanded_orthogroups.txt
+cat $OutDir/arborescens_expanded_orthogroups.txt | wc -l
+cat $OutDir/summarised_orthogroups_expansion_status.tsv | grep 'tenuissima'  | cut -f1 > $OutDir/tenuissima_expanded_orthogroups.txt
+cat $OutDir/tenuissima_expanded_orthogroups.txt | wc -l
+```
+Investigate arborescens orthogroups
+```bash
+OutDir=analysis/enrichment/arb_vs_ten/orthogroups
+AnnotTab=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/annotation/*/*/*_annotation_ncbi.tsv | grep '675')
+cat $AnnotTab | grep -wf $OutDir/arborescens_expanded_orthogroups.txt > $OutDir/675_annotab_arborescens_expanded.tsv
+cat $OutDir/675_annotab_arborescens_expanded.tsv | wc -l
+cat $OutDir/675_annotab_arborescens_expanded.tsv | grep 'EffP' | wc -l
+cat $OutDir/675_annotab_arborescens_expanded.tsv | grep 'At_1(0):At_2(0):At_3(0):At_4(0)' | wc -l
+
+cat $AnnotTab | grep 'HET' | wc -l
+cat $OutDir/675_annotab_arborescens_expanded.tsv | grep 'HET' | wc -l
+#cat $AnnotTab | grep 'HET' | grep -v 'IPR010730' | less -S
+
+cat $OutDir/675_annotab_arborescens_expanded.tsv  | grep 'CAZY' | wc -l
+
+cat $OutDir/675_annotab_arborescens_expanded.tsv | grep -e 'Transcription factor' -e 'Zinc finger'  | grep 'At_1(0):At_2(0):At_3(0):At_4(0)' | wc -l
+
+cat $AnnotTab | cut -f1 > $OutDir/arborescens_expanded_orthogroups_genes.txt
+
+GeneGff=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/final/A.alternata_ssp._arborescens/675/final/final_genes_appended_renamed.gff3)
+cat $GeneGff | grep -w 'mRNA' | grep -w -f $OutDir/arborescens_expanded_orthogroups_genes.txt > $OutDir/arborescens_expanded_orthogroup_genes.gff
+#
+# ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+# $ProgDir/extract_gff_for_sigP_hits.pl $OutFileHeaders $Gff effectorP ID > $EffectorP_Gff
+
+```
+
+Investigate tenuissima orthogroups
+```bash
+OutDir=analysis/enrichment/arb_vs_ten/orthogroups
+AnnotTab=$(ls /home/groups/harrisonlab/project_files/alternaria/gene_pred/annotation/*/*/*_annotation_ncbi.tsv | grep '648')
+cat $AnnotTab | grep -wf $OutDir/tenuissima_expanded_orthogroups.txt > $OutDir/648_annotab_tenuissima_expanded.tsv
+cat $OutDir/648_annotab_tenuissima_expanded.tsv | wc -l
+cat $OutDir/648_annotab_tenuissima_expanded.tsv | grep 'EffP' | wc -l
+cat $OutDir/648_annotab_tenuissima_expanded.tsv | grep 'Aa_1(0):Aa_2(0):Aa_3(0)' | wc -l
+
+cat $AnnotTab | grep 'HET' | wc -l
+cat $OutDir/648_annotab_tenuissima_expanded.tsv | grep 'HET' | wc -l
+#cat $AnnotTab | grep 'HET' | grep -v 'IPR010730' | less -S
+
+cat $OutDir/648_annotab_tenuissima_expanded.tsv  | grep 'CAZY' | wc -l
+
+cat $OutDir/648_annotab_tenuissima_expanded.tsv | grep -e 'Transcription factor' -e 'Zinc finger'  | grep 'Aa_1(0):Aa_2(0):Aa_3(0)' | wc -l
+```
+
+
+
+
+
+The file was downloaded to my local computer and used for analysis in R
+
+```r
+library(scales)
+summarised_orthogroups <- read.delim("~/Downloads/Aalt/enrichment/orthogroups/summarised_orthogroups.tsv")
+df1 <- subset(summarised_orthogroups, Species == 'A.alternata_ssp._arborescens' | Species == 'A.alternata_ssp._tenuissima')
+#df2 <- df1[, colSums(df1 != 0) > 0]
+# Remove orthogroups with identical numbers
+df2 <- df1[vapply(df1, function(x) length(unique(x)) > 1, logical(1L))]
+# Convert columns to numeric
+df2[3:ncol(df2)] <- lapply(df2[3:ncol(df2)], as.numeric)
+# Drop the OrthomclID column
+df2$OrthomclID <- NULL
+# Take those columns where all samples in one species are greater and identical
+# arb_greater <- function(x) {
+#   min(x[df2$Species == 'A.alternata_ssp._arborescens'])
+#   max(x[df2$Species == 'A.alternata_ssp._tenuissima'])
+#   }
+
+
+df3 <- df2[vapply(df2, function(x) length(unique(x[df2$Species == 'A.alternata_ssp._arborescens'])) == 1 && length(unique(x[df2$Species == 'A.alternata_ssp._tenuissima'])) == 1, logical(1L))]
+df3$Species <- df2$Species
+
+df4 <- df2[vapply(df2, function(x) length(unique(x[df2$Species == 'A.alternata_ssp._arborescens'])) > 1 | length(unique(x[df2$Species == 'A.alternata_ssp._tenuissima'])) > 1, logical(1L))]
+# df4 <- cbind(df2$Species, df4)
+
+# df4[3:ncol(df2)] <- lapply(df2[3:ncol(df2)], as.numeric)
+
+t <- data.frame(t(sapply(df4, function(x)
+      unlist(t.test(x~df2$Species)[c("estimate","p.value","statistic","conf.int")]))))
+df5 <- data.frame(colnames(df4))
+df5$pval <- round(t$p.value, 3)
+df5$bh_pval <- round(p.adjust(t$p.value, method = "hochberg"), 3)
+df5$tstat <- round(t$statistic, 2)
 ```
