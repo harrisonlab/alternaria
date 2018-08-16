@@ -267,3 +267,54 @@ df5$pval <- round(t$p.value, 3)
 df5$bh_pval <- round(p.adjust(t$p.value, method = "hochberg"), 3)
 df5$tstat <- round(t$statistic, 2)
 ```
+
+
+Numbers of genes, secreted proteins and effectors were tested:
+
+```r
+gene_numbers <- read.delim("~/Downloads/Aalt/enrichment/gene_numbers/gene_numbers.txt")
+View(gene_numbers)
+gene_numbers$Strain <- as.factor(gene_numbers$Strain)
+
+
+library(reshape2)
+library(ggplot2)
+library(scales)
+df1 <- gene_numbers[c("Organism", "Strain", "Total.genes", "Secreted.genes", "Secreted...effectorP", "Secreted.CAZYmes", "Secondary.metabolite.clusters")]
+colnames(df1) <- c("Organism", "Strain", "Total genes", "Secreted genes", "Secreted effectorP", "Secreted CAZYmes", "Secondary metabolite clusters")
+df1$Organism <- factor(df1$Organism, levels = c("pear pathotype", "apple pathotype", "tenuissima clade", "arborescens clade"))
+df2 <- melt(df1, id.vars=c(1,2))
+p <- ggplot(df2, aes(x=Organism, y=value)) +
+  scale_y_continuous(name = "", breaks= pretty_breaks()) +
+  geom_boxplot()
+p <- p + theme(axis.text.x=element_text(angle = -45, hjust = 0))
+p <- p + scale_x_discrete(name ="")
+p <- p + facet_wrap(~df2$variable, nrow = 3, ncol = 2, strip.position = "top", scales="free_y")
+p <- p + theme(plot.margin=unit(c(0,1,0,0),"cm"))
+outfile='gene_enrichment.pdf'
+ggsave(outfile , plot = p, device = 'pdf', width =15, height = 15, units = "cm", limitsize = FALSE)
+outfile='gene_enrichment.tiff'
+ggsave(outfile , plot = p, device = 'tiff', width =15, height = 15, units = "cm", limitsize = FALSE)
+
+df3 <- subset(gene_numbers, Organism != "pear pathotype")
+
+fit <- aov(Total.genes ~ Organism, data = df3)
+summary(fit)
+TukeyHSD(fit)
+
+fit <- aov(Secreted.genes ~ Organism, data = df3)
+summary(fit)
+TukeyHSD(fit)
+
+fit <- aov(Secreted...effectorP ~ Organism, data = df3)
+summary(fit)
+TukeyHSD(fit)
+
+fit <- aov(Secreted.CAZYmes ~ Organism, data = df3)
+summary(fit)
+TukeyHSD(fit)
+
+fit <- aov(Secondary.metabolite.clusters ~ Organism, data = df3)
+summary(fit)
+TukeyHSD(fit)
+```
