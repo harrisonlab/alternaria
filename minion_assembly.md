@@ -1050,7 +1050,14 @@ for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_rep
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 echo "$Organism - $Strain"
-OutDir=gene_pred/codingquary/$Organism/$Strain
+Jobs=$(qstat | grep 'sub_cuff' | wc -l)
+while [ $Jobs -gt '0' ]; do
+sleep 10
+printf "."
+Jobs=$(qstat | grep 'sub_cuff' | wc -l)
+done
+printf "\n"
+OutDir=gene_pred/codingquary/$Organism/${Strain}
 CufflinksGTF=$(ls gene_pred/cufflinks/$Organism/$Strain/concatenated/transcripts.gtf)
 ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/codingquary
 qsub $ProgDir/sub_CodingQuary.sh $Assembly $CufflinksGTF $OutDir
