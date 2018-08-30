@@ -712,7 +712,7 @@ A.alternata_ssp._tenuissima	648	12757	12798	12036	721
 A.alternata_ssp._tenuissima	743	13707	13776	12991	716
 ```
 
-## Checking gene prediction accruacy using BUSCO
+## Checking gene prediction accuracy using BUSCO
 
 
 
@@ -1654,7 +1654,8 @@ Organism=$(echo $HitsGff | rev | cut -f3 -d '/' | rev)
 Proteins=$(ls gene_pred/final/$Organism/$Strain/*/final_genes_appended_renamed.gff3)
 OutDir=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes
 IntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_Intersect.gff
-# NoIntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
+NoIntersectBlasthost
+=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
 mkdir -p $OutDir
 echo "$Organism - $Strain"
 echo "The number of BLAST hits in the gff file were:"
@@ -1663,7 +1664,7 @@ echo "The number of blast hits intersected were:"
 bedtools intersect -wao -a $HitsGff -b $Proteins > $IntersectBlast
 cat $IntersectBlast | grep -w 'gene' | wc -l
 echo "The number of blast hits not intersecting gene models were:"
-# bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
+bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
 # rm $NoIntersectBlast
 cat $IntersectBlast | grep -w -E '0$' | wc -l
 done
