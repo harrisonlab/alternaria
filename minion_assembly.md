@@ -1824,7 +1824,7 @@ Eval="1e-100"
 OutDir=analysis/blast_homology/$Organism/$Strain
 mkdir -p $OutDir
 makeblastdb -in $dbFasta -input_type fasta -dbtype $dbType -title $Prefix.db -parse_seqids -out $OutDir/$Prefix.db
-tblastx -num_threads 4 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
+tblastx -num_threads 24 -db $OutDir/$Prefix.db -query $QueryFasta -outfmt 6 -num_alignments 1 -out $OutDir/${Prefix}_hits.txt -evalue $Eval
 cat $OutDir/${Prefix}_hits.txt | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 # cat $OutDir/${Prefix}_hits.txt | grep 'effector' | cut -f1,2 | sort | uniq > $OutDir/${Prefix}_hits_headers.txt
 done
@@ -1903,13 +1903,13 @@ Once blast searches had completed, the BLAST hits were converted to GFF
 annotations:
 
 ```bash
-  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv | grep '650'); do
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
     ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
     Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
     Organism=$(echo $BlastHits | rev | cut -f3 -d '/' | rev)
     HitsGff=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs.gff
     Column2=toxin_homolog
-    NumHits=1
+    NumHits=2
     $ProgDir/blast2gff.pl $Column2 $NumHits $BlastHits > $HitsGff
     cat $HitsGff | grep 'AKT' > analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs_AKT.gff
     cat $HitsGff | grep 'AMT' > analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs_AMT.gff
@@ -1921,13 +1921,13 @@ Extracted gff files of the BLAST hit locations were intersected with gene models
 to identify if genes were predicted for these homologs:
 
 ```bash
-for HitsGff in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.gff); do
+for HitsGff in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.gff | grep '1166'); do
 Strain=$(echo $HitsGff | rev | cut -f2 -d '/' | rev)
 Organism=$(echo $HitsGff | rev | cut -f3 -d '/' | rev)
 Proteins=$(ls gene_pred/final/$Organism/$Strain/*/final_genes_appended_renamed.gff3)
 OutDir=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes
 IntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_Intersect.gff
-# NoIntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
+NoIntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
 mkdir -p $OutDir
 echo "$Organism - $Strain"
 echo "The number of BLAST hits in the gff file were:"
@@ -1936,7 +1936,7 @@ echo "The number of blast hits intersected were:"
 bedtools intersect -wao -a $HitsGff -b $Proteins > $IntersectBlast
 cat $IntersectBlast | grep -w 'gene' | wc -l
 echo "The number of blast hits not intersecting gene models were:"
-# bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
+bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
 # rm $NoIntersectBlast
 cat $IntersectBlast | grep -w -E '0$' | wc -l
 done
@@ -1965,7 +1965,7 @@ The number of blast hits not intersecting gene models were:
 
 
 ```bash
-for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650' | grep -v '650'); do
+for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 | grep -e '1166' -e '650' | grep '650'); do
   Strain=$(echo $GeneGff | rev | cut -f3 -d '/' | rev)
   Organism=$(echo $GeneGff | rev | cut -f4 -d '/' | rev)
   Assembly=$(ls repeat_masked/$Organism/$Strain/filtered_contigs/*_contigs_unmasked.fa)
@@ -2026,7 +2026,7 @@ for GeneGff in $(ls gene_pred/final/*/*/final/final_genes_appended_renamed.gff3 
   ProgDir=/home/armita/git_repos/emr_repos/scripts/alternaria/pathogen/annotation
   # $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --Smurf $Smurf --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
   # SMURF results were exluceded due to them being considered untrustworthy
-  $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi2.tsv
+  $ProgDir/build_annot_table_Alt2.py --genes_gff $GeneGff --SigP $SigP --TM_list $TM_out --EffP_list $EffP_list --CAZY_list $CAZY_list --TFs $TFs --PhiHits $PhiHits --ToxinHits $ToxinHits --Antismash $Antismash --InterPro $InterPro --Swissprot $SwissProt --orthogroups $Orthology --strain_id $OrthoStrainID --OrthoMCL_all $OrthoStrainAll > $OutDir/"$Strain"_annotation_ncbi.tsv
 done
 ```
 
@@ -2037,7 +2037,7 @@ LS regions of the apple and pear pathotype were investigated:
 ```bash
 # 1166
 Isolate='1166'
-AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi2.tsv)
 GenesCDC=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_CDC_genes.tsv/g')
 cat $AnnotTab | grep -e 'contig_14' -e 'contig_15' -e 'contig_18' -e 'contig_19' -e 'contig_20' -e 'contig_21' > $GenesCDC
 TotalGenes=$(cat $GenesCDC | wc -l)
@@ -2049,7 +2049,7 @@ printf "$Isolate\t$TotalGenes\t$Secreted\t$EffectorP\t$CAZyme\t$SecMet\n"
 
 # 650
 Isolate='650'
-AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi2.tsv)
 GenesCDC=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_CDC_genes.tsv/g')
 cat $AnnotTab | grep -e 'contig_12' -e 'contig_14' -e 'contig_19' -e 'contig_20' -e 'contig_21' -e 'contig_22' -e 'contig_23' > $GenesCDC
 TotalGenes=$(cat $GenesCDC | wc -l)
@@ -2483,6 +2483,15 @@ for File in $(ls analysis/blast_homology/*/*/*_toxgenes_hits.txt); do
   done
 done > analysis/blast_homology/CDC_genes/ref_genome_summarised_hits.tsv
 ```
+
+
+```bash
+cat gene_pred/annotation/A.alternata_ssp_tenuissima/1166/1166_annotation_ncbi2.tsv | grep 'Cluster' | grep -e 'contig_15' -e 'contig_18' -e 'contig_20' -e 'contig_21' | cut -f12 | sort | uniq -c
+cat gene_pred/annotation/A.alternata_ssp_tenuissima/1166/1166_annotation_ncbi2.tsv | grep 'Cluster' | grep -e 'contig_14' -e 'contig_19' | cut -f12 | sort | uniq -c
+
+cat gene_pred/annotation/A.gaisen/650/650_annotation_ncbi.tsv | grep 'Cluster' | grep -e 'contig_14' -e 'contig_16' -e 'contig_23' -e 'contig_24' | cut -f2,12 | sort | uniq -c
+```
+
 
 # Investigate GC content and compartmentalisation
 
