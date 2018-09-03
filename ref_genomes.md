@@ -435,3 +435,21 @@ for File in $(ls analysis/blast_homology/Alternaria_*/*/*_toxgenes_hits.txt); do
 cat $File | sort -nr -k3 | head -n5;
 done
 ```
+
+## Telomere identification
+
+Telomeres were identified within the A. solani genome
+
+
+```bash
+  for Assembly in $(ls assembly/misc_publications/Alternaria_solani_altNL03003/genome.ctg.fa); do
+  Organism="A.solani"
+  Strain="altNL03003"
+  echo "$Organism - $Strain"
+  OutDir=analysis/telomere/$Organism/$Strain
+  mkdir -p $OutDir
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/telomeres
+  $ProgDir/annotate_telomeres.py --fasta $Assembly --out $OutDir/telomere_hits
+  done
+  # cat $OutDir/telomere_hits.txt | sort -nr -k7 | less
+```
