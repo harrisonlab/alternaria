@@ -12,8 +12,13 @@
 
   cat $OutDir/Ag_genome.txt > $OutDir/Ag_As_genome.txt
   tac $OutDir/As_genome.txt >> $OutDir/Ag_As_genome.txt
+```
 
-  # cat $OutDir/At_Ag_genome.txt | grep -v 'DS231' | grep -v -e 'chr23' -e 'chr24' -e 'chr25' -e 'chr26' -e 'chr27' -e 'chr28' -e 'chr29' -e 'chr30' -e 'chr31' -e 'chr32' -e 'chr33' -e 'chr34' > $OutDir/At_Ag_genome_edited.txt
+Telomere locations on contigs:
+
+```bash
+cat analysis/telomere/A.gaisen/650/telomere_hits_circos.txt | sed 's/contig/Ag_contig/g' | sort -k3 -n -t'_' > $OutDir/Ag_vs_As_telomere_hits.txt
+cat /home/groups/harrisonlab/project_files/alternaria/analysis/telomere/A.solani/altNL03003/telomere_hits_circos.txt  | sed 's/CP/As_CP/g' | sort -k3 -n -t'_' >> $OutDir/Ag_vs_As_telomere_hits.txt
 ```
 
 ```bash

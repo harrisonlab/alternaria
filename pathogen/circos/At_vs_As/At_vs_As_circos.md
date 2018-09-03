@@ -1,17 +1,26 @@
+
 ```bash
   OutDir=analysis/circos/At_vs_As_circos
   mkdir -p $OutDir
 
-  Ag_genome=$(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '1166')
+  At_genome=$(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa | grep '1166')
   ProgDir=~/git_repos/emr_repos/scripts/fusarium/pathogen/identify_LS_chromosomes/circos
-  $ProgDir/fasta2circos.py --genome $Ag_genome --contig_prefix "At_" > $OutDir/Ag_genome.txt
+  $ProgDir/fasta2circos.py --genome $At_genome --contig_prefix "At_" > $OutDir/At_genome.txt
 
   As_genome=$(ls /home/groups/harrisonlab/project_files/alternaria/assembly/misc_publications/Alternaria_solani_altNL03003/genome.ctg.fa)
   ProgDir=~/git_repos/emr_repos/scripts/fusarium/pathogen/identify_LS_chromosomes/circos
   $ProgDir/fasta2circos.py --genome $As_genome --contig_prefix "As_" > $OutDir/As_genome.txt
 
-  cat $OutDir/Ag_genome.txt > $OutDir/At_As_genome.txt
+  cat $OutDir/At_genome.txt > $OutDir/At_As_genome.txt
   tac $OutDir/As_genome.txt >> $OutDir/At_As_genome.txt
+
+```
+
+Telomere locations on contigs:
+
+```bash
+cat analysis/telomere/A.alternata_ssp_tenuissima/1166/telomere_hits_circos.txt | sed 's/contig/At_contig/g' | sort -k3 -n -t'_' > $OutDir/At_vs_As_telomere_hits.txt
+cat /home/groups/harrisonlab/project_files/alternaria/analysis/telomere/A.solani/altNL03003/telomere_hits_circos.txt  | sed 's/CP/As_CP/g' | sort -k3 -n -t'_' >> $OutDir/At_vs_As_telomere_hits.txt
 
 ```
 
@@ -42,7 +51,6 @@ cat $OutDir/At_As_genome.txt | grep 'As' | grep -w -v -f tmp.txt | cut -f3 -d ' 
 
 echo "Order of unseen At contigs and remaining As contigs"
 cat $OutDir/At_As_genome.txt | grep -w -v -f tmp.txt | cut -f3 -d ' '| tr -d '\n' | sed 's/At/, At/g' | sed 's/As/, As/g'
-
 ```
 
 ```bash
