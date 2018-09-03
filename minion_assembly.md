@@ -926,17 +926,17 @@ A.gaisen	650	27	34346950	6257968	2110033
 
 # Identify Telomere repeats:
 
-Maria wrote a script to identify presence of Telomeric repeats in assemblies
+Telomeric repeats were identified in assemblies
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
 Strain=$(echo $Assembly | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Assembly | rev | cut -f4 -d '/' | rev)
 echo "$Organism - $Strain"
 OutDir=analysis/telomere/$Organism/$Strain
 mkdir -p $OutDir
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/feature_annotation/telomeres
-$ProgDir/annotate_telomeres.py --fasta $Assembly > $OutDir/telomere_hits.txt
+$ProgDir/annotate_telomeres.py --fasta $Assembly --out $OutDir/telomere_hits
 # Motif="TTAGGG"
 # for Strand in '+' '-'; do
 # ProgDir=/home/armita/git_repos/emr_repos/scripts/popgen/codon
