@@ -104,24 +104,161 @@ df1 <- subset(TPSI_summary, Organism == 'A.alternata_ssp._arborescens' | Organis
 df1$Strain <- NULL
 df1$ISC1316 <- NULL
 df1$Crypton <- NULL
+library("ggpubr")
+ggdensity(df1$DDE_1,
+          main = "",
+          xlab = "") + facet_wrap(df1$Organism)
+ggqqplot(df1$DDE_1) #+ facet_wrap(df1$Organism)
+shapiro.test(df1$DDE_1)
 t <- data.frame(t(sapply(df1[-1], function(x)
       unlist(t.test(x~df1$Organism)[c("estimate","p.value","statistic","conf.int")]))))
 round(p.adjust(t$p.value, method = "hochberg"), 3)
 round(t$statistic, 2)
 
-
 library(reshape2)
 library(ggplot2)
 library(scales)
+library("ggpubr")
 df2 <- melt(df1, id.vars=1)
-p <- ggplot(df2, aes(x=Organism, y=value)) +
-  scale_y_continuous(name = "", breaks= pretty_breaks()) +
-  geom_boxplot()
-p <- p + theme(axis.text.x=element_text(angle = 0, hjust = 0))
+
+# df2$combo <- paste(df2$variable, df2$Organism, sep="_")
+# meds <- c(by(df2$value, df2$combo, median))
+
+compare_means(value ~ Organism, data = df2,
+              group.by = "variable", method="t.test")
+
+
+# p <- ggplot(df2, aes(x=Organism, y=value)) +
+#   scale_y_continuous(name = "", breaks= pretty_breaks()) +
+#   geom_boxplot()
+# p <- p + theme(axis.text.x=element_text(angle = 0, hjust = 0))
+# p <- p + scale_x_discrete(name ="", labels=c("arb", "ten"))
+# p <- p + facet_wrap(~df2$variable, nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
+# # p + geom_text(data=data.frame(), aes(x=names(meds), y=meds, label=1:20), col='red', size=10)
+# # p + geom_text(size = 3,aes(x=Organism, y=1,
+# #                  label=c("a", "b", "a", "b", "", "", "",
+# #                    "", "", "",
+# #                    "", "", "", "", "", "", "",
+# #                      "", "", "")),
+# #                                    data=df3)
+# p <- p + stat_compare_means(method="t.test")
+# outfile='transposon_enrichment.pdf'
+# ggsave(outfile , plot = p, device = 'pdf', width =10, height = 10, units = "cm", limitsize = FALSE)
+#
+
+# --- Summary SE function ---
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval:
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+# --- /Summary SE function ends ---
+
+
+df3 <- summarySE(df2, measurevar="value", groupvars=c("Organism", 'variable'))
+df3$label_pos <- ((df3$value + df3$se) * 1.3)
+# library(dplyr)
+# df4 <- arrange(df3,desc(df3$'variable'),)
+df3 <- df3[order(df3$variable),]
+
+p<-ggplot(data=subset(df3), aes(x=Organism, y=value))
+p <- p + geom_bar(stat="identity")
+p <- p + theme(axis.text.x=element_text(angle = -45, hjust = 0))
+p <- p + scale_y_continuous(name = "", breaks= pretty_breaks())
 p <- p + scale_x_discrete(name ="", labels=c("arb", "ten"))
-p <- p + facet_wrap(~df2$variable, nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
+# p <- p + ylab('Number of lesions') + xlab('')
+p <- p + geom_errorbar(aes(ymin=value-se, ymax=value+se),
+                  width=.2,                    # Width of the error bars
+                  position=position_dodge(.9))
+# p <- p + geom_text(aes(x=name, y=1.2 * max(no..leisions), label=df4$sig),
+#                                    data=)
+ p <- p + geom_text(size = 3,aes(x=Organism, y=df3$label_pos,
+                  label=c("a", "b", "a", "b", "", "", "",
+                    "", "", "",
+                    "", "", "", "", "", "", "",
+                      "", "", "")),
+                                    data=df3)
+p <- p + facet_wrap("variable", nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
 outfile='transposon_enrichment.pdf'
-ggsave(outfile , plot = p, device = 'pdf', width =10, height = 10, units = "cm", limitsize = FALSE)
+ggsave(outfile , plot = p, device = 'pdf', width =15, height = 15, units = "cm", limitsize = FALSE)
+
+
+
+
+df1 <- subset(TPSI_summary, Organism == 'A.alternata_ssp._arborescens' | Organism == 'A.alternata_ssp._tenuissima' | Organism == 'A.alternata_ssp._tenuissima apple pathotype')
+df1$Strain <- NULL
+df1$ISC1316 <- NULL
+df1$Crypton <- NULL
+ggdensity(df1$DDE_1,
+          main = "",
+          xlab = "") + facet_wrap(df1$Organism)
+ggqqplot(df1$DDE_1) #+ facet_wrap(df1$Organism)
+shapiro.test(df1$DDE_1)
+# t <- data.frame(t(sapply(df1[-1], function(x)
+#       unlist(t.test(x~df1$Organism)[c("estimate","p.value","statistic","conf.int")]))))
+# round(p.adjust(t$p.value, method = "hochberg"), 3)
+# round(t$statistic, 2)
+df2 <- melt(df1, id.vars=1)
+compare_means(value ~ Organism, data = df2,
+              group.by = "variable", method="anova")
+
+df3 <- summarySE(df2, measurevar="value", groupvars=c("Organism", 'variable'))
+df3$label_pos <- ((df3$value + df3$se) * 1.3)
+# library(dplyr)
+# df4 <- arrange(df3,desc(df3$'variable'),)
+df3 <- df3[order(df3$variable),]
+
+
+p<-ggplot(data=subset(df3), aes(x=Organism, y=value))
+p <- p + geom_bar(stat="identity")
+# p <- p + geom_boxplot()
+p <- p + theme(axis.text.x=element_text(angle = -45, hjust = 0))
+p <- p + scale_y_continuous(name = "", breaks= pretty_breaks())
+p <- p + scale_x_discrete(name ="", labels=c("arb", "ten"))
+# p <- p + ylab('Number of lesions') + xlab('')
+p <- p + geom_errorbar(aes(ymin=value-se, ymax=value+se),
+                  width=.2,                    # Width of the error bars
+                  position=position_dodge(.9))
+p <- p + facet_wrap("variable", nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
+# p <- p + stat_compare_means(method="anova")
+p <- p + stat_compare_means(method="anova", hide.ns='True')
+
 ```
 
 This showed that gypsy elements and DDE elements were expanded in the arborescens
@@ -269,7 +406,7 @@ df5$tstat <- round(t$statistic, 2)
 ```
 
 
-Numbers of genes, secreted proteins and effectors were tested:
+# Numbers of genes, secreted proteins and effectors were tested:
 
 ```r
 gene_numbers <- read.delim("~/Downloads/Aalt/enrichment/gene_numbers/gene_numbers.txt")
