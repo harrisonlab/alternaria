@@ -177,6 +177,9 @@ library(treeio)
 
 tree <- read.tree("/Users/armita/Downloads/Aalt/ASTRAL/expanded/Alt_phylogeny.consensus.scored.geneious2.tre")
 
+tree$edge.length[tree$edge.length == 1] <- 0
+tree$edge.length[51] <- 0
+
 mydata <- read.csv("/Users/armita/Downloads/Aalt/ASTRAL/traits.csv", stringsAsFactors=FALSE)
 rownames(mydata) <- mydata$Isolate
 mydata <- mydata[match(tree$tip.label,rownames(mydata)),]
@@ -184,13 +187,15 @@ mydata <- mydata[match(tree$tip.label,rownames(mydata)),]
 t <- ggtree(tree, aes(linetype=nodes$support)) # Core tree
 # Adjust terminal branch lengths:
 branches <- t$data
+
+branches <- t$data
 tree$edge.length[branches$isTip] <- 1.0
+# tree$edge.length[tree$edge.length == 1] <- 0
+# t <- ggtree(tree, aes(linetype=nodes$support))
 #Tree <- branches$branch.length
-#rescale_tree(t, branches$branch.length)
 
 t <- t + geom_treescale(offset=-1.0, fontsize = 3) # Add scalebar
 # t <- t + xlim(0, 0.025) # Add more space for labels
-
 
 
 # Colouring labels by values in another df
@@ -200,16 +205,19 @@ scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
 
 tips <- data.frame(t$data)
 tips$label <- tips$ID
-t <- t + geom_tiplab(data=tips, aes(color=Source), size=3, hjust=0, offset = +0.1) +
+t <- t + geom_tiplab(data=tips, aes(color=Source), size=3, hjust=0, align=T, offset = +0.1) +
 scale_color_manual(values=c("gray39","black")) # colours as defined by col2rgb
 
 # Add in a further set of labels
 tree_mod <- data.frame(t$data)
 tree_mod$label <- tips$pathotype
-t <- t + geom_tiplab(data=tree_mod, aes(label=label, color=Source), size=3, hjust=0, offset = +2.5) +
+t <- t + geom_tiplab(data=tree_mod, aes(label=label, color=Source), align=T, linetype = NULL, size=3, hjust=0, offset = +5.0) +
 scale_color_manual(values=c("gray39","black"))
 
-t <- t + geom_tippoint(data=tips, aes(shape=MAT), size=2)
+tips$MAT <- factor(tips$MAT)
+# t <- t + geom_tippoint(data=tips, aes(shape=MAT), size=2)
+t <- t + geom_tiplab(data=tips, aes(label=MAT, color=Source), align=T, linetype = NULL, size=3, hjust=0, offset = +3.5) +
+scale_color_manual(values=c("gray39","black"))
 
 # Format nodes by values
 nodes <- data.frame(t$data)
@@ -231,10 +239,11 @@ t <- t + geom_nodelab(data=nodes, size=2, hjust=-0.05) # colours as defined by c
 # t <- t + geom_cladelabel(node=70, label='gaisen clade', align=T, colour='black', offset=-4.5)
 # t <- t + geom_cladelabel(node=51, label='tenuissima clade', align=T, colour='black', offset=-4.5)
 # t <- t + geom_cladelabel(node=45, label='arborescens clade', align=T, colour='black', offset=-4.5)
-t <- t + geom_cladelabel(node=43, label='sect. Alternaria', align=T, colour='black', offset=-0.0)
-t <- t + geom_cladelabel(node=70, label='gaisen clade', align=T, colour='black', offset=-2.0)
-t <- t + geom_cladelabel(node=46, label='tenuissima clade', align=T, colour='black', offset=-2.0)
-t <- t + geom_cladelabel(node=65, label='arborescens clade', align=T, colour='black', offset=-2.0)
+t <- t + geom_cladelabel(node=43, label='sect. Alternaria', align=T, colour='black', offset=9.5)
+t <- t + geom_cladelabel(node=70, label='gaisen clade', align=T, colour='black', offset=6.5)
+t <- t + geom_cladelabel(node=46, label='tenuissima clade', align=T, colour='black', offset=6.5)
+t <- t + geom_cladelabel(node=65, label='arborescens clade', align=T, colour='black', offset=6.5)
+t <- t + geom_cladelabel(node=65, label='', colour='NA', offset=17.5)
 
 # Save as PDF and force a 'huge' size plot
 t <- ggsave("expanded/tree5.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
