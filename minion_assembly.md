@@ -2037,7 +2037,7 @@ LS regions of the apple and pear pathotype were investigated:
 ```bash
 # 1166
 Isolate='1166'
-AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi2.tsv)
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
 GenesCDC=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_CDC_genes.tsv/g')
 cat $AnnotTab | grep -e 'contig_14' -e 'contig_15' -e 'contig_18' -e 'contig_19' -e 'contig_20' -e 'contig_21' > $GenesCDC
 TotalGenes=$(cat $GenesCDC | wc -l)
@@ -2049,9 +2049,9 @@ printf "$Isolate\t$TotalGenes\t$Secreted\t$EffectorP\t$CAZyme\t$SecMet\n"
 
 # 650
 Isolate='650'
-AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi2.tsv)
+AnnotTab=$(ls gene_pred/annotation/A.*/$Isolate/${Isolate}_annotation_ncbi.tsv)
 GenesCDC=$(echo $AnnotTab | sed 's/_annotation_ncbi.tsv/_CDC_genes.tsv/g')
-cat $AnnotTab | grep -e 'contig_12' -e 'contig_14' -e 'contig_19' -e 'contig_20' -e 'contig_21' -e 'contig_22' -e 'contig_23' > $GenesCDC
+cat $AnnotTab | grep -e 'contig_14' -e 'contig_16' -e 'contig_23' -e 'contig_24' > $GenesCDC
 TotalGenes=$(cat $GenesCDC | wc -l)
 Secreted=$(cat $GenesCDC | cut -f1,8 | grep 'Yes' | wc -l)
 EffectorP=$(cat $GenesCDC | cut -f1,8,9 | grep "Yes.Yes" | wc -l)
@@ -2062,7 +2062,7 @@ printf "$Isolate\t$TotalGenes\t$Secreted\t$EffectorP\t$CAZyme\t$SecMet\n"
 
 ```
 1166	624	32	12	6	153
-650	504	38	12	7	140
+650	502	41	13	8	154
 ```
 
 # Genomic analysis
