@@ -124,14 +124,15 @@ p <- p + geom_errorbar(aes(ymin=no..leisions-se, ymax=no..leisions+se),
 # p <- p + geom_text(aes(x=name, y=1.2 * max(no..leisions), label=df4$sig),
 #                                    data=)
  p <- p + geom_text(size = 3,aes(x=name, y=5.9,
-                  label=c("a", "b", "a", "c", "c", "c", "c",
+                  label=c("c", "c", "a", "a", "c", "b", "c",
                     "a", "b", "b",
-                    "a", "b", "a", "c", "c", "c", "c",
+                    "c", "c", "a", "a", "c", "b", "c",
                       "a", "b", "b")),
                                     data=df4)
 p <- p + facet_grid(Leaf.type ~ level, scales="free_x")
 # p <- p + facet_grid(Leaf.type ~ level)
 p
 
-filename <- '~/Downloads/Aalt/facet_lesions.pdf'
+# filename <- '~/Downloads/Aalt/Fig5_path_results.pdf'
+filename <- '~/Downloads/Aalt/Fig5_path_results.tiff'
 ggsave(filename, plot = p, width =10, height = 10, units = "cm", limitsize = FALSE)
