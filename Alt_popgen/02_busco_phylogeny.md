@@ -246,7 +246,8 @@ t <- t + geom_cladelabel(node=65, label='arborescens clade', align=T, colour='bl
 t <- t + geom_cladelabel(node=65, label='', colour='NA', offset=17.5)
 
 # Save as PDF and force a 'huge' size plot
-t <- ggsave("expanded/tree5.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
+# t <- ggsave("expanded/Fig3_busco_phylogeny.pdf", width =30, height = 30, units = "cm", limitsize = FALSE)
+t <- ggsave("expanded/Fig3_busco_phylogeny.tiff", width =30, height = 30, units = "cm", limitsize = FALSE)
 
 ````
 
