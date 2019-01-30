@@ -99,6 +99,8 @@ ls $PWD/$OutDir/enriched_domains_orthogroups.tsv
 # Enrichment of transposon families
 
 ```r
+setwd('~/Downloads/Aalt/enrichment/transposons')
+
 TPSI_summary <- read.delim("~/Downloads/Aalt/enrichment/transposons/TPSI_summary.txt")
 df1 <- subset(TPSI_summary, Organism == 'A.alternata_ssp._arborescens' | Organism == 'A.alternata_ssp._tenuissima')
 df1$Strain <- NULL
@@ -215,49 +217,50 @@ p <- p + geom_errorbar(aes(ymin=value-se, ymax=value+se),
                       "", "", "")),
                                     data=df3)
 p <- p + facet_wrap("variable", nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
-outfile='transposon_enrichment.pdf'
-ggsave(outfile , plot = p, device = 'pdf', width =15, height = 15, units = "cm", limitsize = FALSE)
+# outfile='Fig2_transposon_enrichment.pdf'
+outfile='transposon_enrichment.tiff'
+ggsave(outfile , plot = p, width =15, height = 15, units = "cm", limitsize = FALSE)
 
 
 
-
-df1 <- subset(TPSI_summary, Organism == 'A.alternata_ssp._arborescens' | Organism == 'A.alternata_ssp._tenuissima' | Organism == 'A.alternata_ssp._tenuissima apple pathotype')
-df1$Strain <- NULL
-df1$ISC1316 <- NULL
-df1$Crypton <- NULL
-ggdensity(df1$DDE_1,
-          main = "",
-          xlab = "") + facet_wrap(df1$Organism)
-ggqqplot(df1$DDE_1) #+ facet_wrap(df1$Organism)
-shapiro.test(df1$DDE_1)
-# t <- data.frame(t(sapply(df1[-1], function(x)
-#       unlist(t.test(x~df1$Organism)[c("estimate","p.value","statistic","conf.int")]))))
-# round(p.adjust(t$p.value, method = "hochberg"), 3)
-# round(t$statistic, 2)
-df2 <- melt(df1, id.vars=1)
-compare_means(value ~ Organism, data = df2,
-              group.by = "variable", method="anova")
-
-df3 <- summarySE(df2, measurevar="value", groupvars=c("Organism", 'variable'))
-df3$label_pos <- ((df3$value + df3$se) * 1.3)
-# library(dplyr)
-# df4 <- arrange(df3,desc(df3$'variable'),)
-df3 <- df3[order(df3$variable),]
-
-
-p<-ggplot(data=subset(df3), aes(x=Organism, y=value))
-p <- p + geom_bar(stat="identity")
-# p <- p + geom_boxplot()
-p <- p + theme(axis.text.x=element_text(angle = -45, hjust = 0))
-p <- p + scale_y_continuous(name = "", breaks= pretty_breaks())
-p <- p + scale_x_discrete(name ="", labels=c("arb", "ten"))
-# p <- p + ylab('Number of lesions') + xlab('')
-p <- p + geom_errorbar(aes(ymin=value-se, ymax=value+se),
-                  width=.2,                    # Width of the error bars
-                  position=position_dodge(.9))
-p <- p + facet_wrap("variable", nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
-# p <- p + stat_compare_means(method="anova")
-p <- p + stat_compare_means(method="anova", hide.ns='True')
+#
+# df1 <- subset(TPSI_summary, Organism == 'A.alternata_ssp._arborescens' | Organism == 'A.alternata_ssp._tenuissima' | Organism == 'A.alternata_ssp._tenuissima apple pathotype')
+# df1$Strain <- NULL
+# df1$ISC1316 <- NULL
+# df1$Crypton <- NULL
+# ggdensity(df1$DDE_1,
+#           main = "",
+#           xlab = "") + facet_wrap(df1$Organism)
+# ggqqplot(df1$DDE_1) #+ facet_wrap(df1$Organism)
+# shapiro.test(df1$DDE_1)
+# # t <- data.frame(t(sapply(df1[-1], function(x)
+# #       unlist(t.test(x~df1$Organism)[c("estimate","p.value","statistic","conf.int")]))))
+# # round(p.adjust(t$p.value, method = "hochberg"), 3)
+# # round(t$statistic, 2)
+# df2 <- melt(df1, id.vars=1)
+# compare_means(value ~ Organism, data = df2,
+#               group.by = "variable", method="anova")
+#
+# df3 <- summarySE(df2, measurevar="value", groupvars=c("Organism", 'variable'))
+# df3$label_pos <- ((df3$value + df3$se) * 1.3)
+# # library(dplyr)
+# # df4 <- arrange(df3,desc(df3$'variable'),)
+# df3 <- df3[order(df3$variable),]
+#
+#
+# p<-ggplot(data=subset(df3), aes(x=Organism, y=value))
+# p <- p + geom_bar(stat="identity")
+# # p <- p + geom_boxplot()
+# p <- p + theme(axis.text.x=element_text(angle = -45, hjust = 0))
+# p <- p + scale_y_continuous(name = "", breaks= pretty_breaks())
+# p <- p + scale_x_discrete(name ="", labels=c("arb", "ten"))
+# # p <- p + ylab('Number of lesions') + xlab('')
+# p <- p + geom_errorbar(aes(ymin=value-se, ymax=value+se),
+#                   width=.2,                    # Width of the error bars
+#                   position=position_dodge(.9))
+# p <- p + facet_wrap("variable", nrow = 4, ncol = 3, strip.position = "top", scales="free_y")
+# # p <- p + stat_compare_means(method="anova")
+# p <- p + stat_compare_means(method="anova", hide.ns='True')
 
 ```
 
