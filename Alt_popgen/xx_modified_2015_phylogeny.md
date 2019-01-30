@@ -93,6 +93,7 @@ t <- t + geom_cladelabel(node=95, label='arborescens clade', align=T, colour='bl
 t <- t + geom_cladelabel(node=92, label='', align=T, color='NA', offset=3.75, barsize = 0)
 
 # Save as PDF and force a 'huge' size plot
-t <- ggsave("redrawn.pdf", width =30, height = 40, units = "cm", limitsize = FALSE)
+# t <- ggsave("Fig4_PCR_results.pdf", width =30, height = 40, units = "cm", limitsize = FALSE)
+t <- ggsave("Fig4_PCR_results.tiff", width =30, height = 40, units = "cm", limitsize = FALSE)
 
 ````
