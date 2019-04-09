@@ -924,6 +924,31 @@ A.alternata_ssp_tenuissima	1166	22	35704180	3902980	2583941
 A.gaisen	650	27	34346950	6257968	2110033
 ```
 
+KAT kmer spectra analysis
+
+```bash
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+  Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
+  Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+  echo "$Organism - $Strain"
+  IlluminaDir=$(ls -d ../../../../home/groups/harrisonlab/project_files/alternaria/qc_dna/paired/*/$Strain)
+  cat $IlluminaDir/F/*.fastq.gz > $IlluminaDir/F/F_trim_appended.fq.gz
+  cat $IlluminaDir/F/*.fastq.gz > $IlluminaDir/R/R_trim_appended.fq.gz
+  ReadsF=$(ls $IlluminaDir/F/F_trim_appended.fq.gz)
+  ReadsR=$(ls $IlluminaDir/R/R_trim_appended.fq.gz)
+  OutDir=$(dirname $Assembly)/kat
+  Prefix="repeat_masked"
+  ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/assemblers/assembly_qc/kat
+  qsub $ProgDir/sub_kat.sh $Assembly $ReadsF $ReadsR $OutDir $Prefix
+done
+```
+
+after KAT jobs have finished running, then remove appended trimmed reads
+```bash
+  rm ../../../../home/groups/harrisonlab/project_files/alternaria/qc_dna/paired/*/*/*/F_trim_appended.fq.gz
+  rm ../../../../home/groups/harrisonlab/project_files/alternaria/qc_dna/paired/*/*/*/R_trim_appended.fq.gz
+```
+
 # Identify Telomere repeats:
 
 Telomeric repeats were identified in assemblies
@@ -1960,6 +1985,84 @@ The number of blast hits not intersecting gene models were:
 ```
 
 
+## Presence and genes with homology to Nc clock genes
+
+The analysis was based upon BLAST searches for genes known to be involved in N. crassa clock function
+
+
+
+```bash
+  cp -s /home/groups/harrisonlab/project_files/alternaria/analysis/blast_homology/Nc_clock_genes.fasta analysis/blast_homology/Nc_clock_genes.fasta
+  for Subject in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_softmasked_repeatmasker_TPSI_appended.fa); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    Query=analysis/blast_homology/Nc_clock_genes.fasta
+    qsub $ProgDir/blast_pipe.sh $Query dna $Subject
+  done
+```
+
+<!-- ```bash
+  HitsList=""
+  StrainList=""
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_Nc_clock_genes.fasta_homologs.csv); do
+    sed -i "s/\t\t/\t/g" $BlastHits
+    sed -i "s/Grp1\t//g" $BlastHits
+    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
+    HitsList="$HitsList $BlastHits"
+    StrainList="$StrainList $Strain"
+  done
+  ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+  $ProgDir/blast_parse.py --blast_csv $HitsList --headers $StrainList --identity 0.7 --evalue 1e-30
+``` -->
+
+
+Once blast searches had completed, the BLAST hits were converted to GFF
+annotations:
+
+```bash
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_Nc_clock_genes.fasta_homologs.csv); do
+    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
+    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
+    Organism=$(echo $BlastHits | rev | cut -f3 -d '/' | rev)
+    HitsGff=analysis/blast_homology/$Organism/$Strain/"$Strain"_Nc_clock_gene_homologs.gff
+    Column2=clock_homolog
+    NumHits=1
+    $ProgDir/blast2gff.pl $Column2 $NumHits $BlastHits > $HitsGff
+  done
+```
+
+
+Extracted gff files of the BLAST hit locations were intersected with gene models
+to identify if genes were predicted for these homologs:
+
+```bash
+for HitsGff in $(ls analysis/blast_homology/*/*/*_Nc_clock_gene_homologs.gff); do
+Strain=$(echo $HitsGff | rev | cut -f2 -d '/' | rev)
+Organism=$(echo $HitsGff | rev | cut -f3 -d '/' | rev)
+Proteins=$(ls gene_pred/final/$Organism/$Strain/*/final_genes_appended_renamed.gff3)
+OutDir=analysis/blast_homology/$Organism/$Strain/"$Strain"_Nc_clock_gene
+IntersectBlast=$OutDir/"$Strain"_Nc_clock_gene_Intersect.gff
+NoIntersectBlast=$OutDir/"$Strain"_Nc_clock_gene_NoIntersect.gff
+mkdir -p $OutDir
+echo "$Organism - $Strain"
+echo "The number of BLAST hits in the gff file were:"
+cat $HitsGff | wc -l
+echo "The number of blast hits intersected were:"
+bedtools intersect -wao -a $HitsGff -b $Proteins > $IntersectBlast
+cat $IntersectBlast | grep -w 'gene' | wc -l
+echo "The number of blast hits not intersecting gene models were:"
+bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
+# rm $NoIntersectBlast
+cat $IntersectBlast | grep -w -E '0$' | wc -l
+# Gene models cds and gene sequences were extracted
+cat $IntersectBlast | grep -w 'mRNA' | cut -f18 | sed 's/ID=//g' | cut -f1 -d ';' > $OutDir/"$Strain"_Nc_clock_gene_Intersect_genes.txt
+cat $OutDir/"$Strain"_Nc_clock_gene_Intersect_genes.txt | sed "s/\.t.*//g" > $OutDir/"$Strain"_Nc_clock_gene_Intersect_genes_mod.txt
+Cds=$(ls gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.cds.fasta)
+ProgDir=/home/armita/git_repos/emr_repos/tools/gene_prediction/ORF_finder
+$ProgDir/extract_from_fasta.py --fasta $Cds --headers $OutDir/"$Strain"_Nc_clock_gene_Intersect_genes.txt > $OutDir/"$Strain"_Nc_clock_gene_Intersect_cds.fa
+Gene=$(ls gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.gene.fasta)
+$ProgDir/extract_from_fasta.py --fasta $Gene --headers $OutDir/"$Strain"_Nc_clock_gene_Intersect_genes_mod.txt > $OutDir/"$Strain"_Nc_clock_gene_Intersect_gene.fa
+done
+```
 
 # Build Annotation Tables
 
@@ -2409,7 +2512,7 @@ $ProgDir/analyse_recipricol_blast.py --subset analysis/meiotic_machinery/86_meio
 ```bash
   HitsList=""
   StrainList=""
-  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
+  for BlastHits in $(ls analysis/blast_homology/*/*/*_Nc_clock_gene.fa_homologs.csv); do
     sed -i "s/\t\t/\t/g" $BlastHits
     sed -i "s/Grp1\t//g" $BlastHits
     Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
