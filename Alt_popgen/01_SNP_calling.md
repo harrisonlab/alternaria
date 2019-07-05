@@ -1,5 +1,5 @@
 
-# 1. Alignment of Pcac raw reads vs the 414 genome
+# 1. Alignment of Alternaria reads vs reference genomes
 
 Alignment of reads from a single run:
 
