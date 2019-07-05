@@ -118,7 +118,7 @@ point.
 
 ```bash
 export PYTHONPATH="/home/armita/.local/lib/python3.5/site-packages"
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   echo "$Organism - $Strain"
@@ -140,7 +140,7 @@ Gag was run using the modified gff file as well as the annie annotation file.
 Gag was noted to output database references incorrectly, so these were modified.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
 Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
 Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
 echo "$Organism - $Strain"
@@ -228,8 +228,8 @@ them as incomplete ('unknown_UTR').
     OutDir="genome_submission/$Organism/$Strain"
     printf "StructuredCommentPrefix\t##Genome-Annotation-Data-START##
     Annotation Provider\tHarrison Lab NIAB-EMR
-    Annotation Date\tAUG-2017
-    Annotation Version\tRelease 1.01
+    Annotation Date\tMar-2018
+    Annotation Version\tRelease 2.01
     Annotation Method\tAb initio gene prediction: Braker 1.9 and CodingQuary 2.0; Functional annotation: Swissprot (March 2018 release) and Interproscan 5.18-57.0" \
     > $OutDir/gag/edited/annotation_methods.strcmt.txt
   done
@@ -245,16 +245,17 @@ sequence, these options show that paired-ends have been used to estimate gaps
 and that runs of N's longer than 10 bp should be labelled as gaps.
 
 ```bash
-for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Assembly in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
   Strain=$(echo $Assembly| rev | cut -d '/' -f3 | rev)
   Organism=$(echo $Assembly | rev | cut -d '/' -f4 | rev)
+  Taxon=$(echo $Organism | sed 's/A./Alternaria /g')
   echo "$Organism - $Strain"
   OutDir="genome_submission/$Organism/$Strain"
-  FinalName="$Organism"_"$Strain"_Armitage_2017
+  FinalName="$Organism"_"$Strain"_Armitage_2018
   cp $Assembly $OutDir/gag/edited/genome.fsa
   cp $SbtFile $OutDir/gag/edited/genome.sbt
   mkdir $OutDir/tbl2asn/final
-  tbl2asn -p $OutDir/gag/edited/. -t $OutDir/gag/edited/genome.sbt -r $OutDir/tbl2asn/final -M n -X E -Z $OutDir/tbl2asn/final/discrep.txt -j "[organism=$Organism] [strain=$Strain]" -l paired-ends -a r10k -w $OutDir/gag/edited/annotation_methods.strcmt.txt
-  cat $OutDir/tbl2asn/final/genome.sqn | sed 's/_pilon//g' | sed 's/title " \[NAD\S*\w/title "Saccharopine dehydrogenase/g' | sed 's/" \[NAD\S*\w"/"Saccharopine dehydrogenase"/g' > $OutDir/tbl2asn/final/$FinalName.sqn
+  tbl2asn -p $OutDir/gag/edited/. -t $OutDir/gag/edited/genome.sbt -r $OutDir/tbl2asn/final -M n -X E -Z $OutDir/tbl2asn/final/discrep.txt -j "[organism=$Taxon] [strain=$Strain]" -l paired-ends -a r10k -w $OutDir/gag/edited/annotation_methods.strcmt.txt
+  cat $OutDir/tbl2asn/final/genome.sqn | sed 's/_pilon//g' | sed 's/title " \[NAD\S*\w/title "Saccharopine dehydrogenase/g' | sed 's/" \[NAD\S*\w"/"Saccharopine dehydrogenase"/g' | sed 's/Saccharopine dehydrogenase \[NAD\S*(+)_/Saccharopine dehydrogenase/g' > $OutDir/tbl2asn/final/$FinalName.sqn
 done
 ```
