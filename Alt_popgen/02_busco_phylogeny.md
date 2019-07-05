@@ -1,7 +1,7 @@
-# 1 Find single copy busco genes in P.cactorum assemblies
+# 1 Find single copy busco genes in Alternaria assemblies
 
-Firstly, busco results from P414 in /data/scratch/armita/idris
-was copied into the idris project folder
+Firstly, busco results from Alternaria MinION assemblies in /data/scratch/armita/alternaria
+was copied into the project folder
 
 ```bash
 cd /home/groups/harrisonlab/project_files/alternaria
