@@ -189,33 +189,6 @@ MinION coverage
 650	39.48
 1166	44.07
 ```
-<!--
-For Miseq data:
-```bash
-	for RawData in $(ls qc_dna/paired/*/*/*/*q.gz | grep -e 'FON_63'); do
-		echo $RawData;
-		ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/dna_qc;
-		qsub $ProgDir/run_fastqc.sh $RawData;
-		GenomeSz=60
-		OutDir=$(dirname $RawData)
-		qsub $ProgDir/sub_count_nuc.sh $GenomeSz $RawData $OutDir
-	done
-```
-
-```bash
-  for StrainDir in $(ls -d qc_dna/paired/*/* | grep 'FON_63'); do
-    Strain=$(basename $StrainDir)
-    printf "$Strain\t"
-    for File in $(ls qc_dna/paired/*/"$Strain"/*/*.txt); do
-      echo $(basename $File);
-      cat $File | tail -n1 | rev | cut -f2 -d ' ' | rev;
-    done | grep -v '.txt' | awk '{ SUM += $1} END { print SUM }'
-  done
-```
-```
-FON_63	52.39
-```
- -->
 
 ### Read correction using Canu
 
@@ -407,7 +380,9 @@ python $NanoPolishDir/nanopolish_makerange.py $Assembly --segment-length 50000 >
 
 Ploidy=1
 echo "nanopolish log:" > $OutDir/nanopolish_log.txt
-for Region in $(cat $OutDir/nanopolish_range.txt); do
+ls -lh $OutDir/*/*.fa | grep -v ' 0 ' | cut -f8 -d '/' | sed 's/_consensus.fa//g' > $OutDir/files_present.txt
+for Region in $(cat $OutDir/nanopolish_range.txt | grep -vwf "$OutDir/files_present.txt" | head -n1); do
+# for Region in $(cat $OutDir/nanopolish_range.txt); do
 Jobs=$(qstat | grep 'sub_nanopo' | grep 'qw' | wc -l)
 while [ $Jobs -gt 1 ]; do
 sleep 1m
@@ -603,7 +578,7 @@ done
 
 
 ```bash
-  for File in $(ls assembly/spades_minion/*/*/*/polished/*/short_summary_*.txt ); do
+  for File in $(ls assembly/spades_minion/A.*/*/filtered_contigs/run_contigs_min_500bp/short_summary_*.txt | grep -v 'arborescens'); do
   Strain=$(echo $File| rev | cut -d '/' -f5 | rev)
   Organism=$(echo $File | rev | cut -d '/' -f6 | rev)
   Prefix=$(basename $File)
@@ -615,6 +590,10 @@ done
   done
 ```
 
+```
+spades_minion	A.alternata_ssp_tenuissima	short_summary_contigs_min_500bp.txt	1302	3	10	1315
+spades_minion	A.gaisen	short_summary_contigs_min_500bp.txt	1302	3	10	1315
+```
 
 ## Merging pacbio and hybrid assemblies
 
@@ -650,7 +629,7 @@ done
 ```
 
 ```bash
-  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/short_summary_*.txt | grep '1166'); do
+  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/*/short_summary_*.txt); do
   Strain=$(echo $File| rev | cut -d '/' -f3 | rev)
   Organism=$(echo $File | rev | cut -d '/' -f4 | rev)
   Prefix=$(basename $File)
@@ -718,7 +697,7 @@ done
 ```
 
 ```bash
-  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*/short_summary_*.txt | grep '1166'); do
+  for File in $(ls assembly/merged_SMARTdenovo_spades/*/*/pilon/*/short_summary_*.txt | grep '650'); do
   Strain=$(echo $File| rev | cut -d '/' -f4 | rev)
   Organism=$(echo $File | rev | cut -d '/' -f5 | rev)
   Prefix=$(basename $File)
@@ -730,9 +709,26 @@ done
   done
 ```
 
+```
+A.alternata_ssp_tenuissima	1166	short_summary_pilon_1.txt	1302	3	10	1315
+A.alternata_ssp_tenuissima	1166	short_summary_pilon_2.txt	1302	3	10	1315
+A.alternata_ssp_tenuissima	1166	short_summary_pilon_3.txt	1302	3	10	1315
+A.alternata_ssp_tenuissima	1166	short_summary_pilon_4.txt	1302	3	10	1315
+A.alternata_ssp_tenuissima	1166	short_summary_pilon_5.txt	1302	3	10	1315
+A.alternata_ssp_tenuissima	1166	short_summary_pilon_min_500bp_renamed.txt	1302	3	10 1315
+
+A.gaisen	650	short_summary_pilon_1.txt	1260	5	50	1315
+A.gaisen	650	short_summary_pilon_2.txt	1260	5	50	1315
+A.gaisen	650	short_summary_pilon_3.txt	1260	5	50	1315
+A.gaisen	650	short_summary_pilon_4.txt	1260	5	50	1315
+A.gaisen	650	short_summary_pilon_5.txt	1260	5	50	1315
+A.gaisen	650	short_summary_pilon_min_500bp_renamed.txt	1260	5	50	1315
+```
 
 The results of merging showed worse results than when the assembly was performed
-using MinION only data.
+using MinION only data for A. gaisen isolate 650. As such, the hybrid assembly
+was used for the apple pathotype genome and the SMARTdenovo assembly used for the
+pear pathotype genome.
 
 
 
@@ -776,6 +772,7 @@ Results were summarised using the commands:
 for Exclude_db in "Aalt_mtDNA"; do
 echo $Exclude_db
 for File in $(ls assembly/*/*/*/*/log.txt | grep "$Exclude_db"); do
+  echo $File
 Name=$(echo $File | rev | cut -f3 -d '/' | rev);
 Good=$(cat $File |cut -f2 | head -n1 | tail -n1);
 Bad=$(cat $File |cut -f2 | head -n3 | tail -n1);
@@ -2198,7 +2195,8 @@ F_Read=$(ls $StrainPath/F/*_trim.fq.gz | head -n1 | tail -n1)
 R_Read=$(ls $StrainPath/R/*_trim.fq.gz | head -n1 | tail -n1)
 echo $F_Read
 echo $R_Read
-OutDir=analysis/genome_alignment/bowtie/$Organism/$Strain/vs_${RefStrain}
+# OutDir=analysis/genome_alignment/bowtie/$Organism/$Strain/vs_${RefStrain}
+OutDir=analysis/genome_alignment/bowtie/$Organism/$Strain/vs_${RefStrain}_v2
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/genome_alignment
 qsub $ProgDir/bowtie/sub_bowtie.sh $Reference $F_Read $R_Read $OutDir $Strain
 done
