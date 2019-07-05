@@ -37,14 +37,15 @@ done
 
 ```bash
 Reference=$(ls ../../../../home/groups/harrisonlab/project_files/alternaria/assembly/misc_publications/Alternaria_solani_altNL03003/genome.ctg.fa)
-for Query in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+for Query in $(ls repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep '650'); do
 Strain=$(echo $Query | rev | cut -f3 -d '/' | rev)
 Organism=$(echo $Query | rev | cut -f4 -d '/' | rev)
 echo "$Organism - $Strain"
-Prefix="$Strain"_vs_A.solani
+# Prefix="$Strain"_vs_A.solani
+Prefix="$Strain"_vs_A.solani_2
 OutDir=analysis/genome_alignment/mummer/$Organism/$Strain/$Prefix
 ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/genome_alignment/MUMmer
-# qsub $ProgDir/sub_nucmer.sh $Reference $Query $Prefix $OutDir
-$ProgDir/sub_nucmer.sh $Reference $Query $Prefix $OutDir
+qsub $ProgDir/sub_nucmer.sh $Reference $Query $Prefix $OutDir
+# $ProgDir/sub_nucmer.sh $Reference $Query $Prefix $OutDir
 done
 ```
