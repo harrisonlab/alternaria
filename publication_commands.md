@@ -2037,3 +2037,24 @@ for File in $(ls analysis/blast_homology/*/*/*_toxgenes_hits.txt); do
   done
 done > analysis/blast_homology/CDC_genes/ref_genome_summarised_hits.tsv
 ```
+
+
+
+# Sharing data
+
+```bash
+for File in $(ls repeat_masked/*/*/filtered_contigs_repmask/*_contigs_unmasked.fa | grep -v -e '1166' -e '650'); do
+Organism=$(echo $File | cut -f2 -d '/')
+Strain=$(echo $File | cut -f3 -d '/')
+echo "$Organism - $Strain"
+OutDir=assembly/Armitage_genomes/$Organism/$Strain
+mkdir -p $OutDir
+cp $File $OutDir/.
+cp ${File%_unmasked.fa}_softmasked_repeatmasker_TPSI_appended.fa $OutDir/.
+cp ${File%_unmasked.fa}_hardmasked_repeatmasker_TPSI_appended.fa $OutDir/.
+cp gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.* $OutDir/.
+cp gene_pred/interproscan/$Organism/$Strain/${Strain}_interproscan.tsv $OutDir/.
+cp gene_pred/swissprot/$Organism/$Strain/swissprot_vJul2016_tophit_parsed.tbl $OutDir/${Strain}_swissprot_tophit.tbl
+cp gene_pred/annotation/$Organism/$Strain/${Strain}_annotation_ncbi.tsv $OutDir/.
+done
+```

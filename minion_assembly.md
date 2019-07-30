@@ -2877,3 +2877,22 @@ sample estimates:
 mean in group control  mean in group sample
                0.7788                0.9508
 ```
+
+# Sharing data
+
+```bash
+for File in $(ls /data/scratch/armita/alternaria/repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa | grep -e '1166' -e '650'); do
+Organism=$(echo $File | cut -f7 -d '/')
+Strain=$(echo $File | cut -f8 -d '/')
+echo "$Organism - $Strain"
+OutDir=assembly/Armitage_genomes/$Organism/$Strain
+mkdir -p $OutDir
+cp $File $OutDir/.
+cp ${File%_unmasked.fa}_softmasked_repeatmasker_TPSI_appended.fa $OutDir/.
+cp ${File%_unmasked.fa}_hardmasked_repeatmasker_TPSI_appended.fa $OutDir/.
+cp /data/scratch/armita/alternaria/gene_pred/final/$Organism/$Strain/final/final_genes_appended_renamed.* $OutDir/.
+cp /data/scratch/armita/alternaria/gene_pred/interproscan/$Organism/$Strain/${Strain}_interproscan.tsv $OutDir/.
+cp /data/scratch/armita/alternaria/gene_pred/swissprot/$Organism/$Strain/swissprot_vMar2018_tophit_parsed.tbl $OutDir/${Strain}_swissprot_tophit.tbl
+cp /data/scratch/armita/alternaria/gene_pred/annotation/$Organism/$Strain/${Strain}_annotation_ncbi.tsv $OutDir/.
+done
+```
