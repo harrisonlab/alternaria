@@ -2208,7 +2208,7 @@ done
 Identify read coverage over each bp
 
 ```bash
-  for Bam in $(ls analysis/genome_alignment/bowtie/*/*/vs_*/*_aligned_sorted.bam | grep 'vs_650'); do
+  for Bam in $(ls analysis/genome_alignment/bowtie/*/*/vs_*/*_aligned_sorted.bam); do
     Target=$(echo $Bam | rev | cut -f2 -d '/' | rev)
     Strain=$(echo $Bam | rev | cut -f3 -d '/' | rev)
     Organism=$(echo $Bam | rev | cut -f4 -d '/' | rev)
@@ -2219,12 +2219,82 @@ Identify read coverage over each bp
     $ProgDir/cov_by_window.py --cov $OutDir/${Organism}_${Strain}_${Target}_depth.tsv > $OutDir/${Organism}_${Strain}_${Target}_depth_10kb.tsv
     sed -i "s/$/\t$Strain/g" $OutDir/${Organism}_${Strain}_${Target}_depth_10kb.tsv
   done
-  for Target in "vs_650" "vs_1166"; do
-    OutDir=analysis/genome_alignment/bowtie/grouped_${Target}
-    mkdir -p $OutDir
-    cat analysis/genome_alignment/bowtie/*/*/*/*_*_${Target}_depth_10kb.tsv > $OutDir/${Target}_grouped_depth.tsv
-  done
+  for Cov in $(ls analysis/genome_alignment/bowtie/*/*/vs_*/*_vs_*_depth.tsv); do
+    echo ${Cov} | cut -f4,5,6 -d '/' --output-delimiter " - "
+    cat $Cov | cut -f3 | sort -n | awk ' { a[i++]=$1; } END { print a[int(i/2)]; }'
+  done > analysis/genome_alignment/bowtie/read_coverage.txt
+  for Strain in 1166 650; do
+    for Cov in $(ls ../../../../../../data/scratch/armita/alternaria/analysis/genome_alignment/bowtie/*/${Strain}/vs_${Strain}/*_vs_*_depth.tsv); do
+      echo ${Cov} | cut -f14,15,16 -d '/' --output-delimiter " - "
+      cat $Cov | cut -f3 | sort -n | awk ' { a[i++]=$1; } END { print a[int(i/2)]; }'
+    done
+  done >> analysis/genome_alignment/bowtie/read_coverage.txt
+  # for Target in "vs_650" "vs_1166"; do
+  #   OutDir=analysis/genome_alignment/bowtie/grouped_${Target}
+  #   mkdir -p $OutDir
+  #   cat analysis/genome_alignment/bowtie/*/*/*/*_*_${Target}_depth_10kb.tsv > $OutDir/${Target}_grouped_depth.tsv
+  # done
 ```
+
+This allowed assessment of read depth against the reference genomes.
+
+The analysis was repeated for each isolate vs its own assembly to give an control value for the isolate:
+
+```bash
+for Reference in $(ls repeat_masked/*/*/ncbi_edits_repmask/*_contigs_unmasked.fa | grep -v -e '1166' -e '650'); do
+Strain=$(echo $Reference | rev | cut -f3 -d '/'| rev)
+StrainPath=$(ls -d qc_dna/paired/*/$Strain)
+Organism=$(echo $StrainPath | rev | cut -f2 -d '/' | rev)
+F_Read=$(ls $StrainPath/F/*_trim.fq.gz)
+R_Read=$(ls $StrainPath/R/*_trim.fq.gz)
+for FileF in $(ls qc_rna/paired/*/*/F/*.fastq.gz); do
+Jobs=$(qstat | grep 'sub_bwa' | grep 'qw'| wc -l)
+# while [ $Jobs -gt 1 ]; do
+# sleep 1m
+# printf "."
+# Jobs=$(qstat | grep 'sub_bwa' | grep 'qw'| wc -l)
+# done
+echo $F_Read
+echo $R_Read
+Prefix="${Organism}_${Strain}"
+OutDir=analysis/genome_alignment/bowtie/$Organism/$Strain/vs_${Strain}
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/genome_alignment
+qsub $ProgDir/bowtie/sub_bowtie.sh $Reference $F_Read $R_Read $OutDir $Strain
+done
+done
+```
+
+```bash
+for Reference in $(ls ../../../../../../data/scratch/armita/alternaria/repeat_masked/*/*/filtered_contigs/*_contigs_unmasked.fa); do
+Strain=$(echo $Reference | rev | cut -f3 -d '/'| rev)
+Organism=$(echo $Reference | rev | cut -f4 -d '/' | rev)
+Reads=$(ls qc_dna/minion/*/$Strain/*_trim.fastq.gz)
+Prefix="${Organism}_${Strain}"
+OutDir=analysis/genome_alignment/minimap/$Organism/$Strain/vs_${Strain}
+ProgDir=/home/armita/git_repos/emr_repos/tools/seq_tools/genome_alignment
+qsub $ProgDir/minimap/sub_minimap2.sh $Reference $Reads $OutDir
+done
+```
+
+```bash
+for Sam in $(ls analysis/genome_alignment/minimap/*/*/vs_*/*_aligned_sorted.bam); do
+  Target=$(echo $Sam | rev | cut -f2 -d '/' | rev)
+  Strain=$(echo $Sam | rev | cut -f3 -d '/' | rev)
+  Organism=$(echo $Sam | rev | cut -f4 -d '/' | rev)
+  echo "$Organism - $Strain - $Target"
+  OutDir=$(dirname $Sam)
+  samtools depth -aa $Sam > $OutDir/${Organism}_${Strain}_${Target}_depth.tsv
+done
+
+for Strain in 1166 650; do
+  for Cov in $(ls analysis/genome_alignment/minimap/*/*/vs_*/*_depth.tsv); do
+    echo ${Cov} | cut -f4,5,6 -d '/' --output-delimiter " - "
+    cat $Cov | cut -f3 | sort -n | awk ' { a[i++]=$1; } END { print a[int(i/2)]; }'
+  done
+done > analysis/genome_alignment/minimap/read_coverage.txt
+```
+
+
 
 ### Plot read coverage
 
