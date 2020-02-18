@@ -283,124 +283,18 @@ Alternaria_turkisafria	BMP3436	MAT1-1-1
 
 ## Presence and genes with homology to Alternaria toxins
 
-
-Blast searches were performed in comparison to the genome sequence
-
 ```bash
-  for Subject in $(ls assembly/*/*/genome.ctg.fa); do
-    Strain=$(echo $Subject | rev | cut -f2 -d '/' | rev | cut -f3 -d '_')
-    Organism=$(echo $Subject | rev | cut -f2 -d '/' | rev | cut -f1,2 -d '_')
-    OutDir=analysis/blast_homology/$Organism/$Strain
-    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
-    Query=analysis/blast_homology/CDC_genes/A.alternata_CDC_genes.fa
-    qsub $ProgDir/blast_pipe.sh $Query dna $Subject $OutDir
-  done
-```
-
-```bash
-  HitsList=""
-  StrainList=""
-  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv); do
-    sed -i "s/\t\t/\t/g" $BlastHits
-    sed -i "s/Grp1\t//g" $BlastHits
-    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
-    HitsList="$HitsList $BlastHits"
-    StrainList="$StrainList $Strain"
-    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
-    $ProgDir/blast_parse.py --blast_csv $HitsList --headers $StrainList --identity 0.7 --evalue 1e-30
-  done
-```
-
-```
-Query ID's	1166	650
-AB015351_-_AKT1_gene	0	2
-AB015352_-_AKT2_gene	0	1
-AB034586_-_ACTT1_gene	0	1
-AB035491_-_AKTR_gene	0	2
-AB035492_-_AKT3_gene	0	2
-AB070711_-_AFT1-1_gene	0	2
-AB070712_-_AFTR-1_gene	0	2
-AB070713_-_AFT3-1_gene	0	2
-AB119280_-_AFTS1_gene	1	0
-AB176941_ACTT3_gene	0	2
-AB176941_ACTTR_gene	0	2
-AB179766_-_AFT3-2_gene	0	2
-AB179766_-_AFT9-1_gene	0	2
-AB179766_-_AFT10-1_gene	0	2
-AB179766_-_AFT11-1_gene	0	2
-AB179766_-_AFT12-1_gene	0	2
-AB179766_-_AFTR-2_gene	0	2
-AB432914_ACTT2_gene	0	1
-AB444613_ACTT5_gene	0	1
-AB444614_ACTT6_gene	0	2
-AB465676_-_ALT1_gene	0	0
-AB525198_-_AMT1_gene	2	0
-AB525198_-_AMT2_gene	3	1
-AB525198_-_AMT3_gene	2	0
-AB525198_-_AMT4_gene	2	0
-AB525198_-_AMT5_gene	2	0
-AB525198_-_AMT6_gene	2	0
-AB525198_-_AMT7_gene	2	0
-AB525198_-_AMT8_gene	2	0
-AB525198_-_AMT9_gene	2	0
-AB525198_-_AMT10_gene	1	0
-AB525198_-_AMT11_gene	0	0
-AB525198_-_AMT12_gene	2	0
-AB525198_-_AMT13_gene	1	0
-AB525198_-_AMT14_gene	1	1
-AB525198_-_AMT15_gene	0	0
-AB525198_-_AMT16_gene	3	2
-AB525198_-_AMTR1_gene	2	2
-AB688098_-_ACRTS1_gene	0	0
-AB725683_-_ACRTS2_gene	0	0
-```
-
-Once blast searches had completed, the BLAST hits were converted to GFF
-annotations:
-
-```bash
-  for BlastHits in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.csv | grep '650'); do
-    ProgDir=/home/armita/git_repos/emr_repos/tools/pathogen/blast
-    Strain=$(echo $BlastHits | rev | cut -f2 -d '/' | rev)
-    Organism=$(echo $BlastHits | rev | cut -f3 -d '/' | rev)
-    HitsGff=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs.gff
-    Column2=toxin_homolog
-    NumHits=1
-    $ProgDir/blast2gff.pl $Column2 $NumHits $BlastHits > $HitsGff
-    cat $HitsGff | grep 'AKT' > analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs_AKT.gff
-    cat $HitsGff | grep 'AMT' > analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes.fa_homologs_AMT.gff
-  done
-```
-
-
-Extracted gff files of the BLAST hit locations were intersected with gene models
-to identify if genes were predicted for these homologs:
-
-```bash
-for HitsGff in $(ls analysis/blast_homology/*/*/*_A.alternata_CDC_genes.fa_homologs.gff); do
-Strain=$(echo $HitsGff | rev | cut -f2 -d '/' | rev)
-Organism=$(echo $HitsGff | rev | cut -f3 -d '/' | rev)
-Proteins=$(ls gene_pred/final/$Organism/$Strain/*/final_genes_appended_renamed.gff3)
-OutDir=analysis/blast_homology/$Organism/$Strain/"$Strain"_A.alternata_CDC_genes
-IntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_Intersect.gff
-# NoIntersectBlast=$OutDir/"$Strain"_A.alternata_CDC_genes_NoIntersect.gff
-mkdir -p $OutDir
-echo "$Organism - $Strain"
-echo "The number of BLAST hits in the gff file were:"
-cat $HitsGff | wc -l
-echo "The number of blast hits intersected were:"
-bedtools intersect -wao -a $HitsGff -b $Proteins > $IntersectBlast
-cat $IntersectBlast | grep -w 'gene' | wc -l
-echo "The number of blast hits not intersecting gene models were:"
-# bedtools intersect -v -a $HitsGff -b $Proteins > $NoIntersectBlast
-# rm $NoIntersectBlast
-cat $IntersectBlast | grep -w -E '0$' | wc -l
+for Fasta in $(ls assembly/*/*/genome.ctg.fa); do
+Strain=$(echo $Fasta | rev | cut -f2 -d '/' | rev | cut -f3 -d '_')
+Organism=$(echo $Fasta | rev | cut -f2 -d '/' | rev | cut -f1,2 -d '_')
+cp $Fasta $(dirname $Fasta)"/${Organism}_${Strain}_contigs.fa"
+done
+for File in $(ls assembly/*/*/genes.gff3); do
+Strain=$(echo $File | rev | cut -f2 -d '/' | rev | cut -f3 -d '_')
+Organism=$(echo $File | rev | cut -f2 -d '/' | rev | cut -f1,2 -d '_')
+cp $File $(dirname $File)"/${Organism}_${Strain}_contigs.gff3"
 done
 ```
-
-
-
-
 
 ```bash
 qlogin -pe smp 12
@@ -428,6 +322,14 @@ for File in $(ls analysis/blast_homology/*/*/*_toxgenes_hits.txt); do
     printf "$Organism\t$Strain\t$Hit\n"
   done
 done > analysis/blast_homology/CDC_genes/ref_genome_summarised_hits.tsv
+```
+
+```bash
+for File in $(ls analysis/blast_homology/*/*/*_toxgenes_hits.txt); do
+  Organism=$(echo $File | rev | cut -f3 -d '/' | rev)
+  Strain=$(echo $File | rev | cut -f2 -d '/' | rev)
+  cat $File | awk '{OFS="\t"; print $2, "toxin_homolog", "tblastx", $9, $10, $11, "+", ".", "ID=\"" $1 "_blast_hit1\";"}' | awk '$4 > $5 { temp = $4; $4 = $5; $5 = temp; $7 = "-" } 1' OFS='\t' | sed 's/gene_blast/blast/g' > ${File%.txt}.gff
+done
 ```
 
 ```bash

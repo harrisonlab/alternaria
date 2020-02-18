@@ -192,6 +192,8 @@ samtools idxstats 1082_vs_1177_sorted.bam > 1082_vs_1177_sorted_indexstats.csv
 #samtools view -F4 1082_vs_1177_sorted.bam
 /home/armita/git_repos/emr_repos/scripts/alternaria/assembly/divide_col.py 1082_vs_1177_sorted_indexstats.csv 1 2 > 1082_vs_1177_sorted_indexstats_coverage.csv
 printf "occurence\taligned_reads_per_base\n" > aligned_reads_per_base.csv
-cat 1082_vs_1177_sorted_indexstats_coverage.csv | cut -f5 | sort -n | uniq -c | sed 's/ *//' | sed 's/ /\t/g' >> aligned_reads_per_base.csv
+cat 1082_vs_1177_sorted_indexstats_coverage.csv | cut -f5 | sort -n | uniq -c | sed 's/ *//' | sed 's/ /\t/g' >> aligned_reads_per_base.csv | cut -f1 | python -c"import sys; print(sum(map(int, sys.stdin)))"
+# These contigs represent 294200bp of the assembly. There were 521530 bp of unique contigs in 1082.
 
+cat 1082_vs_1177_sorted_indexstats_coverage.csv | cut -f1,5 | grep -w '0' | grep -v '*' | cut -f1 > 1177_ls_contigs.txt
 

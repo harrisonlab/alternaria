@@ -23,7 +23,7 @@ TRANSCRIPTOME=$1
 
 GENOMIC_CONTIGS=$2
 #GENOMIC_CONTIGS=assembly/velvet/A.alternata_ssp._gaisen/650/650_assembly.41/sorted_contigs.fa
-#GENOMIC_CONTIGS=repeat_masked/P.cactorum/10300/version1_repmask/10300_contigs_softmasked.fa
+#GENOMIC_CONTIGS=repeat_masked/P.cactorum/10300/version1_repmask/10300_contigs_unmasked.fa
 ORGANISM=$(echo $GENOMIC_CONTIGS | rev | cut -d "/" -f4 | rev)
 STRAIN=$(echo $GENOMIC_CONTIGS | rev | cut -d "/" -f3 | rev)
 
@@ -31,7 +31,7 @@ CUR_PATH=$PWD
 #WORK_DIR=$TMPDIR/$STRAIN
 WORK_DIR=/tmp/$STRAIN
 
-PASA_DB="$STRAIN"_db
+PASA_DB="$STRAIN"_new_db
 # When Pasa makes a MYSQL database it wont work if there is already a database of this name.
 # For this reason the PASA_DB value needs to be changed everytime this script is run.
 # IMPORTANT - find a way to remove MYSQL databases.
@@ -69,7 +69,7 @@ Launch_PASA_pipeline.pl -c pasa.alignAssembly.Template.txt -C -R -g $CUR_PATH/$G
 pasa_asmbls_to_training_set.dbi --pasa_transcripts_fasta $PASA_DB.assemblies.fasta  --pasa_transcripts_gff $PASA_DB.pasa_assemblies.gff3
 
 grep "complete" $PASA_DB.assemblies.fasta.transdecoder.pep | cut -d " " -f1 | cut -c 2- > complete_genes.txt
-cd $CUR_PATH
+#cd $CUR_PATH
 
 #------------------------------------------------------
 # 		Step 4.		Convert .gff output to .gb format
@@ -77,7 +77,6 @@ cd $CUR_PATH
 # gff3_2_auggff.pl <infile.gff3> > <augustus_format_outfile.gff3>
 
 /home/armita/git_repos/emr_repos/tools/gene_prediction/augustus/gff3_2_auggff.pl $PASA_DB.assemblies.fasta.transdecoder.genome.gff3 > $PASA_DB.assemblies.transdecoder.genome.aug.gff3
-
 
 # As part of this the flanking region length between genes needs to be set. This is recomended
 # to be set to half the average gene size (as used on the Augustus web server).
