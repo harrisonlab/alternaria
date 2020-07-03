@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''
-
+A tool to convert NUCmer output files into genome alignment features in Circos format.
 '''
 
 import sys,argparse
@@ -34,8 +34,8 @@ r_id = conf.ref_id
 
 #-----------------------------------------------------
 # Step 2
-# Identify SigP hits within sigP file
-# Store key information from hits and non-hits.
+# Parse input columns following the NUCmer header line
+# Output column information in Circos format
 #-----------------------------------------------------
 
 start_reading = False
