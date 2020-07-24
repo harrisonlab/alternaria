@@ -4,7 +4,7 @@ Firstly, busco results from Alternaria MinION assemblies in /data/scratch/armita
 was copied into the project folder
 
 ```bash
-cd /home/groups/harrisonlab/project_files/alternaria
+cd /projects/oldhome/groups/harrisonlab/project_files/alternaria
 for MinionDir in $(ls -d /data/scratch/armita/alternaria/repeat_masked/*/*/filtered_contigs/run* | grep '1166'); do
   OrgStrain=$(echo $MinionDir | cut -f7,8 -d '/')
   echo $OrgStrain
@@ -16,13 +16,12 @@ done
 Create a list of all BUSCO IDs
 
 ```bash
-cd /home/groups/harrisonlab/project_files/alternaria
+cd /projects/oldhome/groups/harrisonlab/project_files/alternaria
 
-# pushd /home/sobczm/bin/BUSCO_v1.22/fungi/hmms
 OutDir=analysis/popgen/busco_phylogeny
 mkdir -p $OutDir
 BuscoDb="ascomycota_odb9"
-ls -1 /home/groups/harrisonlab/dbBusco/$BuscoDb/hmms/*hmm | rev | cut -f1 -d '/' | rev | sed -e 's/.hmm//' > $OutDir/all_buscos_"$BuscoDb".txt
+ls -1 /projects/oldhome/groups/harrisonlab/dbBusco/$BuscoDb/hmms/*hmm | rev | cut -f1 -d '/' | rev | sed -e 's/.hmm//' > $OutDir/all_buscos_"$BuscoDb".txt
 ```
 
 For each busco gene create a folder and move all single copy busco hits from
@@ -32,7 +31,7 @@ alignment later.
 
 ```bash
 printf "" > analysis/popgen/busco_phylogeny/single_hits.txt
-for Busco in $(cat analysis/popgen/busco_phylogeny/all_buscos_*.txt); do
+for Busco in $(cat analysis/popgen/busco_phylogeny/all_buscos_*.txt | head -n1); do
 echo $Busco
 OutDir=analysis/popgen/busco_phylogeny/$Busco
 mkdir -p $OutDir
@@ -150,12 +149,11 @@ GGtree was used to make a plot.
 
 * Note- Tips can be found here: https://bioconnector.org/r-ggtree.html
 
-* Note- Tips can be found here: https://bioconnector.org/r-ggtree.html
 
 The consensus tree was downloaded to my local machine
 
-* Note - I had to import into geneious and export again in newick format to get around polytomy branches having no branch length.
-* Terminal branch lengths are meanlingless from ASTRAL and should all be set to an arbitrary value. This will be done by geneious (set to 1), but it also introduces a branch length of 2 for one isolate that needs to be corrected with sed
+* Note - I had to import the tree into geneious and export it again in newick format to get around  a problem with the polytomy branches having no branch length.
+* Terminal branch lengths are meanlingless from ASTRAL and should all be set to an arbitrary value. This will be done by geneious (set to 1), but it also introduces a branch length of 2 for one isolate that needs to be corrected with sed. I later remove terminal branches when plotting the tree.
 
 ```bash
 cat Alt_phylogeny.consensus.scored.geneious.tre | sed 's/:2/:1/g' > Alt_phylogeny.consensus.scored.geneious2.tre
@@ -341,7 +339,7 @@ your local computer
 
 ```bash
 cd Users/armita/Downloads
-scp -r cluster:/home/groups/harrisonlab/project_files/idris/analysis/popgen/busco_phylogeny/phylogeny .
+scp -r cluster:/projects/oldhome/groups/harrisonlab/project_files/idris/analysis/popgen/busco_phylogeny/phylogeny .
 ```
 
 Alignments were loaded into Geneious where they were visualised and manually sorted into
@@ -378,7 +376,7 @@ analysis
 Upload partition models back to the cluster:
 
 ```bash
-ClusterDir=/home/groups/harrisonlab/project_files/idris/analysis/popgen/busco_phylogeny/phylogeny
+ClusterDir=/projects/oldhome/groups/harrisonlab/project_files/idris/analysis/popgen/busco_phylogeny/phylogeny
 scp -r bad_alignments cluster:$ClusterDir/.
 ```
 
@@ -406,7 +404,7 @@ some runs may never converge)
 
 ```bash
 
-cd /home/groups/harrisonlab/project_files/idris
+cd /projects/oldhome/groups/harrisonlab/project_files/idris
 
 
 for File in $(ls analysis/popgen/busco_phylogeny/phylogeny/good_alignments/*_appended_aligned/analysis/best_scheme.txt); do
